@@ -3,7 +3,7 @@ import type { NotificationPayload } from "../types";
 export async function sendTelegramNotification(
   botToken: string,
   chatId: string,
-  payload: NotificationPayload
+  payload: NotificationPayload,
 ): Promise<boolean> {
   const message = formatTelegramMessage(payload);
   const baseUrl = `https://api.telegram.org/bot${botToken}`;

@@ -5,10 +5,13 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy --minify",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
+    "lint": "biome check --write",
+    "lint:check": "biome check",
     "prepare": "husky"
   },
   "dependencies": {
     "@octokit/rest": "^22.0.1",
+    "grammy": "^1.38.4",
     "hono": "^4.10.8"
   },
   "devDependencies": {

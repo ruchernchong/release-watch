@@ -9,7 +9,7 @@ export async function getLatestReleases(
   octokit: Octokit,
   owner: string,
   repo: string,
-  perPage = 10
+  perPage = 10,
 ): Promise<GitHubRelease[]> {
   const response = await octokit.repos.listReleases({
     owner,
@@ -21,7 +21,10 @@ export async function getLatestReleases(
   return response.data.filter((release) => !release.draft) as GitHubRelease[];
 }
 
-export function parseFullName(fullName: string): { owner: string; repo: string } {
+export function parseFullName(fullName: string): {
+  owner: string;
+  repo: string;
+} {
   const [owner, repo] = fullName.split("/");
   return { owner, repo };
 }
