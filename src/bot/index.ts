@@ -72,7 +72,7 @@ export async function createBot(env: Env): Promise<Bot> {
       "👋 Welcome to ReleaseWatch!\n\n" +
         "I monitor GitHub releases and notify you when new versions are published.\n\n" +
         "To subscribe, simply paste a GitHub repository URL:\n" +
-        "https://github.com/vercel/next.js\n\n" +
+        "https://github.com/owner/repo\n\n" +
         "Commands:\n" +
         "/check - Manually check for new releases\n" +
         "/unsubscribe - Select a repository to unsubscribe\n" +
