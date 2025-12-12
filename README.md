@@ -5,7 +5,7 @@ Monitor GitHub releases from public repositories and receive real-time Telegram 
 ## Features
 
 - **Real-time Notifications**: Get notified within 15 minutes of new releases
-- **AI-Powered Summaries**: Automatic release analysis using Cloudflare AI (Llama 3.2)
+- **AI-Powered Summaries**: Automatic release analysis using Cloudflare AI (Llama 3.1 8B)
 - **Changelog Fallback**: Supports repos without GitHub Releases via CHANGELOG.md parsing
 - **Telegram Bot**: Subscribe/unsubscribe to repositories via simple commands
 - **Stats Dashboard**: Track notifications sent, releases monitored, and active users
@@ -18,7 +18,7 @@ Built entirely on Cloudflare:
 - **Workflows**: Durable execution for reliable release checking
 - **KV**: Subscription storage and AI analysis cache
 - **Durable Objects**: SQLite-backed statistics tracking
-- **AI**: Release summarization with Llama 3.2
+- **AI**: Release summarization with Llama 3.1 8B (with JSON Schema support)
 
 ## Getting Started
 
@@ -51,6 +51,8 @@ bun install
 
 3. Update `wrangler.jsonc` with your KV namespace ID.
 
+**Note**: Workflows and Durable Objects are configured in `wrangler.jsonc` and will be automatically deployed.
+
 ### Development
 
 ```bash
@@ -75,7 +77,20 @@ Pass the `CloudflareBindings` as generics when instantiating `Hono`:
 const app = new Hono<{ Bindings: Env }>();
 ```
 
+## Usage
+
+### Telegram Bot Commands
+
+- `/start` - Get started and see available commands
+- `/check` - Manually trigger a release check for all your subscriptions
+- `/list` - View all your repository subscriptions
+- `/unsubscribe` - Unsubscribe from a repository (interactive menu)
+
+**To subscribe**: Simply paste a GitHub repository URL (e.g., `https://github.com/owner/repo`)
+
 ## API Endpoints
+
+Deployed at: `api.releasewatch.dev`
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
@@ -91,8 +106,7 @@ src/
 ├── bot/                         # Grammy Telegram bot
 ├── handlers/                    # Cron trigger handler
 ├── workflows/                   # Cloudflare Workflows
-│   ├── release-check.ts         # Main release checking workflow
-│   └── ai-analysis.ts           # AI analysis with caching
+│   └── release-check.ts         # Main workflow: fetch releases, AI analysis, notify users
 ├── durable-objects/             # Stats tracking
 ├── services/                    # Business logic
 └── types/                       # TypeScript definitions
