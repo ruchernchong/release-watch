@@ -110,6 +110,9 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
         continue;
       }
 
+      // Capture release in a const for type safety inside closures
+      const release = latestRelease;
+
       for (const chatId of chatIds) {
         const lastNotified = await step.do(
           `check:${repoFullName}:${chatId}`,
@@ -123,19 +126,20 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
           },
         );
 
-        if (lastNotified === latestRelease.tag_name) {
+        if (lastNotified === release.tag_name) {
           continue;
         }
 
+        // Separate try-catch blocks to handle each step independently
+        // This prevents duplicate notifications: if notify succeeds but save fails,
+        // we log the save failure separately and don't retry the notification
+        let notificationSent = false;
         try {
           await step.do(
             `notify:${repoFullName}:${chatId}`,
             TELEGRAM_RETRY_CONFIG,
             async () => {
-              const payload = toNotificationPayload(
-                repoFullName,
-                latestRelease,
-              );
+              const payload = toNotificationPayload(repoFullName, release);
               await sendTelegramNotification(
                 this.env.TELEGRAM_BOT_TOKEN,
                 chatId,
@@ -143,7 +147,16 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
               );
             },
           );
+          notificationSent = true;
+        } catch (error) {
+          console.error(
+            `[Workflow] Failed to send notification to ${chatId} for ${repoFullName}:`,
+            error,
+          );
+          continue;
+        }
 
+        try {
           await step.do(
             `save:${repoFullName}:${chatId}`,
             KV_RETRY_CONFIG,
@@ -152,14 +165,22 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
                 this.env.SUBSCRIPTIONS,
                 chatId,
                 repoFullName,
-                latestRelease.tag_name,
+                release.tag_name,
               );
             },
           );
-
           notificationsSent++;
         } catch (error) {
-          console.error(`[Workflow] Failed to notify ${chatId}:`, error);
+          // Notification was sent but save failed - log warning about potential duplicate
+          console.error(
+            `[Workflow] Failed to save tag for ${chatId}:${repoFullName} after successful notification. ` +
+              `Duplicate notification may occur on next run.`,
+            error,
+          );
+          // Still count as sent since user received the notification
+          if (notificationSent) {
+            notificationsSent++;
+          }
         }
       }
     }
