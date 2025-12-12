@@ -3,7 +3,7 @@ import {
   type WorkflowEvent,
   type WorkflowStep,
 } from "cloudflare:workers";
-import { type AIAnalysisResult, analyzeRelease } from "../services/ai.service";
+import type { AIAnalysisResult } from "../services/ai.service";
 import {
   type ChangelogEntry,
   createOctokit,
@@ -14,9 +14,7 @@ import {
 } from "../services/github.service";
 import {
   getAllSubscriptions,
-  getCachedAnalysis,
   getLastNotifiedTag,
-  setCachedAnalysis,
   setLastNotifiedTag,
 } from "../services/kv.service";
 import {
@@ -26,6 +24,7 @@ import {
 import { sendTelegramNotification } from "../services/telegram.service";
 import type { NotificationPayload } from "../types";
 import type { Env } from "../types/env";
+import type { AIAnalysisOutput, AIAnalysisParams } from "./ai-analysis";
 
 export type ReleaseCheckParams = {
   triggeredAt: string;
@@ -62,13 +61,13 @@ const KV_RETRY_CONFIG = {
   timeout: "10 seconds",
 };
 
-const AI_RETRY_CONFIG = {
+const AI_WORKFLOW_RETRY_CONFIG = {
   retries: {
     limit: 2,
-    delay: "2 seconds",
+    delay: "5 seconds",
     backoff: "exponential" as const,
   },
-  timeout: "30 seconds",
+  timeout: "60 seconds",
 };
 
 export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
@@ -150,78 +149,72 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
           ? releaseInfo.data.tag_name
           : releaseInfo.data.version;
 
-      // AI analysis for the release (cached per release, shared across subscribers)
+      // AI analysis via child workflow (handles caching internally)
       let aiAnalysis: AIAnalysisResult | null = null;
-
-      // Check cache first
       try {
-        aiAnalysis = await step.do(
-          `cache-get:${repoFullName}:${tagName}`,
-          KV_RETRY_CONFIG,
+        const body =
+          releaseInfo.type === "release"
+            ? releaseInfo.data.body
+            : releaseInfo.data.content;
+        const releaseName =
+          releaseInfo.type === "release"
+            ? releaseInfo.data.name
+            : `v${releaseInfo.data.version}`;
+
+        const aiResult = await step.do(
+          `ai-workflow:${repoFullName}:${tagName}`,
+          AI_WORKFLOW_RETRY_CONFIG,
           async () => {
-            return getCachedAnalysis(
-              this.env.SUBSCRIPTIONS,
+            const params: AIAnalysisParams = {
               repoFullName,
               tagName,
-            );
+              releaseName,
+              body,
+            };
+
+            // Create AI analysis workflow instance
+            const instance = await this.env.AI_ANALYSIS_WORKFLOW.create({
+              id: `ai-${repoFullName.replace("/", "-")}-${tagName}`,
+              params,
+            });
+
+            // Poll for completion
+            let status = await instance.status();
+            while (
+              status.status !== "complete" &&
+              status.status !== "errored" &&
+              status.status !== "terminated"
+            ) {
+              await new Promise((resolve) => setTimeout(resolve, 1000));
+              status = await instance.status();
+            }
+
+            if (status.status === "complete" && status.output) {
+              return status.output as AIAnalysisOutput;
+            }
+
+            if (status.error) {
+              throw new Error(status.error);
+            }
+
+            return null;
           },
         );
-      } catch (error) {
-        console.error(
-          `[Workflow] Cache lookup failed for ${repoFullName}:`,
-          error,
-        );
-      }
 
-      // If not cached, analyze and cache the result
-      if (!aiAnalysis) {
-        try {
-          aiAnalysis = await step.do(
-            `analyze:${repoFullName}:${tagName}`,
-            AI_RETRY_CONFIG,
-            async () => {
-              const body =
-                releaseInfo.type === "release"
-                  ? releaseInfo.data.body
-                  : releaseInfo.data.content;
-              const releaseName =
-                releaseInfo.type === "release"
-                  ? releaseInfo.data.name
-                  : `v${releaseInfo.data.version}`;
-
-              return analyzeRelease(
-                this.env.AI,
-                repoFullName,
-                tagName,
-                releaseName,
-                body,
-              );
-            },
-          );
-
-          // Cache the analysis result
-          if (aiAnalysis) {
-            const resultToCache = aiAnalysis;
-            await step.do(
-              `cache-set:${repoFullName}:${tagName}`,
-              KV_RETRY_CONFIG,
-              async () => {
-                await setCachedAnalysis(
-                  this.env.SUBSCRIPTIONS,
-                  repoFullName,
-                  tagName,
-                  resultToCache,
-                );
-              },
+        if (aiResult) {
+          aiAnalysis = aiResult.analysis;
+          if (aiResult.cached) {
+            console.log(
+              `[Workflow] AI cache hit for ${repoFullName}@${tagName}`,
             );
           }
-        } catch (error) {
-          console.error(
-            `[Workflow] AI analysis failed for ${repoFullName}:`,
-            error,
-          );
-          // Continue without AI analysis - graceful degradation
         }
+      } catch (error) {
+        console.error(
+          `[Workflow] AI workflow failed for ${repoFullName}:`,
+          error,
+        );
+        // Continue without AI analysis - graceful degradation
       }
 
       for (const chatId of chatIds) {

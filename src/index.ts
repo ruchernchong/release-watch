@@ -6,6 +6,7 @@ import { getSystemStats } from "./services/stats.service";
 import type { Env } from "./types/env";
 
 export { Stats } from "./durable-objects/stats";
+export { AIAnalysisWorkflow } from "./workflows/ai-analysis";
 export { ReleaseCheckWorkflow } from "./workflows/release-check";
 
 const app = new Hono<{ Bindings: Env }>();
