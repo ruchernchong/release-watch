@@ -28,7 +28,7 @@
   "migrations": [
     {
       "tag": "v1",
-      "new_classes": ["Stats"]
+      "new_sqlite_classes": ["Stats"]
     }
   ],
   "kv_namespaces": [
