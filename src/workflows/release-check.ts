@@ -3,7 +3,7 @@ import {
   type WorkflowEvent,
   type WorkflowStep,
 } from "cloudflare:workers";
-import type { AIAnalysisResult } from "../services/ai.service";
+import { type AIAnalysisResult, analyzeRelease } from "../services/ai.service";
 import {
   type ChangelogEntry,
   createOctokit,
@@ -14,7 +14,9 @@ import {
 } from "../services/github.service";
 import {
   getAllSubscriptions,
+  getCachedAnalysis,
   getLastNotifiedTag,
+  setCachedAnalysis,
   setLastNotifiedTag,
 } from "../services/kv.service";
 import {
@@ -24,7 +26,6 @@ import {
 import { sendTelegramNotification } from "../services/telegram.service";
 import type { NotificationPayload } from "../types";
 import type { Env } from "../types/env";
-import type { AIAnalysisOutput, AIAnalysisParams } from "./ai-analysis";
 
 export type ReleaseCheckParams = {
   triggeredAt: string;
@@ -61,13 +62,13 @@ const KV_RETRY_CONFIG = {
   timeout: "10 seconds",
 };
 
-const AI_WORKFLOW_RETRY_CONFIG = {
+const AI_RETRY_CONFIG = {
   retries: {
     limit: 2,
-    delay: "5 seconds",
+    delay: "2 seconds",
     backoff: "exponential" as const,
   },
-  timeout: "60 seconds",
+  timeout: "30 seconds",
 };
 
 export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
@@ -149,7 +150,7 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
           ? releaseInfo.data.tag_name
           : releaseInfo.data.version;
 
-      // AI analysis via child workflow (handles caching internally)
+      // AI analysis with KV caching
       let aiAnalysis: AIAnalysisResult | null = null;
       try {
         const body =
@@ -161,57 +162,61 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
             ? releaseInfo.data.name
             : `v${releaseInfo.data.version}`;
 
-        const aiResult = await step.do(
-          `ai-workflow:${repoFullName}:${tagName}`,
-          AI_WORKFLOW_RETRY_CONFIG,
+        // Check cache first
+        const cachedAnalysis = await step.do(
+          `ai-cache-get:${repoFullName}:${tagName}`,
+          KV_RETRY_CONFIG,
           async () => {
-            const params: AIAnalysisParams = {
+            return getCachedAnalysis(
+              this.env.SUBSCRIPTIONS,
               repoFullName,
               tagName,
-              releaseName,
-              body,
-            };
-
-            // Create AI analysis workflow instance
-            const instance = await this.env.AI_ANALYSIS_WORKFLOW.create({
-              id: `ai-${repoFullName.replace("/", "-")}-${tagName}`,
-              params,
-            });
-
-            // Poll for completion
-            let status = await instance.status();
-            while (
-              status.status !== "complete" &&
-              status.status !== "errored" &&
-              status.status !== "terminated"
-            ) {
-              await new Promise((resolve) => setTimeout(resolve, 1000));
-              status = await instance.status();
-            }
-
-            if (status.status === "complete" && status.output) {
-              return status.output as AIAnalysisOutput;
-            }
-
-            if (status.error) {
-              throw new Error(status.error);
-            }
-
-            return null;
+            );
           },
         );
 
-        if (aiResult) {
-          aiAnalysis = aiResult.analysis;
-          if (aiResult.cached) {
+        if (cachedAnalysis) {
+          console.log(`[Workflow] AI cache hit for ${repoFullName}@${tagName}`);
+          aiAnalysis = cachedAnalysis;
+        } else {
+          // Run AI analysis
+          const analysis = await step.do(
+            `ai-analyze:${repoFullName}:${tagName}`,
+            AI_RETRY_CONFIG,
+            async () => {
+              return analyzeRelease(
+                this.env.AI,
+                repoFullName,
+                tagName,
+                releaseName,
+                body,
+              );
+            },
+          );
+
+          if (analysis) {
+            aiAnalysis = analysis;
+            // Cache the result
+            await step.do(
+              `ai-cache-set:${repoFullName}:${tagName}`,
+              KV_RETRY_CONFIG,
+              async () => {
+                await setCachedAnalysis(
+                  this.env.SUBSCRIPTIONS,
+                  repoFullName,
+                  tagName,
+                  analysis,
+                );
+              },
+            );
             console.log(
-              `[Workflow] AI cache hit for ${repoFullName}@${tagName}`,
+              `[Workflow] Cached AI analysis for ${repoFullName}@${tagName}`,
             );
           }
         }
       } catch (error) {
         console.error(
-          `[Workflow] AI workflow failed for ${repoFullName}:`,
+          `[Workflow] AI analysis failed for ${repoFullName}:`,
           error,
         );
         // Continue without AI analysis - graceful degradation
