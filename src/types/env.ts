@@ -6,7 +6,6 @@ export interface Env {
   TELEGRAM_BOT_TOKEN: string;
   SUBSCRIPTIONS: KVNamespace;
   RELEASE_CHECK_WORKFLOW: Workflow;
-  AI_ANALYSIS_WORKFLOW: Workflow;
   STATS: DurableObjectNamespace;
   AI: Ai;
 

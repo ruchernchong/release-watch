@@ -10,7 +10,7 @@ ReleaseWatch monitors GitHub releases from public repositories and sends real-ti
 - **Cloudflare Workflows**: Durable execution for release checking and AI analysis
 - **Cloudflare KV**: Subscription storage, notification state, and AI analysis cache
 - **Cloudflare Durable Objects**: SQLite-backed stats tracking
-- **Cloudflare AI**: Release notes summarization using Llama 3.2
+- **Cloudflare AI**: Release notes summarization using Llama 3.1 8B (with JSON Schema support)
 
 ## Development Commands
 
@@ -30,8 +30,7 @@ src/
 ├── bot/index.ts                 # Grammy bot initialization
 ├── handlers/schedule.ts         # Cron: triggers release check workflow
 ├── workflows/
-│   ├── release-check.ts         # Main workflow: fetch releases, notify users
-│   └── ai-analysis.ts           # Child workflow: AI analysis with KV caching
+│   └── release-check.ts         # Main workflow: fetch releases, AI analysis, notify users
 ├── durable-objects/
 │   └── stats.ts                 # SQLite-backed Durable Object for stats
 ├── services/
@@ -53,7 +52,7 @@ src/
   1. Fetch all subscriptions from KV
   2. Build repo-to-chat mapping
   3. For each repo: fetch latest release (GitHub API) or changelog fallback
-  4. Trigger AIAnalysisWorkflow (checks cache first, then runs AI)
+  4. Run AI analysis workflow steps (check cache first, then analyze with AI, cache result)
   5. For each subscriber: check last notified tag, send notification if new
   6. Update stats via Durable Objects
 
@@ -61,14 +60,14 @@ src/
 
 - `chat:{chatId}` - Array of subscribed repo full names
 - `notified:{chatId}:{repo}` - Last notified tag (deduplication)
-- `ai:{repo}:{tag}` - Cached AI analysis results
+- `release:{repo}:{tag}` - Cached AI analysis results
 
 ## Tech Stack
 
 - **Framework**: Hono
 - **GitHub API**: @octokit/rest
 - **Telegram**: Grammy
-- **AI Model**: @cf/meta/llama-3.2-3b-instruct (Cloudflare AI)
+- **AI Model**: @cf/meta/llama-3.1-8b-instruct-fast (Cloudflare AI with JSON Schema)
 
 ## Code Standards
 
@@ -85,8 +84,7 @@ Secrets (set via `wrangler secret put`):
 Bindings (configured in wrangler.jsonc):
 - `SUBSCRIPTIONS` - KV namespace for subscription and notification state
 - `STATS` - Durable Object for stats tracking
-- `RELEASE_CHECK_WORKFLOW` - Main release checking workflow
-- `AI_ANALYSIS_WORKFLOW` - AI analysis child workflow
+- `RELEASE_CHECK_WORKFLOW` - Main release checking workflow (includes AI analysis steps)
 - `AI` - Cloudflare AI binding
 
 ---

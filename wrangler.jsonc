@@ -15,11 +15,6 @@
       "name": "release-check-workflow",
       "binding": "RELEASE_CHECK_WORKFLOW",
       "class_name": "ReleaseCheckWorkflow"
-    },
-    {
-      "name": "ai-analysis-workflow",
-      "binding": "AI_ANALYSIS_WORKFLOW",
-      "class_name": "AIAnalysisWorkflow"
     }
   ],
   "durable_objects": {
