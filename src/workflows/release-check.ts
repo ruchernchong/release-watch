@@ -4,7 +4,9 @@ import {
   type WorkflowStep,
 } from "cloudflare:workers";
 import {
+  type ChangelogEntry,
   createOctokit,
+  getChangelogEntry,
   type GitHubRelease,
   getLatestReleases,
   parseFullName,
@@ -25,6 +27,10 @@ import type { Env } from "../types/env";
 export type ReleaseCheckParams = {
   triggeredAt: string;
 };
+
+type ReleaseInfo =
+  | { type: "release"; data: GitHubRelease }
+  | { type: "changelog"; data: ChangelogEntry };
 
 const GITHUB_RETRY_CONFIG = {
   retries: {
@@ -94,16 +100,28 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
       const chatIds = repoToChats[repoFullName];
       let releaseCountedForStats = false;
 
-      let latestRelease: GitHubRelease | null = null;
+      let releaseInfo: ReleaseInfo | null = null;
       try {
-        latestRelease = await step.do(
+        releaseInfo = await step.do(
           `fetch:${repoFullName}`,
           GITHUB_RETRY_CONFIG,
           async () => {
             const octokit = createOctokit(this.env.GITHUB_TOKEN);
             const { owner, repo } = parseFullName(repoFullName);
+
+            // Try GitHub releases first
             const releases = await getLatestReleases(octokit, owner, repo, 1);
-            return releases.length > 0 ? releases[0] : null;
+            if (releases.length > 0) {
+              return { type: "release" as const, data: releases[0] };
+            }
+
+            // Fallback to CHANGELOG.md
+            const changelog = await getChangelogEntry(octokit, owner, repo);
+            if (changelog) {
+              return { type: "changelog" as const, data: changelog };
+            }
+
+            return null;
           },
         );
       } catch (error) {
@@ -111,12 +129,14 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
         continue;
       }
 
-      if (!latestRelease) {
+      if (!releaseInfo) {
         continue;
       }
 
-      // Capture release in a const for type safety inside closures
-      const release = latestRelease;
+      const tagName =
+        releaseInfo.type === "release"
+          ? releaseInfo.data.tag_name
+          : releaseInfo.data.version;
 
       for (const chatId of chatIds) {
         const lastNotified = await step.do(
@@ -131,7 +151,7 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
           },
         );
 
-        if (lastNotified === release.tag_name) {
+        if (lastNotified === tagName) {
           continue;
         }
 
@@ -144,7 +164,7 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
             `notify:${repoFullName}:${chatId}`,
             TELEGRAM_RETRY_CONFIG,
             async () => {
-              const payload = toNotificationPayload(repoFullName, release);
+              const payload = toNotificationPayload(repoFullName, releaseInfo);
               await sendTelegramNotification(
                 this.env.TELEGRAM_BOT_TOKEN,
                 chatId,
@@ -170,7 +190,7 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
                 this.env.SUBSCRIPTIONS,
                 chatId,
                 repoFullName,
-                release.tag_name,
+                tagName,
               );
             },
           );
@@ -188,7 +208,7 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
           // Track stats: increment releases notified (once per unique release)
           if (!releaseCountedForStats) {
             await step.do(
-              `stats:release:${repoFullName}:${release.tag_name}`,
+              `stats:release:${repoFullName}:${tagName}`,
               KV_RETRY_CONFIG,
               async () => {
                 await incrementReleasesNotified(this.env);
@@ -217,15 +237,29 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
 
 function toNotificationPayload(
   repoFullName: string,
-  release: GitHubRelease,
+  releaseInfo: ReleaseInfo,
 ): NotificationPayload {
+  if (releaseInfo.type === "release") {
+    const release = releaseInfo.data;
+    return {
+      repoName: repoFullName,
+      tagName: release.tag_name,
+      releaseName: release.name ?? null,
+      body: release.body ?? null,
+      url: release.html_url,
+      author: release.author?.login ?? null,
+      publishedAt: release.published_at ?? new Date().toISOString(),
+    };
+  }
+
+  const changelog = releaseInfo.data;
   return {
     repoName: repoFullName,
-    tagName: release.tag_name,
-    releaseName: release.name ?? null,
-    body: release.body ?? null,
-    url: release.html_url,
-    author: release.author?.login ?? null,
-    publishedAt: release.published_at ?? new Date().toISOString(),
+    tagName: changelog.version,
+    releaseName: `v${changelog.version}`,
+    body: changelog.content,
+    url: changelog.url,
+    author: null,
+    publishedAt: changelog.date ?? new Date().toISOString(),
   };
 }
