@@ -7,6 +7,12 @@
   "observability": {
     "enabled": true
   },
+  "kv_namespaces": [
+    {
+      "binding": "SUBSCRIPTIONS",
+      "id": "01e881c80e1c4f60953a5a803f74871c"
+    }
+  ],
   "triggers": {
     "crons": ["*/15 * * * *"]
   },

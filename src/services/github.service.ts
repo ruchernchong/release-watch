@@ -1,5 +1,7 @@
-import { Octokit } from "@octokit/rest";
-import type { GitHubRelease } from "../types";
+import { Octokit, type RestEndpointMethodTypes } from "@octokit/rest";
+
+export type GitHubRelease =
+  RestEndpointMethodTypes["repos"]["listReleases"]["response"]["data"][number];
 
 export function createOctokit(token: string): Octokit {
   return new Octokit({ auth: token });
@@ -17,8 +19,7 @@ export async function getLatestReleases(
     per_page: perPage,
   });
 
-  // Filter out drafts
-  return response.data.filter((release) => !release.draft) as GitHubRelease[];
+  return response.data.filter((release) => !release.draft);
 }
 
 export function parseFullName(fullName: string): {
