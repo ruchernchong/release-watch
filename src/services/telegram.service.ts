@@ -1,4 +1,22 @@
-import type { NotificationPayload } from "../types";
+import type { NotificationPayload, ReleaseCategory } from "../types";
+
+const CATEGORY_EMOJI: Record<ReleaseCategory, string> = {
+  major: "🚀",
+  minor: "✨",
+  patch: "🔧",
+  security: "🔒",
+  breaking: "⚠️",
+  unknown: "📦",
+};
+
+const CATEGORY_LABEL: Record<ReleaseCategory, string> = {
+  major: "Major Release",
+  minor: "Minor Release",
+  patch: "Patch",
+  security: "Security Fix",
+  breaking: "Breaking Changes",
+  unknown: "New Release",
+};
 
 export async function sendTelegramNotification(
   botToken: string,
@@ -29,16 +47,55 @@ export async function sendTelegramNotification(
 
 function formatTelegramMessage(payload: NotificationPayload): string {
   const title = payload.releaseName || payload.tagName;
-  const truncatedBody = payload.body
-    ? payload.body.substring(0, 500) + (payload.body.length > 500 ? "..." : "")
-    : "No release notes";
+  const analysis = payload.aiAnalysis;
 
-  return `<b>New Release: ${escapeHtml(payload.repoName)}</b>
+  const category = analysis?.category ?? "unknown";
+  const emoji = CATEGORY_EMOJI[category];
+  const categoryLabel = CATEGORY_LABEL[category];
 
-<b>${escapeHtml(title)}</b>
-${escapeHtml(truncatedBody)}
+  const parts: string[] = [];
 
-<a href="${payload.url}">View Release</a>`;
+  // Header with category
+  parts.push(
+    `${emoji} <b>${categoryLabel}: ${escapeHtml(payload.repoName)}</b>`,
+  );
+  parts.push("");
+
+  // Version/title
+  parts.push(`<b>${escapeHtml(title)}</b>`);
+
+  // Breaking changes warning
+  if (analysis?.hasBreakingChanges) {
+    parts.push("");
+    parts.push("⚠️ <b>Contains Breaking Changes</b>");
+  }
+
+  // AI Summary or truncated body
+  parts.push("");
+  if (analysis?.summary) {
+    parts.push(`<b>Summary:</b> ${escapeHtml(analysis.summary)}`);
+  } else {
+    const truncatedBody = payload.body
+      ? payload.body.substring(0, 500) +
+        (payload.body.length > 500 ? "..." : "")
+      : "No release notes";
+    parts.push(escapeHtml(truncatedBody));
+  }
+
+  // Highlights
+  if (analysis?.highlights && analysis.highlights.length > 0) {
+    parts.push("");
+    parts.push("<b>Highlights:</b>");
+    for (const highlight of analysis.highlights) {
+      parts.push(`• ${escapeHtml(highlight)}`);
+    }
+  }
+
+  // Link
+  parts.push("");
+  parts.push(`<a href="${payload.url}">View Release</a>`);
+
+  return parts.join("\n");
 }
 
 function escapeHtml(text: string): string {

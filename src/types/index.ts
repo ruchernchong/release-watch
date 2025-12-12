@@ -1,3 +1,5 @@
+import type { AIAnalysisResult } from "../services/ai.service";
+
 // Notification payload
 export interface NotificationPayload {
   repoName: string;
@@ -7,7 +9,10 @@ export interface NotificationPayload {
   url: string;
   author: string | null;
   publishedAt: string;
+  aiAnalysis?: AIAnalysisResult | null;
 }
+
+export type { AIAnalysisResult, ReleaseCategory } from "../services/ai.service";
 
 // System-wide statistics
 export interface SystemStats {

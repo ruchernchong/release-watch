@@ -1,5 +1,8 @@
+import type { AIAnalysisResult } from "./ai.service";
+
 const CHAT_PREFIX = "chat:";
 const NOTIFIED_PREFIX = "notified:";
+const RELEASE_PREFIX = "release:";
 
 export async function getSubscriptions(
   kv: KVNamespace,
@@ -84,4 +87,26 @@ export async function getAllSubscriptions(
   }
 
   return subscriptions;
+}
+
+// Release analysis cache
+function releaseKey(repo: string, tag: string): string {
+  return `${RELEASE_PREFIX}${repo}:${tag}`;
+}
+
+export async function getCachedAnalysis(
+  kv: KVNamespace,
+  repo: string,
+  tag: string,
+): Promise<AIAnalysisResult | null> {
+  return kv.get<AIAnalysisResult>(releaseKey(repo, tag), "json");
+}
+
+export async function setCachedAnalysis(
+  kv: KVNamespace,
+  repo: string,
+  tag: string,
+  analysis: AIAnalysisResult,
+): Promise<void> {
+  await kv.put(releaseKey(repo, tag), JSON.stringify(analysis));
 }

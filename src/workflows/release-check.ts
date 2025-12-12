@@ -3,6 +3,7 @@ import {
   type WorkflowEvent,
   type WorkflowStep,
 } from "cloudflare:workers";
+import type { AIAnalysisResult } from "../services/ai.service";
 import {
   type ChangelogEntry,
   createOctokit,
@@ -23,6 +24,7 @@ import {
 import { sendTelegramNotification } from "../services/telegram.service";
 import type { NotificationPayload } from "../types";
 import type { Env } from "../types/env";
+import type { AIAnalysisOutput, AIAnalysisParams } from "./ai-analysis";
 
 export type ReleaseCheckParams = {
   triggeredAt: string;
@@ -57,6 +59,15 @@ const KV_RETRY_CONFIG = {
     backoff: "constant" as const,
   },
   timeout: "10 seconds",
+};
+
+const AI_WORKFLOW_RETRY_CONFIG = {
+  retries: {
+    limit: 2,
+    delay: "5 seconds",
+    backoff: "exponential" as const,
+  },
+  timeout: "60 seconds",
 };
 
 export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
@@ -138,6 +149,74 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
           ? releaseInfo.data.tag_name
           : releaseInfo.data.version;
 
+      // AI analysis via child workflow (handles caching internally)
+      let aiAnalysis: AIAnalysisResult | null = null;
+      try {
+        const body =
+          releaseInfo.type === "release"
+            ? releaseInfo.data.body
+            : releaseInfo.data.content;
+        const releaseName =
+          releaseInfo.type === "release"
+            ? releaseInfo.data.name
+            : `v${releaseInfo.data.version}`;
+
+        const aiResult = await step.do(
+          `ai-workflow:${repoFullName}:${tagName}`,
+          AI_WORKFLOW_RETRY_CONFIG,
+          async () => {
+            const params: AIAnalysisParams = {
+              repoFullName,
+              tagName,
+              releaseName,
+              body,
+            };
+
+            // Create AI analysis workflow instance
+            const instance = await this.env.AI_ANALYSIS_WORKFLOW.create({
+              id: `ai-${repoFullName.replace("/", "-")}-${tagName}`,
+              params,
+            });
+
+            // Poll for completion
+            let status = await instance.status();
+            while (
+              status.status !== "complete" &&
+              status.status !== "errored" &&
+              status.status !== "terminated"
+            ) {
+              await new Promise((resolve) => setTimeout(resolve, 1000));
+              status = await instance.status();
+            }
+
+            if (status.status === "complete" && status.output) {
+              return status.output as AIAnalysisOutput;
+            }
+
+            if (status.error) {
+              throw new Error(status.error);
+            }
+
+            return null;
+          },
+        );
+
+        if (aiResult) {
+          aiAnalysis = aiResult.analysis;
+          if (aiResult.cached) {
+            console.log(
+              `[Workflow] AI cache hit for ${repoFullName}@${tagName}`,
+            );
+          }
+        }
+      } catch (error) {
+        console.error(
+          `[Workflow] AI workflow failed for ${repoFullName}:`,
+          error,
+        );
+        // Continue without AI analysis - graceful degradation
+      }
+
       for (const chatId of chatIds) {
         const lastNotified = await step.do(
           `check:${repoFullName}:${chatId}`,
@@ -164,7 +243,11 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
             `notify:${repoFullName}:${chatId}`,
             TELEGRAM_RETRY_CONFIG,
             async () => {
-              const payload = toNotificationPayload(repoFullName, releaseInfo);
+              const payload = toNotificationPayload(
+                repoFullName,
+                releaseInfo,
+                aiAnalysis,
+              );
               await sendTelegramNotification(
                 this.env.TELEGRAM_BOT_TOKEN,
                 chatId,
@@ -238,6 +321,7 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
 function toNotificationPayload(
   repoFullName: string,
   releaseInfo: ReleaseInfo,
+  aiAnalysis: AIAnalysisResult | null,
 ): NotificationPayload {
   if (releaseInfo.type === "release") {
     const release = releaseInfo.data;
@@ -249,6 +333,7 @@ function toNotificationPayload(
       url: release.html_url,
       author: release.author?.login ?? null,
       publishedAt: release.published_at ?? new Date().toISOString(),
+      aiAnalysis,
     };
   }
 
@@ -261,5 +346,6 @@ function toNotificationPayload(
     url: changelog.url,
     author: null,
     publishedAt: changelog.date ?? new Date().toISOString(),
+    aiAnalysis,
   };
 }
