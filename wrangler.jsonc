@@ -10,6 +10,13 @@
   "placement": {
     "mode": "smart"
   },
+  "workflows": [
+    {
+      "name": "release-check-workflow",
+      "binding": "RELEASE_CHECK_WORKFLOW",
+      "class_name": "ReleaseCheckWorkflow"
+    }
+  ],
   "kv_namespaces": [
     {
       "binding": "SUBSCRIPTIONS",

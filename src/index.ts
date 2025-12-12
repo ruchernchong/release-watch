@@ -4,6 +4,8 @@ import { createBot } from "./bot";
 import { handleSchedule } from "./handlers/schedule";
 import type { Env } from "./types/env";
 
+export { ReleaseCheckWorkflow } from "./workflows/release-check";
+
 const app = new Hono<{ Bindings: Env }>();
 
 app.get("/", (c) => {
