@@ -14,7 +14,9 @@ import {
 } from "../services/github.service";
 import {
   getAllSubscriptions,
+  getCachedAnalysis,
   getLastNotifiedTag,
+  setCachedAnalysis,
   setLastNotifiedTag,
 } from "../services/kv.service";
 import {
@@ -148,37 +150,78 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
           ? releaseInfo.data.tag_name
           : releaseInfo.data.version;
 
-      // AI analysis for the release (done once per release, not per subscriber)
+      // AI analysis for the release (cached per release, shared across subscribers)
       let aiAnalysis: AIAnalysisResult | null = null;
+
+      // Check cache first
       try {
         aiAnalysis = await step.do(
-          `analyze:${repoFullName}:${tagName}`,
-          AI_RETRY_CONFIG,
+          `cache-get:${repoFullName}:${tagName}`,
+          KV_RETRY_CONFIG,
           async () => {
-            const body =
-              releaseInfo.type === "release"
-                ? releaseInfo.data.body
-                : releaseInfo.data.content;
-            const releaseName =
-              releaseInfo.type === "release"
-                ? releaseInfo.data.name
-                : `v${releaseInfo.data.version}`;
-
-            return analyzeRelease(
-              this.env.AI,
+            return getCachedAnalysis(
+              this.env.SUBSCRIPTIONS,
               repoFullName,
               tagName,
-              releaseName,
-              body,
             );
           },
         );
       } catch (error) {
         console.error(
-          `[Workflow] AI analysis failed for ${repoFullName}:`,
+          `[Workflow] Cache lookup failed for ${repoFullName}:`,
           error,
         );
-        // Continue without AI analysis - graceful degradation
+      }
+
+      // If not cached, analyze and cache the result
+      if (!aiAnalysis) {
+        try {
+          aiAnalysis = await step.do(
+            `analyze:${repoFullName}:${tagName}`,
+            AI_RETRY_CONFIG,
+            async () => {
+              const body =
+                releaseInfo.type === "release"
+                  ? releaseInfo.data.body
+                  : releaseInfo.data.content;
+              const releaseName =
+                releaseInfo.type === "release"
+                  ? releaseInfo.data.name
+                  : `v${releaseInfo.data.version}`;
+
+              return analyzeRelease(
+                this.env.AI,
+                repoFullName,
+                tagName,
+                releaseName,
+                body,
+              );
+            },
+          );
+
+          // Cache the analysis result
+          if (aiAnalysis) {
+            const resultToCache = aiAnalysis;
+            await step.do(
+              `cache-set:${repoFullName}:${tagName}`,
+              KV_RETRY_CONFIG,
+              async () => {
+                await setCachedAnalysis(
+                  this.env.SUBSCRIPTIONS,
+                  repoFullName,
+                  tagName,
+                  resultToCache,
+                );
+              },
+            );
+          }
+        } catch (error) {
+          console.error(
+            `[Workflow] AI analysis failed for ${repoFullName}:`,
+            error,
+          );
+          // Continue without AI analysis - graceful degradation
+        }
       }
 
       for (const chatId of chatIds) {
