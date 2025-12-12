@@ -62,6 +62,7 @@ export async function createBot(env: Env): Promise<Bot> {
       command: "start",
       description: "Start the bot and see available commands",
     },
+    { command: "check", description: "Manually check for new releases" },
     { command: "unsubscribe", description: "Unsubscribe from a repository" },
     { command: "list", description: "List your subscriptions" },
   ]);
@@ -73,9 +74,36 @@ export async function createBot(env: Env): Promise<Bot> {
         "To subscribe, simply paste a GitHub repository URL:\n" +
         "https://github.com/vercel/next.js\n\n" +
         "Commands:\n" +
+        "/check - Manually check for new releases\n" +
         "/unsubscribe - Select a repository to unsubscribe\n" +
         "/list - List your subscriptions",
     );
+  });
+
+  bot.command("check", async (ctx) => {
+    const chatId = ctx.chat.id.toString();
+    const subscriptions = await getSubscriptions(kv, chatId);
+
+    if (subscriptions.length === 0) {
+      await ctx.reply("No subscriptions yet. Paste a GitHub URL to subscribe.");
+      return;
+    }
+
+    await ctx.reply("🔍 Checking for new releases...");
+
+    try {
+      const instanceId = `manual-check-${chatId}-${Date.now()}`;
+      await env.RELEASE_CHECK_WORKFLOW.create({
+        id: instanceId,
+        params: { triggeredAt: new Date().toISOString(), chatId },
+      });
+      await ctx.reply(
+        `✅ Release check triggered for ${subscriptions.length} subscription(s)`,
+      );
+    } catch (error) {
+      console.error("[Bot] Failed to trigger release check:", error);
+      await ctx.reply("❌ Failed to trigger release check. Please try again.");
+    }
   });
 
   bot.command("unsubscribe", async (ctx) => {

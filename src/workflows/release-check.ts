@@ -6,8 +6,8 @@ import {
 import {
   type ChangelogEntry,
   createOctokit,
-  getChangelogEntry,
   type GitHubRelease,
+  getChangelogEntry,
   getLatestReleases,
   parseFullName,
 } from "../services/github.service";
