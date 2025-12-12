@@ -39,8 +39,7 @@
   "kv_namespaces": [
     {
       "binding": "SUBSCRIPTIONS",
-      "id": "01e881c80e1c4f60953a5a803f74871c",
-      "preview_id": "bc8c7c181493459d82f294275e070e7c"
+      "id": "01e881c80e1c4f60953a5a803f74871c"
     }
   ],
   "triggers": {
