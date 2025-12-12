@@ -106,219 +106,227 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
     });
 
     const repos = Object.keys(repoToChats);
-    let notificationsSent = 0;
 
-    for (const repoFullName of repos) {
-      const chatIds = repoToChats[repoFullName];
-      let releaseCountedForStats = false;
+    // Process all repositories in parallel
+    const results = await Promise.all(
+      repos.map(async (repoFullName) => {
+        const chatIds = repoToChats[repoFullName];
+        let releaseCountedForStats = false;
+        let repoNotificationsSent = 0;
 
-      let releaseInfo: ReleaseInfo | null = null;
-      try {
-        releaseInfo = await step.do(
-          `fetch:${repoFullName}`,
-          GITHUB_RETRY_CONFIG,
-          async () => {
-            const octokit = createOctokit(this.env.GITHUB_TOKEN);
-            const { owner, repo } = parseFullName(repoFullName);
-
-            // Try GitHub releases first
-            const releases = await getLatestReleases(octokit, owner, repo, 1);
-            if (releases.length > 0) {
-              return { type: "release" as const, data: releases[0] };
-            }
-
-            // Fallback to CHANGELOG.md
-            const changelog = await getChangelogEntry(octokit, owner, repo);
-            if (changelog) {
-              return { type: "changelog" as const, data: changelog };
-            }
-
-            return null;
-          },
-        );
-      } catch (error) {
-        console.error(`[Workflow] Failed to fetch ${repoFullName}:`, error);
-        continue;
-      }
-
-      if (!releaseInfo) {
-        continue;
-      }
-
-      const tagName =
-        releaseInfo.type === "release"
-          ? releaseInfo.data.tag_name
-          : releaseInfo.data.version;
-
-      // AI analysis with KV caching
-      let aiAnalysis: AIAnalysisResult | null = null;
-      try {
-        const body =
-          releaseInfo.type === "release"
-            ? releaseInfo.data.body
-            : releaseInfo.data.content;
-        const releaseName =
-          releaseInfo.type === "release"
-            ? releaseInfo.data.name
-            : `v${releaseInfo.data.version}`;
-
-        // Check cache first
-        const cachedAnalysis = await step.do(
-          `ai-cache-get:${repoFullName}:${tagName}`,
-          KV_RETRY_CONFIG,
-          async () => {
-            return getCachedAnalysis(
-              this.env.SUBSCRIPTIONS,
-              repoFullName,
-              tagName,
-            );
-          },
-        );
-
-        if (cachedAnalysis) {
-          console.log(`[Workflow] AI cache hit for ${repoFullName}@${tagName}`);
-          aiAnalysis = cachedAnalysis;
-        } else {
-          // Run AI analysis
-          const analysis = await step.do(
-            `ai-analyze:${repoFullName}:${tagName}`,
-            AI_RETRY_CONFIG,
+        let releaseInfo: ReleaseInfo | null = null;
+        try {
+          releaseInfo = await step.do(
+            `fetch:${repoFullName}`,
+            GITHUB_RETRY_CONFIG,
             async () => {
-              return analyzeRelease(
-                this.env.AI,
+              const octokit = createOctokit(this.env.GITHUB_TOKEN);
+              const { owner, repo } = parseFullName(repoFullName);
+
+              // Try GitHub releases first
+              const releases = await getLatestReleases(octokit, owner, repo, 1);
+              if (releases.length > 0) {
+                return { type: "release" as const, data: releases[0] };
+              }
+
+              // Fallback to CHANGELOG.md
+              const changelog = await getChangelogEntry(octokit, owner, repo);
+              if (changelog) {
+                return { type: "changelog" as const, data: changelog };
+              }
+
+              return null;
+            },
+          );
+        } catch (error) {
+          console.error(`[Workflow] Failed to fetch ${repoFullName}:`, error);
+          return repoNotificationsSent;
+        }
+
+        if (!releaseInfo) {
+          return repoNotificationsSent;
+        }
+
+        const tagName =
+          releaseInfo.type === "release"
+            ? releaseInfo.data.tag_name
+            : releaseInfo.data.version;
+
+        // AI analysis with KV caching
+        let aiAnalysis: AIAnalysisResult | null = null;
+        try {
+          const body =
+            releaseInfo.type === "release"
+              ? releaseInfo.data.body
+              : releaseInfo.data.content;
+          const releaseName =
+            releaseInfo.type === "release"
+              ? releaseInfo.data.name
+              : `v${releaseInfo.data.version}`;
+
+          // Check cache first
+          const cachedAnalysis = await step.do(
+            `ai-cache-get:${repoFullName}:${tagName}`,
+            KV_RETRY_CONFIG,
+            async () => {
+              return getCachedAnalysis(
+                this.env.SUBSCRIPTIONS,
                 repoFullName,
                 tagName,
-                releaseName,
-                body,
               );
             },
           );
 
-          if (analysis) {
-            aiAnalysis = analysis;
-            // Cache the result
-            await step.do(
-              `ai-cache-set:${repoFullName}:${tagName}`,
-              KV_RETRY_CONFIG,
+          if (cachedAnalysis) {
+            console.log(
+              `[Workflow] AI cache hit for ${repoFullName}@${tagName}`,
+            );
+            aiAnalysis = cachedAnalysis;
+          } else {
+            // Run AI analysis
+            const analysis = await step.do(
+              `ai-analyze:${repoFullName}:${tagName}`,
+              AI_RETRY_CONFIG,
               async () => {
-                await setCachedAnalysis(
-                  this.env.SUBSCRIPTIONS,
+                return analyzeRelease(
+                  this.env.AI,
                   repoFullName,
                   tagName,
-                  analysis,
+                  releaseName,
+                  body,
                 );
               },
             );
-            console.log(
-              `[Workflow] Cached AI analysis for ${repoFullName}@${tagName}`,
-            );
+
+            if (analysis) {
+              aiAnalysis = analysis;
+              // Cache the result
+              await step.do(
+                `ai-cache-set:${repoFullName}:${tagName}`,
+                KV_RETRY_CONFIG,
+                async () => {
+                  await setCachedAnalysis(
+                    this.env.SUBSCRIPTIONS,
+                    repoFullName,
+                    tagName,
+                    analysis,
+                  );
+                },
+              );
+              console.log(
+                `[Workflow] Cached AI analysis for ${repoFullName}@${tagName}`,
+              );
+            }
           }
-        }
-      } catch (error) {
-        console.error(
-          `[Workflow] AI analysis failed for ${repoFullName}:`,
-          error,
-        );
-        // Continue without AI analysis - graceful degradation
-      }
-
-      for (const chatId of chatIds) {
-        const lastNotified = await step.do(
-          `check:${repoFullName}:${chatId}`,
-          KV_RETRY_CONFIG,
-          async () => {
-            return getLastNotifiedTag(
-              this.env.SUBSCRIPTIONS,
-              chatId,
-              repoFullName,
-            );
-          },
-        );
-
-        if (lastNotified === tagName) {
-          continue;
-        }
-
-        // Separate try-catch blocks to handle each step independently
-        // This prevents duplicate notifications: if notify succeeds but save fails,
-        // we log the save failure separately and don't retry the notification
-        let notificationSent = false;
-        try {
-          await step.do(
-            `notify:${repoFullName}:${chatId}`,
-            TELEGRAM_RETRY_CONFIG,
-            async () => {
-              const payload = toNotificationPayload(
-                repoFullName,
-                releaseInfo,
-                aiAnalysis,
-              );
-              await sendTelegramNotification(
-                this.env.TELEGRAM_BOT_TOKEN,
-                chatId,
-                payload,
-              );
-            },
-          );
-          notificationSent = true;
         } catch (error) {
           console.error(
-            `[Workflow] Failed to send notification to ${chatId} for ${repoFullName}:`,
+            `[Workflow] AI analysis failed for ${repoFullName}:`,
             error,
           );
-          continue;
+          // Continue without AI analysis - graceful degradation
         }
 
-        try {
-          await step.do(
-            `save:${repoFullName}:${chatId}`,
+        for (const chatId of chatIds) {
+          const lastNotified = await step.do(
+            `check:${repoFullName}:${chatId}`,
             KV_RETRY_CONFIG,
             async () => {
-              await setLastNotifiedTag(
+              return getLastNotifiedTag(
                 this.env.SUBSCRIPTIONS,
                 chatId,
                 repoFullName,
-                tagName,
               );
             },
           );
-          notificationsSent++;
 
-          // Track stats: increment notifications sent
-          await step.do(
-            `stats:notification:${repoFullName}:${chatId}`,
-            KV_RETRY_CONFIG,
-            async () => {
-              await incrementNotificationsSent(this.env);
-            },
-          );
+          if (lastNotified === tagName) {
+            continue;
+          }
 
-          // Track stats: increment releases notified (once per unique release)
-          if (!releaseCountedForStats) {
+          // Separate try-catch blocks to handle each step independently
+          // This prevents duplicate notifications: if notify succeeds but save fails,
+          // we log the save failure separately and don't retry the notification
+          let notificationSent = false;
+          try {
             await step.do(
-              `stats:release:${repoFullName}:${tagName}`,
-              KV_RETRY_CONFIG,
+              `notify:${repoFullName}:${chatId}`,
+              TELEGRAM_RETRY_CONFIG,
               async () => {
-                await incrementReleasesNotified(this.env);
+                const payload = toNotificationPayload(
+                  repoFullName,
+                  releaseInfo,
+                  aiAnalysis,
+                );
+                await sendTelegramNotification(
+                  this.env.TELEGRAM_BOT_TOKEN,
+                  chatId,
+                  payload,
+                );
               },
             );
-            releaseCountedForStats = true;
+            notificationSent = true;
+          } catch (error) {
+            console.error(
+              `[Workflow] Failed to send notification to ${chatId} for ${repoFullName}:`,
+              error,
+            );
+            continue;
           }
-        } catch (error) {
-          // Notification was sent but save failed - log warning about potential duplicate
-          console.error(
-            `[Workflow] Failed to save tag for ${chatId}:${repoFullName} after successful notification. ` +
-              `Duplicate notification may occur on next run.`,
-            error,
-          );
-          // Still count as sent since user received the notification
-          if (notificationSent) {
-            notificationsSent++;
+
+          try {
+            await step.do(
+              `save:${repoFullName}:${chatId}`,
+              KV_RETRY_CONFIG,
+              async () => {
+                await setLastNotifiedTag(
+                  this.env.SUBSCRIPTIONS,
+                  chatId,
+                  repoFullName,
+                  tagName,
+                );
+              },
+            );
+            repoNotificationsSent++;
+
+            // Track stats: increment notifications sent
+            await step.do(
+              `stats:notification:${repoFullName}:${chatId}`,
+              KV_RETRY_CONFIG,
+              async () => {
+                await incrementNotificationsSent(this.env);
+              },
+            );
+
+            // Track stats: increment releases notified (once per unique release)
+            if (!releaseCountedForStats) {
+              await step.do(
+                `stats:release:${repoFullName}:${tagName}`,
+                KV_RETRY_CONFIG,
+                async () => {
+                  await incrementReleasesNotified(this.env);
+                },
+              );
+              releaseCountedForStats = true;
+            }
+          } catch (error) {
+            // Notification was sent but save failed - log warning about potential duplicate
+            console.error(
+              `[Workflow] Failed to save tag for ${chatId}:${repoFullName} after successful notification. ` +
+                `Duplicate notification may occur on next run.`,
+              error,
+            );
+            // Still count as sent since user received the notification
+            if (notificationSent) {
+              repoNotificationsSent++;
+            }
           }
         }
-      }
-    }
 
+        return repoNotificationsSent;
+      }),
+    );
+
+    const notificationsSent = results.reduce((sum, count) => sum + count, 0);
     return { processed: repos.length, notificationsSent };
   }
 }
