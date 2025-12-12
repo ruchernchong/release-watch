@@ -12,7 +12,6 @@ import {
 } from "../services/kv.service";
 import type { Env } from "../types/env";
 
-const REPO_PATTERN = /^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/;
 const GITHUB_URL_PATTERN =
   /(?:https?:\/\/)?github\.com\/([a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+)/i;
 
@@ -73,10 +72,6 @@ export async function createBot(env: Env): Promise<Bot> {
       command: "start",
       description: "Start the bot and see available commands",
     },
-    {
-      command: "subscribe",
-      description: "Subscribe to a repository (owner/repo)",
-    },
     { command: "unsubscribe", description: "Unsubscribe from a repository" },
     { command: "list", description: "List your subscriptions" },
   ]);
@@ -85,42 +80,12 @@ export async function createBot(env: Env): Promise<Bot> {
     await ctx.reply(
       "👋 Welcome to ReleaseWatch!\n\n" +
         "I monitor GitHub releases and notify you when new versions are published.\n\n" +
+        "To subscribe, simply paste a GitHub repository URL:\n" +
+        "https://github.com/vercel/next.js\n\n" +
         "Commands:\n" +
-        "/subscribe <owner/repo> - Subscribe to a repository\n" +
         "/unsubscribe <owner/repo> - Unsubscribe from a repository\n" +
-        "/list - List your subscriptions\n\n" +
-        "💡 Tip: You can also paste a GitHub URL directly to subscribe!",
+        "/list - List your subscriptions",
     );
-  });
-
-  bot.command("subscribe", async (ctx) => {
-    const repo = ctx.match?.trim();
-    const chatId = ctx.chat.id.toString();
-
-    if (!repo) {
-      await ctx.reply(
-        "Usage: /subscribe <owner/repo>\nExample: /subscribe vercel/next.js",
-      );
-      return;
-    }
-
-    if (!REPO_PATTERN.test(repo)) {
-      await ctx.reply("Invalid repository format. Use: owner/repo");
-      return;
-    }
-
-    const subscriptions = await getSubscriptions(kv, chatId);
-    if (subscriptions.includes(repo)) {
-      await ctx.reply(`Already subscribed to ${repo}`);
-      return;
-    }
-
-    await addSubscription(kv, chatId, repo);
-
-    const latestRelease = await fetchAndFormatLatestRelease(env, repo);
-    const message = `✅ Subscribed to ${repo}${latestRelease || ""}`;
-
-    await ctx.reply(message, { parse_mode: "HTML" });
   });
 
   bot.command("unsubscribe", async (ctx) => {
@@ -149,9 +114,7 @@ export async function createBot(env: Env): Promise<Bot> {
     const subscriptions = await getSubscriptions(kv, chatId);
 
     if (subscriptions.length === 0) {
-      await ctx.reply(
-        "No subscriptions yet. Use /subscribe <owner/repo> to add one.",
-      );
+      await ctx.reply("No subscriptions yet. Paste a GitHub URL to subscribe.");
       return;
     }
 
