@@ -1,4 +1,4 @@
-import type { Workflow } from "cloudflare:workers";
+import type { DurableObjectNamespace, Workflow } from "cloudflare:workers";
 
 export interface Env {
   DEBUG: string;
@@ -6,6 +6,7 @@ export interface Env {
   TELEGRAM_BOT_TOKEN: string;
   SUBSCRIPTIONS: KVNamespace;
   RELEASE_CHECK_WORKFLOW: Workflow;
+  STATS: DurableObjectNamespace;
 
   // Deprioritized
   DISCORD_WEBHOOK_URL?: string;

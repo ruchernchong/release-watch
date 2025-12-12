@@ -17,6 +17,20 @@
       "class_name": "ReleaseCheckWorkflow"
     }
   ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "STATS",
+        "class_name": "Stats"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_classes": ["Stats"]
+    }
+  ],
   "kv_namespaces": [
     {
       "binding": "SUBSCRIPTIONS",

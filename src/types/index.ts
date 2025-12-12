@@ -8,3 +8,12 @@ export interface NotificationPayload {
   author: string | null;
   publishedAt: string;
 }
+
+// System-wide statistics
+export interface SystemStats {
+  uniqueUsers: number;
+  reposWatched: number;
+  totalSubscriptions: number;
+  notificationsSent: number;
+  releasesNotified: number;
+}

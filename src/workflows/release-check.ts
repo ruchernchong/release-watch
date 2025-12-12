@@ -14,6 +14,10 @@ import {
   getLastNotifiedTag,
   setLastNotifiedTag,
 } from "../services/kv.service";
+import {
+  incrementNotificationsSent,
+  incrementReleasesNotified,
+} from "../services/stats.service";
 import { sendTelegramNotification } from "../services/telegram.service";
 import type { NotificationPayload } from "../types";
 import type { Env } from "../types/env";
@@ -88,6 +92,7 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
 
     for (const repoFullName of repos) {
       const chatIds = repoToChats[repoFullName];
+      let releaseCountedForStats = false;
 
       let latestRelease: GitHubRelease | null = null;
       try {
@@ -170,6 +175,27 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
             },
           );
           notificationsSent++;
+
+          // Track stats: increment notifications sent
+          await step.do(
+            `stats:notification:${repoFullName}:${chatId}`,
+            KV_RETRY_CONFIG,
+            async () => {
+              await incrementNotificationsSent(this.env);
+            },
+          );
+
+          // Track stats: increment releases notified (once per unique release)
+          if (!releaseCountedForStats) {
+            await step.do(
+              `stats:release:${repoFullName}:${release.tag_name}`,
+              KV_RETRY_CONFIG,
+              async () => {
+                await incrementReleasesNotified(this.env);
+              },
+            );
+            releaseCountedForStats = true;
+          }
         } catch (error) {
           // Notification was sent but save failed - log warning about potential duplicate
           console.error(
