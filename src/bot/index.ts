@@ -64,9 +64,22 @@ async function fetchAndFormatLatestRelease(
   }
 }
 
-export function createBot(env: Env): Bot {
+export async function createBot(env: Env): Promise<Bot> {
   const bot = new Bot(env.TELEGRAM_BOT_TOKEN);
   const kv = env.SUBSCRIPTIONS;
+
+  await bot.api.setMyCommands([
+    {
+      command: "start",
+      description: "Start the bot and see available commands",
+    },
+    {
+      command: "subscribe",
+      description: "Subscribe to a repository (owner/repo)",
+    },
+    { command: "unsubscribe", description: "Unsubscribe from a repository" },
+    { command: "list", description: "List your subscriptions" },
+  ]);
 
   bot.command("start", async (ctx) => {
     await ctx.reply(

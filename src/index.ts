@@ -15,7 +15,7 @@ app.get("/", (c) => {
 });
 
 app.post("/webhook", async (c) => {
-  const bot = createBot(c.env);
+  const bot = await createBot(c.env);
   return webhookCallback(bot, "hono")(c);
 });
 
