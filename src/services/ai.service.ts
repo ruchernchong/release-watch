@@ -15,19 +15,35 @@ export interface AIAnalysisResult {
 
 const MODEL = "@cf/meta/llama-3.2-3b-instruct";
 
-const SYSTEM_PROMPT = `You are a release notes analyzer. Given a GitHub release, you must:
-1. Provide a concise 2-3 sentence summary of the most important changes
-2. Categorize the release type based on semver and content
-3. Identify if there are breaking changes
-4. List 2-3 key highlights (brief bullet points)
+const ANALYSIS_SCHEMA = {
+  type: "object",
+  properties: {
+    summary: {
+      type: "string",
+      description:
+        "A concise 2-3 sentence summary of the most important changes",
+    },
+    category: {
+      type: "string",
+      enum: ["major", "minor", "patch", "security", "breaking", "unknown"],
+      description: "The release category based on semver and content",
+    },
+    hasBreakingChanges: {
+      type: "boolean",
+      description: "Whether the release contains breaking changes",
+    },
+    highlights: {
+      type: "array",
+      items: { type: "string" },
+      description: "2-3 key highlights as brief bullet points",
+      minItems: 0,
+      maxItems: 3,
+    },
+  },
+  required: ["summary", "category", "hasBreakingChanges", "highlights"],
+} as const;
 
-Respond ONLY in valid JSON format with this structure:
-{
-  "summary": "Brief 2-3 sentence summary",
-  "category": "major|minor|patch|security|breaking|unknown",
-  "hasBreakingChanges": true|false,
-  "highlights": ["highlight 1", "highlight 2"]
-}
+const SYSTEM_PROMPT = `You are a release notes analyzer. Given a GitHub release, you must analyze and categorize it.
 
 Category rules:
 - "major": Version X.0.0 or significant new features
@@ -35,7 +51,13 @@ Category rules:
 - "patch": Version X.Y.Z or bug fixes only
 - "security": Contains security fixes, CVE mentions, vulnerability patches
 - "breaking": Contains breaking changes regardless of version
-- "unknown": Cannot determine`;
+- "unknown": Cannot determine
+
+Provide:
+1. A concise 2-3 sentence summary of the most important changes
+2. The release category
+3. Whether there are breaking changes
+4. 2-3 key highlights (brief bullet points)`;
 
 export async function analyzeRelease(
   ai: Ai,
@@ -67,62 +89,30 @@ ${truncatedBody}`;
       ],
       max_tokens: 300,
       temperature: 0.3,
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "release_analysis",
+          schema: ANALYSIS_SCHEMA,
+          strict: true,
+        },
+      },
     });
 
-    const responseText =
-      typeof response === "object" && "response" in response
-        ? (response as { response: string }).response
-        : String(response);
+    if (!response || typeof response !== "object") {
+      console.error("[AI] Invalid response format");
+      return null;
+    }
 
-    return parseAIResponse(responseText);
+    const result = "response" in response ? response.response : response;
+
+    if (typeof result === "string") {
+      return JSON.parse(result) as AIAnalysisResult;
+    }
+
+    return result as AIAnalysisResult;
   } catch (error) {
     console.error("[AI] Failed to analyze release:", error);
-    return null;
-  }
-}
-
-function parseAIResponse(response: string): AIAnalysisResult | null {
-  try {
-    const jsonMatch = response.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      console.error("[AI] No JSON found in response");
-      return null;
-    }
-
-    const parsed = JSON.parse(jsonMatch[0]);
-
-    if (
-      typeof parsed.summary !== "string" ||
-      typeof parsed.category !== "string"
-    ) {
-      console.error("[AI] Invalid response structure");
-      return null;
-    }
-
-    const validCategories: ReleaseCategory[] = [
-      "major",
-      "minor",
-      "patch",
-      "security",
-      "breaking",
-      "unknown",
-    ];
-    const category = validCategories.includes(parsed.category)
-      ? parsed.category
-      : "unknown";
-
-    return {
-      summary: parsed.summary.slice(0, 500),
-      category,
-      hasBreakingChanges: Boolean(parsed.hasBreakingChanges),
-      highlights: Array.isArray(parsed.highlights)
-        ? parsed.highlights
-            .slice(0, 3)
-            .map((h: unknown) => String(h).slice(0, 100))
-        : [],
-    };
-  } catch (error) {
-    console.error("[AI] Failed to parse response:", error);
     return null;
   }
 }
