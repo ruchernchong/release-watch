@@ -1,9 +1,18 @@
-import { Hono } from 'hono'
+import { Hono } from "hono";
+import type { Env } from "./types/env";
+import { handleSchedule } from "./handlers/schedule";
 
-const app = new Hono()
+const app = new Hono<{ Bindings: Env }>();
 
-app.get('/', (c) => {
-  return c.text('Hello Hono!')
-})
+app.get("/", (c) => {
+  return c.json({
+    name: "release-watch",
+    status: "ok",
+    timestamp: new Date().toISOString(),
+  });
+});
 
-export default app
+export default {
+  fetch: app.fetch,
+  scheduled: handleSchedule,
+};
