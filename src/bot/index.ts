@@ -18,21 +18,11 @@ const GITHUB_URL_PATTERN =
 function formatLatestRelease(release: GitHubRelease): string {
   const title = release.name || release.tag_name;
   const truncatedBody = release.body
-    ? release.body.substring(0, 300) + (release.body.length > 300 ? "..." : "")
+    ? release.body.substring(0, 500) + (release.body.length > 500 ? "..." : "")
     : "No release notes";
 
-  const publishedDate = release.published_at
-    ? new Date(release.published_at).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      })
-    : "Unknown";
-
   return (
-    `\n\n📦 <b>Latest Release:</b>\n` +
-    `<b>${escapeHtml(title)}</b>\n` +
-    `📅 ${publishedDate}\n\n` +
+    `📦 <b>Latest Release: ${escapeHtml(title)}</b>\n\n` +
     `${escapeHtml(truncatedBody)}\n\n` +
     `<a href="${release.html_url}">View Release</a>`
   );
@@ -176,11 +166,12 @@ export async function createBot(env: Env): Promise<Bot> {
     }
 
     await addSubscription(kv, chatId, repo);
+    await ctx.reply(`✅ Subscribed to ${repo}`);
 
     const latestRelease = await fetchAndFormatLatestRelease(env, repo);
-    const message = `✅ Subscribed to ${repo}${latestRelease || ""}`;
-
-    await ctx.reply(message, { parse_mode: "HTML" });
+    if (latestRelease) {
+      await ctx.reply(latestRelease, { parse_mode: "HTML" });
+    }
   });
 
   return bot;
