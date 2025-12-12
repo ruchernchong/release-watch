@@ -22,7 +22,7 @@
   },
   "routes": [
     {
-      "pattern": "releasewatch.dev",
+      "pattern": "api.releasewatch.dev",
       "custom_domain": true
     }
   ]
