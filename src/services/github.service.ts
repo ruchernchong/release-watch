@@ -64,9 +64,7 @@ export async function getChangelogEntry(
           };
         }
       }
-    } catch {
-      continue;
-    }
+    } catch {}
   }
 
   return null;

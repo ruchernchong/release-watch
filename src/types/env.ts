@@ -7,6 +7,7 @@ export interface Env {
   SUBSCRIPTIONS: KVNamespace;
   RELEASE_CHECK_WORKFLOW: Workflow;
   STATS: DurableObjectNamespace;
+  AI: Ai;
 
   // Deprioritized
   DISCORD_WEBHOOK_URL?: string;

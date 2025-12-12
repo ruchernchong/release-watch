@@ -3,11 +3,12 @@ import {
   type WorkflowEvent,
   type WorkflowStep,
 } from "cloudflare:workers";
+import { type AIAnalysisResult, analyzeRelease } from "../services/ai.service";
 import {
   type ChangelogEntry,
   createOctokit,
-  getChangelogEntry,
   type GitHubRelease,
+  getChangelogEntry,
   getLatestReleases,
   parseFullName,
 } from "../services/github.service";
@@ -57,6 +58,15 @@ const KV_RETRY_CONFIG = {
     backoff: "constant" as const,
   },
   timeout: "10 seconds",
+};
+
+const AI_RETRY_CONFIG = {
+  retries: {
+    limit: 2,
+    delay: "2 seconds",
+    backoff: "exponential" as const,
+  },
+  timeout: "30 seconds",
 };
 
 export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
@@ -138,6 +148,39 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
           ? releaseInfo.data.tag_name
           : releaseInfo.data.version;
 
+      // AI analysis for the release (done once per release, not per subscriber)
+      let aiAnalysis: AIAnalysisResult | null = null;
+      try {
+        aiAnalysis = await step.do(
+          `analyze:${repoFullName}:${tagName}`,
+          AI_RETRY_CONFIG,
+          async () => {
+            const body =
+              releaseInfo.type === "release"
+                ? releaseInfo.data.body
+                : releaseInfo.data.content;
+            const releaseName =
+              releaseInfo.type === "release"
+                ? releaseInfo.data.name
+                : `v${releaseInfo.data.version}`;
+
+            return analyzeRelease(
+              this.env.AI,
+              repoFullName,
+              tagName,
+              releaseName,
+              body,
+            );
+          },
+        );
+      } catch (error) {
+        console.error(
+          `[Workflow] AI analysis failed for ${repoFullName}:`,
+          error,
+        );
+        // Continue without AI analysis - graceful degradation
+      }
+
       for (const chatId of chatIds) {
         const lastNotified = await step.do(
           `check:${repoFullName}:${chatId}`,
@@ -164,7 +207,11 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
             `notify:${repoFullName}:${chatId}`,
             TELEGRAM_RETRY_CONFIG,
             async () => {
-              const payload = toNotificationPayload(repoFullName, releaseInfo);
+              const payload = toNotificationPayload(
+                repoFullName,
+                releaseInfo,
+                aiAnalysis,
+              );
               await sendTelegramNotification(
                 this.env.TELEGRAM_BOT_TOKEN,
                 chatId,
@@ -238,6 +285,7 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
 function toNotificationPayload(
   repoFullName: string,
   releaseInfo: ReleaseInfo,
+  aiAnalysis: AIAnalysisResult | null,
 ): NotificationPayload {
   if (releaseInfo.type === "release") {
     const release = releaseInfo.data;
@@ -249,6 +297,7 @@ function toNotificationPayload(
       url: release.html_url,
       author: release.author?.login ?? null,
       publishedAt: release.published_at ?? new Date().toISOString(),
+      aiAnalysis,
     };
   }
 
@@ -261,5 +310,6 @@ function toNotificationPayload(
     url: changelog.url,
     author: null,
     publishedAt: changelog.date ?? new Date().toISOString(),
+    aiAnalysis,
   };
 }
