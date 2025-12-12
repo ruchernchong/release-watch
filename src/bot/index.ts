@@ -1,4 +1,4 @@
-import { Bot } from "grammy";
+import { Bot, InlineKeyboard } from "grammy";
 import {
   createOctokit,
   type GitHubRelease,
@@ -83,7 +83,7 @@ export async function createBot(env: Env): Promise<Bot> {
         "To subscribe, simply paste a GitHub repository URL:\n" +
         "https://github.com/vercel/next.js\n\n" +
         "Commands:\n" +
-        "/unsubscribe <owner/repo> - Unsubscribe from a repository\n" +
+        "/unsubscribe - Select a repository to unsubscribe\n" +
         "/list - List your subscriptions",
     );
   });
@@ -91,22 +91,38 @@ export async function createBot(env: Env): Promise<Bot> {
   bot.command("unsubscribe", async (ctx) => {
     const repo = ctx.match?.trim();
     const chatId = ctx.chat.id.toString();
+    const subscriptions = await getSubscriptions(kv, chatId);
 
-    if (!repo) {
-      await ctx.reply(
-        "Usage: /unsubscribe <owner/repo>\nExample: /unsubscribe vercel/next.js",
-      );
+    if (subscriptions.length === 0) {
+      await ctx.reply("No subscriptions to remove.");
       return;
     }
 
-    const subscriptions = await getSubscriptions(kv, chatId);
-    if (!subscriptions.includes(repo)) {
+    // If no repo specified, show inline keyboard with subscriptions
+    if (!repo) {
+      const keyboard = new InlineKeyboard();
+      for (const sub of subscriptions) {
+        keyboard.text(`❌ ${sub}`, `unsub:${sub}`).row();
+      }
+
+      await ctx.reply("Select a repository to unsubscribe:", {
+        reply_markup: keyboard,
+      });
+      return;
+    }
+
+    // Case-insensitive matching for typed repo name
+    const matchedRepo = subscriptions.find(
+      (s) => s.toLowerCase() === repo.toLowerCase(),
+    );
+
+    if (!matchedRepo) {
       await ctx.reply(`Not subscribed to ${repo}`);
       return;
     }
 
-    await removeSubscription(kv, chatId, repo);
-    await ctx.reply(`✅ Unsubscribed from ${repo}`);
+    await removeSubscription(kv, chatId, matchedRepo);
+    await ctx.reply(`✅ Unsubscribed from ${matchedRepo}`);
   });
 
   bot.command("list", async (ctx) => {
@@ -120,6 +136,28 @@ export async function createBot(env: Env): Promise<Bot> {
 
     const list = subscriptions.map((repo) => `• ${repo}`).join("\n");
     await ctx.reply(`📋 Your subscriptions:\n\n${list}`);
+  });
+
+  // Handle inline keyboard button clicks for unsubscribe
+  bot.callbackQuery(/^unsub:(.+)$/, async (ctx) => {
+    const repo = ctx.match[1];
+    const chatId = ctx.chat?.id.toString();
+
+    if (!chatId) {
+      await ctx.answerCallbackQuery({ text: "Error: Could not identify chat" });
+      return;
+    }
+
+    const subscriptions = await getSubscriptions(kv, chatId);
+    if (!subscriptions.includes(repo)) {
+      await ctx.answerCallbackQuery({ text: "Already unsubscribed" });
+      await ctx.editMessageText("Repository already unsubscribed.");
+      return;
+    }
+
+    await removeSubscription(kv, chatId, repo);
+    await ctx.answerCallbackQuery({ text: "Unsubscribed!" });
+    await ctx.editMessageText(`✅ Unsubscribed from ${repo}`);
   });
 
   bot.on("message:text", async (ctx) => {
