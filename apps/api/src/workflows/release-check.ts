@@ -38,37 +38,37 @@ type ReleaseInfo =
 const GITHUB_RETRY_CONFIG = {
   retries: {
     limit: 5,
-    delay: "30 seconds",
+    delay: "30 seconds" as const,
     backoff: "exponential" as const,
   },
-  timeout: "2 minutes",
+  timeout: "2 minutes" as const,
 };
 
 const TELEGRAM_RETRY_CONFIG = {
   retries: {
     limit: 3,
-    delay: "5 seconds",
+    delay: "5 seconds" as const,
     backoff: "linear" as const,
   },
-  timeout: "30 seconds",
+  timeout: "30 seconds" as const,
 };
 
 const KV_RETRY_CONFIG = {
   retries: {
     limit: 2,
-    delay: "1 second",
+    delay: "1 second" as const,
     backoff: "constant" as const,
   },
-  timeout: "10 seconds",
+  timeout: "10 seconds" as const,
 };
 
 const AI_RETRY_CONFIG = {
   retries: {
     limit: 2,
-    delay: "2 seconds",
+    delay: "2 seconds" as const,
     backoff: "exponential" as const,
   },
-  timeout: "30 seconds",
+  timeout: "30 seconds" as const,
 };
 
 export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
@@ -157,7 +157,7 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
         try {
           const body =
             releaseInfo.type === "release"
-              ? releaseInfo.data.body
+              ? (releaseInfo.data.body ?? null)
               : releaseInfo.data.content;
           const releaseName =
             releaseInfo.type === "release"

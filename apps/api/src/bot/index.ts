@@ -95,7 +95,7 @@ export async function createBot(env: Env): Promise<Bot> {
       const instanceId = `manual-check-${chatId}-${Date.now()}`;
       await env.RELEASE_CHECK_WORKFLOW.create({
         id: instanceId,
-        params: { triggeredAt: new Date().toISOString(), chatId },
+        params: { triggeredAt: new Date().toISOString() },
       });
       await ctx.reply(
         `✅ Release check triggered for ${subscriptions.length} subscription(s)`,

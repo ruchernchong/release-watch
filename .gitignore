@@ -13,7 +13,13 @@ dist/
 
 # deps
 node_modules/
+
+# cloudflare
 .wrangler
+worker-configuration.d.ts
+
+# turbo
+.turbo
 
 # env
 .env
@@ -31,6 +37,3 @@ lerna-debug.log*
 
 # misc
 .DS_Store
-
-# generated
-worker-configuration.d.ts
