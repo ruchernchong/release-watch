@@ -6,8 +6,13 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
+    "format": "turbo run format",
     "typecheck": "turbo run typecheck",
-    "deploy": "turbo run deploy"
+    "deploy": "turbo run deploy",
+    "auth:generate": "turbo run auth:generate",
+    "db:drop": "turbo run db:drop",
+    "db:generate": "turbo run db:generate",
+    "db:migrate": "turbo run db:migrate"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.8",
@@ -16,5 +21,17 @@
     "husky": "^9.1.7",
     "turbo": "^2.7.2"
   },
-  "packageManager": "pnpm@10.22.0"
+  "packageManager": "pnpm@10.22.0",
+  "workspaces": {
+    "packages": [
+      "apps/**",
+      "packages/**"
+    ],
+    "catalog": {
+      "better-auth": "^1.4.9",
+      "drizzle-kit": "^0.31.8",
+      "drizzle-orm": "^0.45.1",
+      "zod": "^4.2.1"
+    }
+  }
 }
