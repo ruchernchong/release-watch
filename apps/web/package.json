@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "biome check",
     "format": "biome format --write",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "vercel-build": "pnpm --filter @release-watch/database db:migrate && next build"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.11",
