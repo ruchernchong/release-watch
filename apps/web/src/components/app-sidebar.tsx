@@ -3,6 +3,7 @@
 import {
   BadgeCheck,
   ChevronsUpDown,
+  FolderGit2,
   LayoutDashboard,
   LogOut,
   Plug,
@@ -42,8 +43,13 @@ const navItems = [
     icon: LayoutDashboard,
   },
   {
+    title: "Repositories",
+    href: "/dashboard/repos",
+    icon: FolderGit2,
+  },
+  {
     title: "Integrations",
-    href: "/integrations",
+    href: "/dashboard/integrations",
     icon: Plug,
   },
 ];
