@@ -1,17 +1,26 @@
 import type { ReactNode } from "react";
 
+import { AppSidebar } from "@/components/app-sidebar";
+import { Separator } from "@/components/ui/separator";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="border-b">
-        <div className="flex h-16 items-center justify-between px-4">
-          <span className="font-bold text-xl">ReleaseWatch</span>
-          <nav className="flex items-center gap-4">
-            {/* User menu will go here */}
-          </nav>
-        </div>
-      </header>
-      <main className="flex flex-1 flex-col gap-6 px-4 py-6">{children}</main>
-    </div>
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2">
+          <div className="flex items-center gap-2 px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+          </div>
+        </header>
+        <main className="flex flex-1 flex-col gap-6 px-4 pb-6">{children}</main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
