@@ -1,4 +1,5 @@
 import type { AIAnalysisResult } from "./ai";
+import type { ISODateString } from "./channel";
 
 export interface NotificationPayload {
   repoName: string;
@@ -7,6 +8,6 @@ export interface NotificationPayload {
   body: string | null;
   url: string;
   author: string | null;
-  publishedAt: string;
-  aiAnalysis?: AIAnalysisResult | null;
+  publishedAt: ISODateString;
+  aiAnalysis: AIAnalysisResult | null;
 }

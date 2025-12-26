@@ -1,9 +1,9 @@
 import type {
+  AIAnalysisResult,
   ChannelConfig,
   TelegramChannelConfig,
   TelegramLinkRequest,
 } from "@release-watch/types";
-import type { AIAnalysisResult } from "./ai.service";
 
 const CHAT_PREFIX = "chat:";
 const NOTIFIED_PREFIX = "notified:";
@@ -141,12 +141,12 @@ export async function addChannel(
 ): Promise<void> {
   const channels = await getChannels(kv, userId);
 
-  const isDuplicate = channels.some((c) => {
-    if (c.type === "telegram" && channel.type === "telegram") {
-      return c.chatId === channel.chatId;
+  const isDuplicate = channels.some((existingChannel) => {
+    if (existingChannel.type === "telegram" && channel.type === "telegram") {
+      return existingChannel.chatId === channel.chatId;
     }
-    if (c.type === "discord" && channel.type === "discord") {
-      return c.webhookUrl === channel.webhookUrl;
+    if (existingChannel.type === "discord" && channel.type === "discord") {
+      return existingChannel.webhookUrl === channel.webhookUrl;
     }
     return false;
   });
@@ -164,10 +164,12 @@ export async function removeChannel(
   identifier: string,
 ): Promise<void> {
   const channels = await getChannels(kv, userId);
-  const filtered = channels.filter((c) => {
-    if (c.type !== channelType) return true;
-    if (c.type === "telegram") return c.chatId !== identifier;
-    if (c.type === "discord") return c.webhookUrl !== identifier;
+  const filtered = channels.filter((existingChannel) => {
+    if (existingChannel.type !== channelType) return true;
+    if (existingChannel.type === "telegram")
+      return existingChannel.chatId !== identifier;
+    if (existingChannel.type === "discord")
+      return existingChannel.webhookUrl !== identifier;
     return true;
   });
 
@@ -186,16 +188,28 @@ export async function updateChannelEnabled(
   enabled: boolean,
 ): Promise<void> {
   const channels = await getChannels(kv, userId);
-  const updated = channels.map((c) => {
-    if (c.type !== channelType) return c;
-    if (c.type === "telegram" && c.chatId === identifier) {
-      return { ...c, enabled };
+  let changed = false;
+  const updated = channels.map((existingChannel) => {
+    if (existingChannel.type !== channelType) return existingChannel;
+    if (
+      existingChannel.type === "telegram" &&
+      existingChannel.chatId === identifier
+    ) {
+      if (existingChannel.enabled === enabled) return existingChannel;
+      changed = true;
+      return { ...existingChannel, enabled };
     }
-    if (c.type === "discord" && c.webhookUrl === identifier) {
-      return { ...c, enabled };
+    if (
+      existingChannel.type === "discord" &&
+      existingChannel.webhookUrl === identifier
+    ) {
+      if (existingChannel.enabled === enabled) return existingChannel;
+      changed = true;
+      return { ...existingChannel, enabled };
     }
-    return c;
+    return existingChannel;
   });
+  if (!changed) return;
   await kv.put(`${CHANNELS_PREFIX}${userId}`, JSON.stringify(updated));
 }
 
@@ -207,9 +221,14 @@ const LINK_CODE_TTL = 10 * 60; // 10 minutes in seconds
 
 function generateLinkCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const length = 6;
+  const bytes = new Uint8Array(length);
+  crypto.getRandomValues(bytes);
   let code = "";
-  for (let i = 0; i < 6; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  for (let i = 0; i < length; i++) {
+    // chars.length === 32, so bytes[i] & 31 yields a uniform index 0–31
+    const index = bytes[i] & 31;
+    code += chars.charAt(index);
   }
   return code;
 }
@@ -250,9 +269,15 @@ export async function completeTelegramLink(
   kv: KVNamespace,
   code: string,
   chatId: string,
-): Promise<{ userId: string } | null> {
+): Promise<{ userId: string; alreadyLinked?: boolean } | null> {
   const linkRequest = await validateTelegramLinkCode(kv, code);
   if (!linkRequest) return null;
+
+  // Check if chatId is already linked to a different user
+  const existingUserId = await getUserIdByTelegramChat(kv, chatId);
+  if (existingUserId && existingUserId !== linkRequest.userId) {
+    return { userId: existingUserId, alreadyLinked: true };
+  }
 
   // Create telegram -> userId mapping
   await kv.put(`${TELEGRAM_PREFIX}${chatId}`, linkRequest.userId);
@@ -262,7 +287,7 @@ export async function completeTelegramLink(
     type: "telegram",
     chatId,
     enabled: true,
-    linkedAt: new Date().toISOString(),
+    addedAt: new Date().toISOString(),
   };
   await addChannel(kv, linkRequest.userId, telegramChannel);
 
