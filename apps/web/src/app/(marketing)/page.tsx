@@ -37,11 +37,8 @@ export default function Home() {
       <header className="border-b">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <span className="text-xl font-bold">ReleaseWatch</span>
-          <nav className="flex items-center gap-4">
-            <Link href="#">
-              <Button variant="ghost">Sign In</Button>
-            </Link>
-            <Link href="#">
+          <nav>
+            <Link href="/login">
               <Button>Get Started</Button>
             </Link>
           </nav>
@@ -58,7 +55,7 @@ export default function Home() {
             versions are released. AI-powered summaries help you stay informed.
           </p>
           <div className="flex items-center justify-center gap-4">
-            <Link href="#">
+            <Link href="/login">
               <Button size="lg">Start Monitoring</Button>
             </Link>
             <Link
