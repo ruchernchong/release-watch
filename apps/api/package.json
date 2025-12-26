@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@octokit/rest": "^22.0.1",
+    "@release-watch/types": "workspace:*",
     "grammy": "^1.38.4",
     "hono": "^4.11.2"
   },
