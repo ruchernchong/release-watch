@@ -1,8 +1,16 @@
+import type {
+  ChannelConfig,
+  TelegramChannelConfig,
+  TelegramLinkRequest,
+} from "@release-watch/types";
 import type { AIAnalysisResult } from "./ai.service";
 
 const CHAT_PREFIX = "chat:";
 const NOTIFIED_PREFIX = "notified:";
 const RELEASE_PREFIX = "release:";
+const CHANNELS_PREFIX = "channels:";
+const TELEGRAM_PREFIX = "telegram:";
+const LINK_PREFIX = "link:";
 
 export async function getSubscriptions(
   kv: KVNamespace,
@@ -109,4 +117,175 @@ export async function setCachedAnalysis(
   analysis: AIAnalysisResult,
 ): Promise<void> {
   await kv.put(releaseKey(repo, tag), JSON.stringify(analysis));
+}
+
+// ============================================
+// Multi-channel support
+// ============================================
+
+export async function getChannels(
+  kv: KVNamespace,
+  userId: string,
+): Promise<ChannelConfig[]> {
+  const data = await kv.get<ChannelConfig[]>(
+    `${CHANNELS_PREFIX}${userId}`,
+    "json",
+  );
+  return data ?? [];
+}
+
+export async function addChannel(
+  kv: KVNamespace,
+  userId: string,
+  channel: ChannelConfig,
+): Promise<void> {
+  const channels = await getChannels(kv, userId);
+
+  const isDuplicate = channels.some((c) => {
+    if (c.type === "telegram" && channel.type === "telegram") {
+      return c.chatId === channel.chatId;
+    }
+    if (c.type === "discord" && channel.type === "discord") {
+      return c.webhookUrl === channel.webhookUrl;
+    }
+    return false;
+  });
+
+  if (!isDuplicate) {
+    channels.push(channel);
+    await kv.put(`${CHANNELS_PREFIX}${userId}`, JSON.stringify(channels));
+  }
+}
+
+export async function removeChannel(
+  kv: KVNamespace,
+  userId: string,
+  channelType: ChannelConfig["type"],
+  identifier: string,
+): Promise<void> {
+  const channels = await getChannels(kv, userId);
+  const filtered = channels.filter((c) => {
+    if (c.type !== channelType) return true;
+    if (c.type === "telegram") return c.chatId !== identifier;
+    if (c.type === "discord") return c.webhookUrl !== identifier;
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    await kv.delete(`${CHANNELS_PREFIX}${userId}`);
+  } else {
+    await kv.put(`${CHANNELS_PREFIX}${userId}`, JSON.stringify(filtered));
+  }
+}
+
+export async function updateChannelEnabled(
+  kv: KVNamespace,
+  userId: string,
+  channelType: ChannelConfig["type"],
+  identifier: string,
+  enabled: boolean,
+): Promise<void> {
+  const channels = await getChannels(kv, userId);
+  const updated = channels.map((c) => {
+    if (c.type !== channelType) return c;
+    if (c.type === "telegram" && c.chatId === identifier) {
+      return { ...c, enabled };
+    }
+    if (c.type === "discord" && c.webhookUrl === identifier) {
+      return { ...c, enabled };
+    }
+    return c;
+  });
+  await kv.put(`${CHANNELS_PREFIX}${userId}`, JSON.stringify(updated));
+}
+
+// ============================================
+// Telegram account linking
+// ============================================
+
+const LINK_CODE_TTL = 10 * 60; // 10 minutes in seconds
+
+function generateLinkCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
+export async function createTelegramLinkCode(
+  kv: KVNamespace,
+  userId: string,
+): Promise<string> {
+  const code = generateLinkCode();
+  const request: TelegramLinkRequest = {
+    userId,
+    expiresAt: new Date(Date.now() + LINK_CODE_TTL * 1000).toISOString(),
+  };
+  await kv.put(`${LINK_PREFIX}${code}`, JSON.stringify(request), {
+    expirationTtl: LINK_CODE_TTL,
+  });
+  return code;
+}
+
+export async function validateTelegramLinkCode(
+  kv: KVNamespace,
+  code: string,
+): Promise<TelegramLinkRequest | null> {
+  const data = await kv.get<TelegramLinkRequest>(
+    `${LINK_PREFIX}${code}`,
+    "json",
+  );
+  if (!data) return null;
+
+  if (new Date(data.expiresAt) < new Date()) {
+    await kv.delete(`${LINK_PREFIX}${code}`);
+    return null;
+  }
+  return data;
+}
+
+export async function completeTelegramLink(
+  kv: KVNamespace,
+  code: string,
+  chatId: string,
+): Promise<{ userId: string } | null> {
+  const linkRequest = await validateTelegramLinkCode(kv, code);
+  if (!linkRequest) return null;
+
+  // Create telegram -> userId mapping
+  await kv.put(`${TELEGRAM_PREFIX}${chatId}`, linkRequest.userId);
+
+  // Add telegram channel to user's channels
+  const telegramChannel: TelegramChannelConfig = {
+    type: "telegram",
+    chatId,
+    enabled: true,
+    linkedAt: new Date().toISOString(),
+  };
+  await addChannel(kv, linkRequest.userId, telegramChannel);
+
+  // Delete used link code
+  await kv.delete(`${LINK_PREFIX}${code}`);
+
+  return { userId: linkRequest.userId };
+}
+
+export async function getUserIdByTelegramChat(
+  kv: KVNamespace,
+  chatId: string,
+): Promise<string | null> {
+  return kv.get(`${TELEGRAM_PREFIX}${chatId}`);
+}
+
+export async function unlinkTelegramChat(
+  kv: KVNamespace,
+  chatId: string,
+): Promise<void> {
+  const userId = await getUserIdByTelegramChat(kv, chatId);
+  if (userId) {
+    await removeChannel(kv, userId, "telegram", chatId);
+    await kv.delete(`${TELEGRAM_PREFIX}${chatId}`);
+  }
 }
