@@ -1,7 +1,13 @@
 import { passkey } from "@better-auth/passkey";
-import { checkout, portal, usage, webhooks } from "@polar-sh/better-auth";
+import {
+  checkout,
+  polar,
+  portal,
+  usage,
+  webhooks,
+} from "@polar-sh/better-auth";
 import { Polar } from "@polar-sh/sdk";
-import { betterAuth, polar } from "better-auth";
+import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import {
