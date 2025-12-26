@@ -175,9 +175,11 @@ export async function createBot(env: Env): Promise<Bot> {
       return;
     }
 
-    if (code.length !== 6) {
+    // Valid characters: A-H, J-N, P-Z, 2-9 (excludes I, O, 0, 1 to avoid confusion)
+    const validCodePattern = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/;
+    if (!validCodePattern.test(code)) {
       await ctx.reply(
-        "❌ Invalid code format. Please enter a 6-character code.",
+        "❌ Invalid code format. Please enter a 6-character code using only letters and numbers.",
       );
       return;
     }
