@@ -13,6 +13,7 @@
     "db:migrate": "pnpm drizzle-kit migrate"
   },
   "dependencies": {
+    "@better-auth/passkey": "^1.4.9",
     "@neondatabase/serverless": "^1.0.2",
     "better-auth": "catalog:",
     "dotenv": "^17.2.3",

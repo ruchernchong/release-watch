@@ -1,3 +1,4 @@
+import { ReposTable } from "@/components/repos/table";
 import {
   Card,
   CardContent,
@@ -5,7 +6,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ReposTable } from "@/components/repos/table";
 
 export default function ReposPage() {
   return (

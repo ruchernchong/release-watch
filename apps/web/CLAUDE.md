@@ -31,7 +31,43 @@ pnpm typecheck  # Type-check
 - `src/lib/utils.ts` - shadcn/ui utilities
 - `components.json` - shadcn/ui config
 
+## Authentication
+
+Uses BetterAuth with Next.js 16 proxy pattern.
+
+**Key Files:**
+
+- `src/proxy.ts` - Route protection (Next.js 16 proxy, replaces middleware)
+- `src/lib/auth.ts` - Server-side auth (`getSession()` helper)
+- `src/lib/auth-client.ts` - Client-side auth (`signIn`, `signOut`, `useSession`)
+- `src/app/api/auth/[...all]/route.ts` - Auth API handler
+
+**Server Components:**
+
+```tsx
+import { getSession } from "@/lib/auth";
+import { redirect } from "next/navigation";
+
+const session = await getSession();
+if (!session) redirect("/login");
+```
+
+**Client Components:**
+
+```tsx
+import { useSession, signIn, signOut } from "@/lib/auth-client";
+
+const { data: session } = useSession();
+signIn.social({ provider: "github", callbackURL: "/dashboard" });
+signOut();
+```
+
 ## Environment
 
 - `DATABASE_URL` - Neon Postgres connection
 - `BETTER_AUTH_SECRET` - Auth secret
+- `BETTER_AUTH_URL` - Auth callback URL (e.g., `http://localhost:3000`)
+- `GITHUB_CLIENT_ID` - GitHub OAuth client ID
+- `GITHUB_CLIENT_SECRET` - GitHub OAuth client secret
+- `GOOGLE_CLIENT_ID` - Google OAuth client ID
+- `GOOGLE_CLIENT_SECRET` - Google OAuth client secret

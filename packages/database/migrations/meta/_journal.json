@@ -15,6 +15,13 @@
       "when": 1766758010380,
       "tag": "0001_sudden_hedge_knight",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1766772853075,
+      "tag": "0002_typical_christian_walker",
+      "breakpoints": true
     }
   ]
 }

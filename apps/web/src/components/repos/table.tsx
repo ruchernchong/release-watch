@@ -2,9 +2,9 @@
 
 import {
   ExternalLink,
+  GitFork,
   MoreHorizontal,
   Star,
-  GitFork,
   Trash2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
