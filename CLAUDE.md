@@ -74,6 +74,23 @@ src/
 - **Linter/Formatter**: Biome (double quotes, 2-space indent, organized imports)
 - **Commits**: Conventional commits via commitlint + husky
 
+## UI Guidelines (apps/web)
+
+- Use Tailwind CSS v4 recommendations
+- Never use margin-top or padding-top; use gap instead
+- Use `gap-*` instead of `space-y-*` or `space-x-*`
+- Gap values should be even numbers (e.g., `gap-2`, `gap-4`, `gap-6`)
+- Use `size-*` for square dimensions instead of separate `h-*` and `w-*`
+
+## Generated Files (DO NOT MODIFY)
+
+The following files are auto-generated and should never be manually edited:
+
+- `packages/database/src/schema/auth.ts` - BetterAuth generated schema
+- `apps/web/src/components/ui/*` - shadcn/ui components
+- `apps/web/src/lib/utils.ts` - shadcn/ui utilities
+- `apps/web/components.json` - shadcn/ui configuration
+
 ## Environment Variables
 
 Secrets (set via `wrangler secret put`):

@@ -3,6 +3,9 @@
   "description": "Database and authentication package",
   "version": "1.0.0",
   "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "auth:generate": "pnpm dlx @better-auth/cli@latest generate --output src/schema/auth.ts --yes",
     "db:drop": "pnpm drizzle-kit drop",
@@ -11,7 +14,7 @@
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
-    "better-auth": "^1.4.9",
+    "better-auth": "catalog:",
     "dotenv": "^17.2.3",
     "drizzle-orm": "catalog:",
     "zod": "catalog:"
