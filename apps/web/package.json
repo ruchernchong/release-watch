@@ -22,6 +22,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@release-watch/database": "workspace:*",
     "@release-watch/types": "workspace:*",
+    "@vercel/analytics": "^1.6.1",
     "better-auth": "catalog:",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
