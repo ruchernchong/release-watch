@@ -44,14 +44,29 @@ api.use("*", async (c, next) => {
 });
 
 api.post("/link/telegram/generate", async (c) => {
-  const body = await c.req.json<{ userId: string }>();
+  let body: { userId: string };
+  try {
+    body = await c.req.json<{ userId: string }>();
+  } catch {
+    return c.json({ error: "Invalid JSON body" }, 400);
+  }
 
-  if (!body.userId) {
+  if (!body.userId || typeof body.userId !== "string") {
     return c.json({ error: "userId is required" }, 400);
   }
 
-  const code = await createTelegramLinkCode(c.env.SUBSCRIPTIONS, body.userId);
-  return c.json({ code });
+  const userId = body.userId.trim();
+  if (!userId) {
+    return c.json({ error: "userId cannot be empty" }, 400);
+  }
+
+  try {
+    const code = await createTelegramLinkCode(c.env.SUBSCRIPTIONS, userId);
+    return c.json({ code });
+  } catch (err) {
+    console.error("Failed to create Telegram link code:", err);
+    return c.json({ error: "Failed to generate link code" }, 500);
+  }
 });
 
 api.get("/link/telegram/status", async (c) => {
@@ -61,17 +76,24 @@ api.get("/link/telegram/status", async (c) => {
     return c.json({ error: "userId query param is required" }, 400);
   }
 
-  const channels = await getChannels(c.env.SUBSCRIPTIONS, userId);
-  const telegramChannel = channels.find((ch) => ch.type === "telegram");
-
-  if (!telegramChannel || telegramChannel.type !== "telegram") {
-    return c.json({ linked: false });
+  const trimmedUserId = userId.trim();
+  if (!trimmedUserId) {
+    return c.json({ error: "userId cannot be empty" }, 400);
   }
 
-  return c.json({
-    linked: true,
-    chatId: telegramChannel.chatId,
-  });
+  try {
+    const channels = await getChannels(c.env.SUBSCRIPTIONS, trimmedUserId);
+    const telegramChannel = channels.find((ch) => ch.type === "telegram");
+
+    if (!telegramChannel) {
+      return c.json({ linked: false });
+    }
+
+    return c.json({ linked: true });
+  } catch (err) {
+    console.error("Error fetching telegram link status:", err);
+    return c.json({ error: "Failed to fetch link status" }, 500);
+  }
 });
 
 app.route("/api", api);
