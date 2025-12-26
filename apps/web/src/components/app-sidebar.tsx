@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   LogOut,
   Plug,
+  Settings,
 } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
@@ -51,6 +52,11 @@ const navItems = [
     title: "Integrations",
     href: "/dashboard/integrations",
     icon: Plug,
+  },
+  {
+    title: "Settings",
+    href: "/dashboard/settings",
+    icon: Settings,
   },
 ];
 
