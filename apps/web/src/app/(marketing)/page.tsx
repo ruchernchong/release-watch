@@ -36,7 +36,7 @@ export default function Home() {
     <div className="flex min-h-screen flex-col gap-0">
       <header className="border-b">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <span className="text-xl font-bold">ReleaseWatch</span>
+          <span className="font-bold text-xl">ReleaseWatch</span>
           <nav>
             <Link href="/login">
               <Button>Get Started</Button>
@@ -47,7 +47,7 @@ export default function Home() {
 
       <main className="flex flex-1 flex-col">
         <section className="container mx-auto flex flex-1 flex-col items-center justify-center gap-6 px-4 text-center">
-          <h1 className="mx-auto max-w-3xl text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+          <h1 className="mx-auto max-w-3xl font-bold text-4xl tracking-tight sm:text-5xl md:text-6xl">
             Never Miss a GitHub Release
           </h1>
           <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
@@ -73,7 +73,7 @@ export default function Home() {
 
         <section className="border-t bg-muted/50">
           <div className="container mx-auto flex flex-col gap-12 px-4 py-24">
-            <h2 className="text-center text-3xl font-bold">Features</h2>
+            <h2 className="text-center font-bold text-3xl">Features</h2>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {features.map((feature) => (
                 <Card key={feature.title}>
@@ -90,7 +90,7 @@ export default function Home() {
       </main>
 
       <footer className="border-t">
-        <div className="container mx-auto flex items-center justify-center px-4 py-8 text-sm text-muted-foreground">
+        <div className="container mx-auto flex items-center justify-center px-4 py-8 text-muted-foreground text-sm">
           <p>Built with Cloudflare Workers, Next.js, and Neon PostgreSQL.</p>
         </div>
       </footer>

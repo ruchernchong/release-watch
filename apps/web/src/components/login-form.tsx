@@ -44,7 +44,7 @@ export function LoginForm({
           </div>
         </CardContent>
       </Card>
-      <p className="text-muted-foreground px-6 text-center text-sm">
+      <p className="px-6 text-center text-muted-foreground text-sm">
         By continuing, you agree to our Terms of Service and Privacy Policy.
       </p>
     </div>
