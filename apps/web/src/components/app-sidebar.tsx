@@ -5,6 +5,7 @@ import {
   ChevronsUpDown,
   LayoutDashboard,
   LogOut,
+  Plug,
 } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
@@ -39,6 +40,11 @@ const navItems = [
     title: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
+  },
+  {
+    title: "Integrations",
+    href: "/integrations",
+    icon: Plug,
   },
 ];
 
