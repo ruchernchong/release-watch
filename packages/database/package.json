@@ -1,0 +1,24 @@
+{
+  "name": "@release-watch/database",
+  "description": "Database and authentication package",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "auth:generate": "pnpm dlx @better-auth/cli@latest generate --output src/schema/auth.ts --yes",
+    "db:drop": "pnpm drizzle-kit drop",
+    "db:generate": "pnpm drizzle-kit generate",
+    "db:migrate": "pnpm drizzle-kit migrate"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.0.2",
+    "better-auth": "^1.4.9",
+    "dotenv": "^17.2.3",
+    "drizzle-orm": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.4",
+    "drizzle-kit": "catalog:"
+  },
+  "packageManager": "pnpm@10.22.0"
+}

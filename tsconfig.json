@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "Bundler",
@@ -12,6 +13,9 @@
     "isolatedModules": true,
     "resolveJsonModule": true,
     "verbatimModuleSyntax": true,
+    "paths": {
+      "@db/*": ["packages/database/src/*"]
+    }
   },
-  "exclude": ["node_modules"],
+  "exclude": ["node_modules"]
 }

@@ -22,8 +22,8 @@ worker-configuration.d.ts
 .turbo
 
 # env
-.env
-.env.production
+.env.*
+!.env.example
 .dev.vars
 
 # logs

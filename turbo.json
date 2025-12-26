@@ -1,5 +1,7 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "ui": "tui",
+  "envMode": "loose",
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
@@ -11,8 +13,12 @@
       "persistent": true
     },
     "lint": {
-      "dependsOn": ["^build"],
+      "cache": false,
       "inputs": ["$TURBO_DEFAULT$", "!README.md"]
+    },
+    "format": {
+      "cache": false,
+      "inputs": ["$TURBO_DEFAULT$"]
     },
     "typecheck": {
       "dependsOn": ["^build"],
@@ -21,6 +27,21 @@
     "deploy": {
       "dependsOn": ["build"],
       "cache": false
+    },
+    "auth:generate": {
+      "cache": false,
+      "interactive": true
+    },
+    "db:drop": {
+      "cache": false,
+      "interactive": true
+    },
+    "db:generate": {
+      "cache": false
+    },
+    "db:migrate": {
+      "cache": false,
+      "interactive": true
     }
   }
 }
