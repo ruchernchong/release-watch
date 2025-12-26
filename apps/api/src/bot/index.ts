@@ -7,6 +7,7 @@ import {
 } from "../services/github.service";
 import {
   addSubscription,
+  completeTelegramLink,
   getSubscriptions,
   removeSubscription,
 } from "../services/kv.service";
@@ -65,6 +66,7 @@ export async function createBot(env: Env): Promise<Bot> {
     { command: "check", description: "Manually check for new releases" },
     { command: "unsubscribe", description: "Unsubscribe from a repository" },
     { command: "list", description: "List your subscriptions" },
+    { command: "link", description: "Link to your web dashboard account" },
   ]);
 
   bot.command("start", async (ctx) => {
@@ -76,7 +78,8 @@ export async function createBot(env: Env): Promise<Bot> {
         "Commands:\n" +
         "/check - Manually check for new releases\n" +
         "/unsubscribe - Select a repository to unsubscribe\n" +
-        "/list - List your subscriptions",
+        "/list - List your subscriptions\n" +
+        "/link - Link to your web dashboard account",
     );
   });
 
@@ -154,6 +157,50 @@ export async function createBot(env: Env): Promise<Bot> {
 
     const list = subscriptions.map((repo) => `• ${repo}`).join("\n");
     await ctx.reply(`📋 Your subscriptions:\n\n${list}`);
+  });
+
+  bot.command("link", async (ctx) => {
+    const code = ctx.match?.trim().toUpperCase();
+    const chatId = ctx.chat.id.toString();
+
+    if (!code) {
+      await ctx.reply(
+        "🔗 To link your Telegram account:\n\n" +
+          "1. Go to the ReleaseWatch dashboard\n" +
+          "2. Click 'Link Telegram'\n" +
+          "3. Copy the 6-character code\n" +
+          "4. Send /link CODE here\n\n" +
+          "Example: /link ABC123",
+      );
+      return;
+    }
+
+    // Valid characters: A-H, J-N, P-Z, 2-9 (excludes I, O, 0, 1 to avoid confusion)
+    const validCodePattern = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/;
+    if (!validCodePattern.test(code)) {
+      await ctx.reply(
+        "❌ Invalid code format. Please enter a 6-character code using only letters and numbers.",
+      );
+      return;
+    }
+
+    const result = await completeTelegramLink(kv, code, chatId);
+
+    if (!result) {
+      await ctx.reply(
+        "❌ Invalid or expired code. Please generate a new one from the dashboard.",
+      );
+      return;
+    }
+
+    if (result.alreadyLinked) {
+      await ctx.reply(
+        "⚠️ This Telegram account is already linked to another user.",
+      );
+      return;
+    }
+
+    await ctx.reply("✅ Successfully linked to your ReleaseWatch account!");
   });
 
   // Handle inline keyboard button clicks for unsubscribe
