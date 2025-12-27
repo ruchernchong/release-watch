@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  Bell,
+  BellOff,
   Check,
   ExternalLink,
   Loader2,
@@ -16,12 +18,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useNotifications } from "@/hooks/use-notifications";
 import { TelegramLinkDialog } from "./telegram-link-dialog";
 
 export function IntegrationsSection() {
   const [telegramLinked, setTelegramLinked] = useState<boolean | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const { isSupported, permission, requestPermission } = useNotifications();
 
   const fetchTelegramStatus = useCallback(() => {
     startTransition(async () => {
@@ -104,6 +108,49 @@ export function IntegrationsSection() {
                   onSuccess={fetchTelegramStatus}
                 />
               </>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-4">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-red-500">
+                <Bell className="size-5 text-white" />
+              </div>
+              <div className="flex flex-1 flex-col gap-2">
+                <CardTitle>Browser Notifications</CardTitle>
+                <CardDescription>
+                  Get notified directly in your browser.
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <p className="text-muted-foreground text-sm">
+              Receive instant notifications in your browser when new releases
+              are detected.
+            </p>
+            {!isSupported ? (
+              <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                <BellOff className="size-4" />
+                Your browser doesn&apos;t support notifications
+              </div>
+            ) : permission === "granted" ? (
+              <div className="flex items-center gap-2 rounded-full bg-green-500/10 px-3 py-1 text-green-600 text-sm dark:text-green-400">
+                <Check className="size-4" />
+                Enabled
+              </div>
+            ) : permission === "denied" ? (
+              <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                <BellOff className="size-4" />
+                Notifications blocked. Enable in browser settings.
+              </div>
+            ) : (
+              <Button onClick={requestPermission} className="w-fit">
+                <Bell className="size-4" />
+                Enable Notifications
+              </Button>
             )}
           </CardContent>
         </Card>
