@@ -18,7 +18,9 @@ interface ReleaseCardProps {
 }
 
 export function ReleaseCard({ release }: ReleaseCardProps) {
-  const timeAgo = release.publishedAt ? formatTimeAgo(release.publishedAt) : null;
+  const timeAgo = release.publishedAt
+    ? formatTimeAgo(release.publishedAt)
+    : null;
 
   return (
     <Card className="transition-all duration-200 hover:shadow-md">
@@ -49,8 +51,8 @@ export function ReleaseCard({ release }: ReleaseCardProps) {
             </p>
             {release.aiAnalysis.highlights.length > 0 && (
               <ul className="flex flex-col gap-1 text-muted-foreground text-sm">
-                {release.aiAnalysis.highlights.slice(0, 3).map((highlight, i) => (
-                  <li key={i} className="flex items-start gap-2">
+                {release.aiAnalysis.highlights.slice(0, 3).map((highlight) => (
+                  <li key={highlight} className="flex items-start gap-2">
                     <span className="text-primary">•</span>
                     <span>{highlight}</span>
                   </li>
@@ -67,7 +69,9 @@ export function ReleaseCard({ release }: ReleaseCardProps) {
           <p className="text-muted-foreground text-xs">
             {timeAgo && <span>Published {timeAgo}</span>}
             {timeAgo && release.author && <span> by </span>}
-            {release.author && <span className="font-medium">{release.author}</span>}
+            {release.author && (
+              <span className="font-medium">{release.author}</span>
+            )}
           </p>
         )}
       </CardContent>

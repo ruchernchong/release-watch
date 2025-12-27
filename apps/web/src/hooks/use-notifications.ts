@@ -46,7 +46,7 @@ export function useNotifications() {
         return null;
       }
     },
-    [isSupported, permission]
+    [isSupported, permission],
   );
 
   const showReleaseNotification = useCallback(
@@ -56,7 +56,7 @@ export function useNotifications() {
         tag: `release-${repoName}-${tagName}`,
       });
     },
-    [showNotification]
+    [showNotification],
   );
 
   return {

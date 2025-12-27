@@ -4,7 +4,8 @@
   "version": "1.0.0",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./auth-client": "./src/auth-client.ts"
   },
   "scripts": {
     "auth:generate": "pnpm dlx @better-auth/cli@latest generate --output src/schema/auth.ts --yes",

@@ -3,7 +3,12 @@
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ReleaseCard, type Release } from "./release-card";
+import { api } from "@/lib/api-client";
+import { type Release, ReleaseCard } from "./release-card";
+
+interface ReleasesResponse {
+  releases: Release[];
+}
 
 export function RecentReleases() {
   const [releases, setReleases] = useState<Release[]>([]);
@@ -12,11 +17,8 @@ export function RecentReleases() {
   const fetchReleases = useCallback(() => {
     startTransition(async () => {
       try {
-        const res = await fetch("/api/dashboard/releases");
-        if (res.ok) {
-          const data = await res.json();
-          setReleases(data.releases || []);
-        }
+        const data = await api.get<ReleasesResponse>("/dashboard/releases");
+        setReleases(data.releases || []);
       } catch {
         // Ignore errors
       }
@@ -51,7 +53,10 @@ export function RecentReleases() {
       ) : (
         <div className="flex flex-col gap-4">
           {releases.map((release) => (
-            <ReleaseCard key={`${release.repoName}-${release.tagName}`} release={release} />
+            <ReleaseCard
+              key={`${release.repoName}-${release.tagName}`}
+              release={release}
+            />
           ))}
         </div>
       )}

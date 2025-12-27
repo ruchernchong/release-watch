@@ -1,15 +1,15 @@
 "use client";
 
 import {
+  type ColumnDef,
+  type ColumnFiltersState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  useReactTable,
-  type ColumnDef,
-  type ColumnFiltersState,
   type SortingState,
+  useReactTable,
 } from "@tanstack/react-table";
 import {
   ArrowUpDown,
@@ -47,6 +47,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { api } from "@/lib/api-client";
 
 interface User {
   id: string;
@@ -82,11 +83,10 @@ export function UsersTable() {
         const params = new URLSearchParams({ limit: "20", offset: "0" });
         if (search) params.set("search", search);
 
-        const res = await fetch(`/api/admin/users?${params}`);
-        if (res.ok) {
-          const responseData = await res.json();
-          setData(responseData);
-        }
+        const responseData = await api.get<UsersResponse>(
+          `/admin/users?${params}`,
+        );
+        setData(responseData);
       } catch {
         // Ignore
       }
@@ -106,15 +106,8 @@ export function UsersTable() {
 
   const handleUnban = async (userId: string) => {
     try {
-      const res = await fetch(`/api/admin/users/${userId}/ban`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "unban" }),
-      });
-
-      if (res.ok) {
-        fetchUsers(searchQuery);
-      }
+      await api.post(`/admin/users/${userId}/ban`, { action: "unban" });
+      fetchUsers(searchQuery);
     } catch {
       // Handle error
     }
@@ -144,7 +137,9 @@ export function UsersTable() {
             </Avatar>
             <div className="flex flex-col gap-0.5">
               <span className="font-medium">{user.name}</span>
-              <span className="text-muted-foreground text-xs">{user.email}</span>
+              <span className="text-muted-foreground text-xs">
+                {user.email}
+              </span>
             </div>
           </div>
         );
@@ -212,11 +207,7 @@ export function UsersTable() {
       header: "Repos",
       cell: ({ row }) => {
         const count = row.getValue("subscriptionCount") as number;
-        return (
-          <span className="font-mono text-sm">
-            {count}
-          </span>
-        );
+        return <span className="font-mono text-sm">{count}</span>;
       },
     },
     {
@@ -407,8 +398,8 @@ function UsersTableSkeleton() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {Array.from({ length: 5 }).map((_, i) => (
-              <TableRow key={i}>
+            {["s0", "s1", "s2", "s3", "s4"].map((id) => (
+              <TableRow key={id}>
                 <TableCell>
                   <div className="flex items-center gap-3">
                     <Skeleton className="size-9 rounded-full" />

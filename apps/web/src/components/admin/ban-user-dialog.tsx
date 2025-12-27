@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { api } from "@/lib/api-client";
 
 interface BanUserDialogProps {
   user: {
@@ -53,22 +54,15 @@ export function BanUserDialog({
   const handleBan = () => {
     startTransition(async () => {
       try {
-        const res = await fetch(`/api/admin/users/${user.id}/ban`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "ban",
-            banReason: reason || undefined,
-            banExpiresIn: duration === "permanent" ? undefined : Number(duration),
-          }),
+        await api.post(`/admin/users/${user.id}/ban`, {
+          action: "ban",
+          banReason: reason || undefined,
+          banExpiresIn: duration === "permanent" ? undefined : Number(duration),
         });
-
-        if (res.ok) {
-          onBanned();
-          onOpenChange(false);
-          setReason("");
-          setDuration("604800");
-        }
+        onBanned();
+        onOpenChange(false);
+        setReason("");
+        setDuration("604800");
       } catch {
         // Handle error
       }
@@ -94,7 +88,7 @@ export function BanUserDialog({
         <div className="flex flex-col gap-4 py-4">
           <div className="flex items-start gap-3 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
             <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-500" />
-            <p className="text-sm text-amber-600 dark:text-amber-400">
+            <p className="text-amber-600 text-sm dark:text-amber-400">
               This action will immediately revoke the user&apos;s access. They
               will not be able to log in until unbanned.
             </p>

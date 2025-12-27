@@ -4,6 +4,7 @@ import { Bell, FolderGit2 } from "lucide-react";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { api } from "@/lib/api-client";
 
 interface DashboardStats {
   reposWatched: number;
@@ -18,11 +19,8 @@ export function StatsCards() {
   const fetchStats = useCallback(() => {
     startTransition(async () => {
       try {
-        const res = await fetch("/api/dashboard/stats");
-        if (res.ok) {
-          const data = await res.json();
-          setStats(data);
-        }
+        const data = await api.get<DashboardStats>("/dashboard/stats");
+        setStats(data);
       } catch {
         // Ignore errors
       }
@@ -56,7 +54,9 @@ export function StatsCards() {
         iconBg="bg-emerald-500"
         label="Active Channels"
         value={stats.activeChannels}
-        suffix={stats.totalChannels > 0 ? `/ ${stats.totalChannels}` : undefined}
+        suffix={
+          stats.totalChannels > 0 ? `/ ${stats.totalChannels}` : undefined
+        }
         delay={1}
       />
     </div>
@@ -72,7 +72,14 @@ interface StatsCardProps {
   delay?: number;
 }
 
-function StatsCard({ icon: Icon, iconBg, label, value, suffix, delay = 0 }: StatsCardProps) {
+function StatsCard({
+  icon: Icon,
+  iconBg,
+  label,
+  value,
+  suffix,
+  delay = 0,
+}: StatsCardProps) {
   return (
     <Card
       className="group relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-primary/5"
@@ -82,22 +89,27 @@ function StatsCard({ icon: Icon, iconBg, label, value, suffix, delay = 0 }: Stat
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.03]"
         style={{
-          backgroundImage: "radial-gradient(circle, currentColor 1px, transparent 1px)",
+          backgroundImage:
+            "radial-gradient(circle, currentColor 1px, transparent 1px)",
           backgroundSize: "16px 16px",
         }}
       />
       <CardContent className="flex items-center gap-4 p-6">
-        <div className={`flex size-12 items-center justify-center rounded-xl ${iconBg}`}>
+        <div
+          className={`flex size-12 items-center justify-center rounded-xl ${iconBg}`}
+        >
           <Icon className="size-6 text-white" />
         </div>
         <div className="flex flex-col gap-1">
           <p className="text-muted-foreground text-sm">{label}</p>
           <div className="flex items-baseline gap-1">
-            <span className="font-mono text-3xl font-bold tracking-tight">
+            <span className="font-bold font-mono text-3xl tracking-tight">
               {value}
             </span>
             {suffix && (
-              <span className="font-mono text-muted-foreground text-lg">{suffix}</span>
+              <span className="font-mono text-lg text-muted-foreground">
+                {suffix}
+              </span>
             )}
           </div>
         </div>

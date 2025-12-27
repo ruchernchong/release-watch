@@ -10,12 +10,17 @@ import {
   useTransition,
 } from "react";
 import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api-client";
 
 interface Subscription {
   id: string;
   repoName: string;
   lastNotifiedTag: string | null;
   createdAt: string;
+}
+
+interface SubscriptionsResponse {
+  subscriptions: Subscription[];
 }
 
 export interface SubscriptionListRef {
@@ -31,8 +36,7 @@ export const SubscriptionList = forwardRef<SubscriptionListRef>(
 
     const fetchSubscriptions = useEffectEvent(async () => {
       try {
-        const res = await fetch("/api/subscriptions");
-        const data = await res.json();
+        const data = await api.get<SubscriptionsResponse>("/subscriptions");
         setSubscriptions(data.subscriptions || []);
         setHasLoaded(true);
       } catch (error) {
@@ -57,13 +61,8 @@ export const SubscriptionList = forwardRef<SubscriptionListRef>(
     const handleDelete = async (id: string) => {
       setDeletingId(id);
       try {
-        const res = await fetch(`/api/subscriptions/${id}`, {
-          method: "DELETE",
-        });
-
-        if (res.ok) {
-          setSubscriptions((subs) => subs.filter((s) => s.id !== id));
-        }
+        await api.delete(`/subscriptions/${id}`);
+        setSubscriptions((subs) => subs.filter((s) => s.id !== id));
       } catch (error) {
         console.error("Failed to delete subscription:", error);
       } finally {

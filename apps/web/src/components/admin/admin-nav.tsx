@@ -41,7 +41,7 @@ export function AdminNav() {
             key={item.href}
             href={item.href as Route}
             className={cn(
-              "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-all",
+              "flex items-center gap-2 rounded-md px-3 py-2 font-medium text-sm transition-all",
               isActive
                 ? "bg-background text-foreground shadow-sm"
                 : "text-muted-foreground hover:bg-background/50 hover:text-foreground",

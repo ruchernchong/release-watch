@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { api } from "@/lib/api-client";
 
 interface IntegrationToggleProps {
   type: "telegram" | "discord";
@@ -30,16 +31,11 @@ export function IntegrationToggle({
     setLocalEnabled(checked);
     startTransition(async () => {
       try {
-        const res = await fetch("/api/integrations/telegram/toggle", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chatId, enabled: checked }),
+        await api.patch("/integrations/telegram/toggle", {
+          chatId,
+          enabled: checked,
         });
-        if (!res.ok) {
-          setLocalEnabled(!checked);
-        } else {
-          onToggle(checked);
-        }
+        onToggle(checked);
       } catch {
         setLocalEnabled(!checked);
       }
@@ -51,7 +47,9 @@ export function IntegrationToggle({
   return (
     <div className="flex items-center justify-between gap-4">
       <div className="flex items-center gap-3">
-        <div className={`flex size-9 items-center justify-center rounded-lg ${config.iconBg}`}>
+        <div
+          className={`flex size-9 items-center justify-center rounded-lg ${config.iconBg}`}
+        >
           <config.icon className="size-4 text-white" />
         </div>
         <div className="flex flex-col">
@@ -81,12 +79,13 @@ export function IntegrationToggle({
           </Button>
         </div>
       ) : (
-        <Button variant="outline" size="sm" onClick={onLink} disabled={isPending}>
-          {isPending ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            "Connect"
-          )}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onLink}
+          disabled={isPending}
+        >
+          {isPending ? <Loader2 className="size-4 animate-spin" /> : "Connect"}
         </Button>
       )}
     </div>
