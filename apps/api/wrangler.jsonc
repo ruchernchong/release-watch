@@ -33,7 +33,7 @@
   ],
   "kv_namespaces": [
     {
-      "binding": "SUBSCRIPTIONS",
+      "binding": "REPOS",
       "id": "01e881c80e1c4f60953a5a803f74871c",
       "remote": true
     }

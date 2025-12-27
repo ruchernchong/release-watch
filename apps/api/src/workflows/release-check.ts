@@ -13,7 +13,7 @@ import {
   parseFullName,
 } from "../services/github.service";
 import {
-  getAllSubscriptions,
+  getAllTrackedRepos,
   getCachedAnalysis,
   getLastNotifiedTag,
   setCachedAnalysis,
@@ -78,23 +78,23 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
   async run(event: WorkflowEvent<ReleaseCheckParams>, step: WorkflowStep) {
     console.log(`[Workflow] Started at ${event.payload.triggeredAt}`);
 
-    const subscriptions = await step.do(
-      "fetch-subscriptions",
+    const trackedRepos = await step.do(
+      "fetch-tracked-repos",
       KV_RETRY_CONFIG,
       async () => {
-        const subs = await getAllSubscriptions(this.env.SUBSCRIPTIONS);
-        return Array.from(subs.entries());
+        const reposMap = await getAllTrackedRepos(this.env.REPOS);
+        return Array.from(reposMap.entries());
       },
     );
 
-    if (subscriptions.length === 0) {
-      console.log("[Workflow] No subscriptions found");
+    if (trackedRepos.length === 0) {
+      console.log("[Workflow] No tracked repos found");
       return { processed: 0, notificationsSent: 0 };
     }
 
     const repoToChats = await step.do("build-repo-map", async () => {
       const map: Record<string, string[]> = {};
-      for (const [chatId, repos] of subscriptions) {
+      for (const [chatId, repos] of trackedRepos) {
         for (const repo of repos) {
           if (!map[repo]) {
             map[repo] = [];
@@ -170,7 +170,7 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
             KV_RETRY_CONFIG,
             async () => {
               return getCachedAnalysis(
-                this.env.SUBSCRIPTIONS,
+                this.env.REPOS,
                 repoFullName,
                 tagName,
               );
@@ -206,7 +206,7 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
                 KV_RETRY_CONFIG,
                 async () => {
                   await setCachedAnalysis(
-                    this.env.SUBSCRIPTIONS,
+                    this.env.REPOS,
                     repoFullName,
                     tagName,
                     analysis,
@@ -232,7 +232,7 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
             KV_RETRY_CONFIG,
             async () => {
               return getLastNotifiedTag(
-                this.env.SUBSCRIPTIONS,
+                this.env.REPOS,
                 chatId,
                 repoFullName,
               );
@@ -279,7 +279,7 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
               KV_RETRY_CONFIG,
               async () => {
                 await setLastNotifiedTag(
-                  this.env.SUBSCRIPTIONS,
+                  this.env.REPOS,
                   chatId,
                   repoFullName,
                   tagName,

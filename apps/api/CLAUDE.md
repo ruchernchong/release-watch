@@ -33,9 +33,9 @@ No versioning - internal API only.
 **Authenticated (JWT required):**
 - `GET /dashboard/stats` - User dashboard stats
 - `GET /dashboard/releases` - User's recent releases
-- `GET /subscriptions` - List user subscriptions
-- `POST /subscriptions` - Add subscription
-- `DELETE /subscriptions/:id` - Remove subscription
+- `GET /repos` - List user's tracked repos
+- `POST /repos` - Add tracked repo
+- `DELETE /repos/:id` - Remove tracked repo
 - `GET /integrations/telegram/status` - Telegram link status
 - `POST /integrations/telegram/generate` - Generate link code
 - `PATCH /integrations/telegram/toggle` - Toggle notifications
@@ -55,7 +55,7 @@ JWT tokens are issued by BetterAuth (Next.js) and verified here via JWKS.
 
 ## KV Keys
 
-- `chat:{chatId}` - Subscribed repos array
+- `chat:{chatId}` - Tracked repos array
 - `notified:{chatId}:{repo}` - Last notified tag
 - `release:{repo}:{tag}` - Cached AI analysis
 
@@ -65,4 +65,4 @@ JWT tokens are issued by BetterAuth (Next.js) and verified here via JWKS.
 
 ## Bindings (wrangler.jsonc)
 
-`SUBSCRIPTIONS` (KV), `STATS` (DO), `RELEASE_CHECK_WORKFLOW`, `AI`, `HYPERDRIVE`
+`REPOS` (KV), `STATS` (DO), `RELEASE_CHECK_WORKFLOW`, `AI`, `HYPERDRIVE`

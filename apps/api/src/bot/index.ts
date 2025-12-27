@@ -6,10 +6,10 @@ import {
   parseFullName,
 } from "../services/github.service";
 import {
-  addSubscription,
+  addTrackedRepo,
   completeTelegramLink,
-  getSubscriptions,
-  removeSubscription,
+  getTrackedRepos,
+  removeTrackedRepo,
 } from "../services/kv.service";
 import type { Env } from "../types/env";
 
@@ -56,7 +56,7 @@ async function fetchAndFormatLatestRelease(
 
 export async function createBot(env: Env): Promise<Bot> {
   const bot = new Bot(env.TELEGRAM_BOT_TOKEN);
-  const kv = env.SUBSCRIPTIONS;
+  const kv = env.REPOS;
 
   await bot.api.setMyCommands([
     {
@@ -64,8 +64,8 @@ export async function createBot(env: Env): Promise<Bot> {
       description: "Start the bot and see available commands",
     },
     { command: "check", description: "Manually check for new releases" },
-    { command: "unsubscribe", description: "Unsubscribe from a repository" },
-    { command: "list", description: "List your subscriptions" },
+    { command: "untrack", description: "Stop tracking a repository" },
+    { command: "list", description: "List your tracked repos" },
     { command: "link", description: "Link to your web dashboard account" },
   ]);
 
@@ -73,22 +73,22 @@ export async function createBot(env: Env): Promise<Bot> {
     await ctx.reply(
       "👋 Welcome to ReleaseWatch!\n\n" +
         "I monitor GitHub releases and notify you when new versions are published.\n\n" +
-        "To subscribe, simply paste a GitHub repository URL:\n" +
+        "To track a repo, simply paste a GitHub repository URL:\n" +
         "https://github.com/owner/repo\n\n" +
         "Commands:\n" +
         "/check - Manually check for new releases\n" +
-        "/unsubscribe - Select a repository to unsubscribe\n" +
-        "/list - List your subscriptions\n" +
+        "/untrack - Stop tracking a repository\n" +
+        "/list - List your tracked repos\n" +
         "/link - Link to your web dashboard account",
     );
   });
 
   bot.command("check", async (ctx) => {
     const chatId = ctx.chat.id.toString();
-    const subscriptions = await getSubscriptions(kv, chatId);
+    const trackedRepos = await getTrackedRepos(kv, chatId);
 
-    if (subscriptions.length === 0) {
-      await ctx.reply("No subscriptions yet. Paste a GitHub URL to subscribe.");
+    if (trackedRepos.length === 0) {
+      await ctx.reply("No tracked repos yet. Paste a GitHub URL to start tracking.");
       return;
     }
 
@@ -101,7 +101,7 @@ export async function createBot(env: Env): Promise<Bot> {
         params: { triggeredAt: new Date().toISOString() },
       });
       await ctx.reply(
-        `✅ Release check triggered for ${subscriptions.length} subscription(s)`,
+        `✅ Release check triggered for ${trackedRepos.length} tracked repo(s)`,
       );
     } catch (error) {
       console.error("[Bot] Failed to trigger release check:", error);
@@ -109,54 +109,54 @@ export async function createBot(env: Env): Promise<Bot> {
     }
   });
 
-  bot.command("unsubscribe", async (ctx) => {
+  bot.command("untrack", async (ctx) => {
     const repo = ctx.match?.trim();
     const chatId = ctx.chat.id.toString();
-    const subscriptions = await getSubscriptions(kv, chatId);
+    const trackedRepos = await getTrackedRepos(kv, chatId);
 
-    if (subscriptions.length === 0) {
-      await ctx.reply("No subscriptions to remove.");
+    if (trackedRepos.length === 0) {
+      await ctx.reply("No tracked repos to remove.");
       return;
     }
 
-    // If no repo specified, show inline keyboard with subscriptions
+    // If no repo specified, show inline keyboard with tracked repos
     if (!repo) {
       const keyboard = new InlineKeyboard();
-      for (const sub of subscriptions) {
-        keyboard.text(`❌ ${sub}`, `unsub:${sub}`).row();
+      for (const trackedRepo of trackedRepos) {
+        keyboard.text(`❌ ${trackedRepo}`, `untrack:${trackedRepo}`).row();
       }
 
-      await ctx.reply("Select a repository to unsubscribe:", {
+      await ctx.reply("Select a repository to stop tracking:", {
         reply_markup: keyboard,
       });
       return;
     }
 
     // Case-insensitive matching for typed repo name
-    const matchedRepo = subscriptions.find(
-      (s) => s.toLowerCase() === repo.toLowerCase(),
+    const matchedRepo = trackedRepos.find(
+      (trackedRepo) => trackedRepo.toLowerCase() === repo.toLowerCase(),
     );
 
     if (!matchedRepo) {
-      await ctx.reply(`Not subscribed to ${repo}`);
+      await ctx.reply(`Not tracking ${repo}`);
       return;
     }
 
-    await removeSubscription(kv, chatId, matchedRepo);
-    await ctx.reply(`✅ Unsubscribed from ${matchedRepo}`);
+    await removeTrackedRepo(kv, chatId, matchedRepo);
+    await ctx.reply(`✅ Stopped tracking ${matchedRepo}`);
   });
 
   bot.command("list", async (ctx) => {
     const chatId = ctx.chat.id.toString();
-    const subscriptions = await getSubscriptions(kv, chatId);
+    const trackedRepos = await getTrackedRepos(kv, chatId);
 
-    if (subscriptions.length === 0) {
-      await ctx.reply("No subscriptions yet. Paste a GitHub URL to subscribe.");
+    if (trackedRepos.length === 0) {
+      await ctx.reply("No tracked repos yet. Paste a GitHub URL to start tracking.");
       return;
     }
 
-    const list = subscriptions.map((repo) => `• ${repo}`).join("\n");
-    await ctx.reply(`📋 Your subscriptions:\n\n${list}`);
+    const list = trackedRepos.map((repo) => `• ${repo}`).join("\n");
+    await ctx.reply(`📋 Your tracked repos:\n\n${list}`);
   });
 
   bot.command("link", async (ctx) => {
@@ -203,8 +203,8 @@ export async function createBot(env: Env): Promise<Bot> {
     await ctx.reply("✅ Successfully linked to your ReleaseWatch account!");
   });
 
-  // Handle inline keyboard button clicks for unsubscribe
-  bot.callbackQuery(/^unsub:(.+)$/, async (ctx) => {
+  // Handle inline keyboard button clicks for untrack
+  bot.callbackQuery(/^untrack:(.+)$/, async (ctx) => {
     const repo = ctx.match[1];
     const chatId = ctx.chat?.id.toString();
 
@@ -213,16 +213,16 @@ export async function createBot(env: Env): Promise<Bot> {
       return;
     }
 
-    const subscriptions = await getSubscriptions(kv, chatId);
-    if (!subscriptions.includes(repo)) {
-      await ctx.answerCallbackQuery({ text: "Already unsubscribed" });
-      await ctx.editMessageText("Repository already unsubscribed.");
+    const trackedRepos = await getTrackedRepos(kv, chatId);
+    if (!trackedRepos.includes(repo)) {
+      await ctx.answerCallbackQuery({ text: "Already removed" });
+      await ctx.editMessageText("Repository already removed.");
       return;
     }
 
-    await removeSubscription(kv, chatId, repo);
-    await ctx.answerCallbackQuery({ text: "Unsubscribed!" });
-    await ctx.editMessageText(`✅ Unsubscribed from ${repo}`);
+    await removeTrackedRepo(kv, chatId, repo);
+    await ctx.answerCallbackQuery({ text: "Removed!" });
+    await ctx.editMessageText(`✅ Stopped tracking ${repo}`);
   });
 
   bot.on("message:text", async (ctx) => {
@@ -234,14 +234,14 @@ export async function createBot(env: Env): Promise<Bot> {
     const repo = match[1].replace(/\/$/, "");
     const chatId = ctx.chat.id.toString();
 
-    const subscriptions = await getSubscriptions(kv, chatId);
-    if (subscriptions.includes(repo)) {
-      await ctx.reply(`Already subscribed to ${repo}`);
+    const trackedRepos = await getTrackedRepos(kv, chatId);
+    if (trackedRepos.includes(repo)) {
+      await ctx.reply(`Already tracking ${repo}`);
       return;
     }
 
-    await addSubscription(kv, chatId, repo);
-    await ctx.reply(`✅ Subscribed to ${repo}`);
+    await addTrackedRepo(kv, chatId, repo);
+    await ctx.reply(`✅ Now tracking ${repo}`);
 
     const latestRelease = await fetchAndFormatLatestRelease(env, repo);
     if (latestRelease) {

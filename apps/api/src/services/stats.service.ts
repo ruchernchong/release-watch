@@ -1,7 +1,7 @@
 import type { Stats } from "../durable-objects/stats";
 import type { SystemStats } from "../types";
 import type { Env } from "../types/env";
-import { getAllSubscriptions } from "./kv.service";
+import { getAllTrackedRepos } from "./kv.service";
 
 const STATS_ID = "global-stats";
 const NOTIFICATIONS_SENT_KEY = "notifications_sent";
@@ -14,17 +14,15 @@ function getStatsStub(env: Env): DurableObjectStub<Stats> {
 
 async function computeStats(
   kv: KVNamespace,
-): Promise<
-  Pick<SystemStats, "uniqueUsers" | "reposWatched" | "totalSubscriptions">
-> {
-  const subscriptions = await getAllSubscriptions(kv);
+): Promise<Pick<SystemStats, "uniqueUsers" | "reposWatched" | "reposTracked">> {
+  const trackedReposMap = await getAllTrackedRepos(kv);
 
-  const uniqueUsers = subscriptions.size;
+  const uniqueUsers = trackedReposMap.size;
   const allRepos = new Set<string>();
-  let totalSubscriptions = 0;
+  let reposTracked = 0;
 
-  for (const repos of subscriptions.values()) {
-    totalSubscriptions += repos.length;
+  for (const repos of trackedReposMap.values()) {
+    reposTracked += repos.length;
     for (const repo of repos) {
       allRepos.add(repo);
     }
@@ -33,7 +31,7 @@ async function computeStats(
   return {
     uniqueUsers,
     reposWatched: allRepos.size,
-    totalSubscriptions,
+    reposTracked,
   };
 }
 
@@ -49,7 +47,7 @@ export async function incrementReleasesNotified(env: Env): Promise<number> {
 
 export async function getSystemStats(env: Env): Promise<SystemStats> {
   const [computed, doStats] = await Promise.all([
-    computeStats(env.SUBSCRIPTIONS),
+    computeStats(env.REPOS),
     getStatsStub(env).getAll(),
   ]);
 

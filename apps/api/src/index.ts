@@ -79,7 +79,7 @@ api.post("/integrations/telegram/generate", async (c) => {
   const user = c.get("user");
 
   try {
-    const code = await createTelegramLinkCode(c.env.SUBSCRIPTIONS, user.sub);
+    const code = await createTelegramLinkCode(c.env.REPOS, user.sub);
     return c.json({ code });
   } catch (err) {
     console.error("Failed to create Telegram link code:", err);
@@ -91,7 +91,7 @@ api.get("/integrations/telegram/status", async (c) => {
   const user = c.get("user");
 
   try {
-    const channels = await getChannels(c.env.SUBSCRIPTIONS, user.sub);
+    const channels = await getChannels(c.env.REPOS, user.sub);
     const telegramChannel = channels.find(
       (channel) => channel.type === "telegram",
     );
@@ -113,7 +113,7 @@ api.get("/dashboard/stats", async (c) => {
       columns: { id: true },
     });
 
-    const channels = await getChannels(c.env.SUBSCRIPTIONS, user.sub);
+    const channels = await getChannels(c.env.REPOS, user.sub);
     const activeChannels = channels.filter((ch) => ch.enabled).length;
 
     return c.json({
@@ -157,7 +157,7 @@ api.get("/dashboard/releases", async (c) => {
 
           const release = latestReleases[0];
           const aiAnalysis = await getCachedAnalysis(
-            c.env.SUBSCRIPTIONS,
+            c.env.REPOS,
             repoName,
             release.tag_name,
           );
@@ -205,13 +205,13 @@ api.patch("/integrations/telegram/toggle", async (c) => {
 
   const { chatId, enabled } = body;
 
-  if (!chatId || typeof enabled !== "boolean") {
+  if (!chatId) {
     return c.json({ error: "chatId and enabled are required" }, 400);
   }
 
   try {
     await updateChannelEnabled(
-      c.env.SUBSCRIPTIONS,
+      c.env.REPOS,
       user.sub,
       "telegram",
       chatId,
@@ -224,23 +224,23 @@ api.patch("/integrations/telegram/toggle", async (c) => {
   }
 });
 
-api.get("/subscriptions", async (c) => {
+api.get("/repos", async (c) => {
   const user = c.get("user");
 
   try {
     const database = c.get("db");
-    const subscriptions = await database.query.userRepos.findMany({
+    const repos = await database.query.userRepos.findMany({
       where: (userRepos, { eq }) => eq(userRepos.userId, user.sub),
     });
 
-    return c.json({ subscriptions });
+    return c.json({ repos });
   } catch (err) {
-    console.error("Failed to fetch subscriptions:", err);
-    return c.json({ error: "Failed to fetch subscriptions" }, 500);
+    console.error("Failed to fetch repos:", err);
+    return c.json({ error: "Failed to fetch repos" }, 500);
   }
 });
 
-api.post("/subscriptions", async (c) => {
+api.post("/repos", async (c) => {
   const user = c.get("user");
 
   let body: { repoName: string };
@@ -252,7 +252,7 @@ api.post("/subscriptions", async (c) => {
 
   const { repoName } = body;
 
-  if (!repoName || typeof repoName !== "string") {
+  if (!repoName) {
     return c.json({ error: "repoName is required" }, 400);
   }
 
@@ -275,7 +275,7 @@ api.post("/subscriptions", async (c) => {
 
     const database = c.get("db");
 
-    const [subscription] = await database
+    const [trackedRepo] = await database
       .insert(userRepos)
       .values({
         userId: user.sub,
@@ -284,18 +284,18 @@ api.post("/subscriptions", async (c) => {
       .onConflictDoNothing()
       .returning();
 
-    if (!subscription) {
-      return c.json({ error: "Already subscribed to this repository" }, 409);
+    if (!trackedRepo) {
+      return c.json({ error: "Already tracking this repository" }, 409);
     }
 
-    return c.json({ subscription }, 201);
+    return c.json({ repo: trackedRepo }, 201);
   } catch (err) {
-    console.error("Failed to add subscription:", err);
-    return c.json({ error: "Failed to add subscription" }, 500);
+    console.error("Failed to add repo:", err);
+    return c.json({ error: "Failed to add repo" }, 500);
   }
 });
 
-api.delete("/subscriptions/:id", async (c) => {
+api.delete("/repos/:id", async (c) => {
   const user = c.get("user");
   const id = c.req.param("id");
 
@@ -308,13 +308,13 @@ api.delete("/subscriptions/:id", async (c) => {
       .returning();
 
     if (!deleted) {
-      return c.json({ error: "Subscription not found" }, 404);
+      return c.json({ error: "Repo not found" }, 404);
     }
 
     return c.json({ success: true });
   } catch (err) {
-    console.error("Failed to delete subscription:", err);
-    return c.json({ error: "Failed to delete subscription" }, 500);
+    console.error("Failed to delete repo:", err);
+    return c.json({ error: "Failed to delete repo" }, 500);
   }
 });
 
@@ -356,10 +356,7 @@ admin.get("/users", async (c) => {
           banReason: users.banReason,
           banExpires: users.banExpires,
           createdAt: users.createdAt,
-          subscriptionCount: database.$count(
-            userRepos,
-            eq(userRepos.userId, users.id),
-          ),
+          repoCount: database.$count(userRepos, eq(userRepos.userId, users.id)),
         })
         .from(users)
         .where(whereClause)
@@ -409,7 +406,7 @@ admin.get("/users/:id", async (c) => {
       return c.json({ error: "User not found" }, 404);
     }
 
-    const [subscriptions, channels, connectedAccounts] = await Promise.all([
+    const [repos, channels, connectedAccounts] = await Promise.all([
       database
         .select({
           id: userRepos.id,
@@ -438,7 +435,7 @@ admin.get("/users/:id", async (c) => {
         .where(eq(accounts.userId, id)),
     ]);
 
-    return c.json({ user, subscriptions, channels, connectedAccounts });
+    return c.json({ user, repos, channels, connectedAccounts });
   } catch (err) {
     console.error("Failed to fetch user details:", err);
     return c.json({ error: "Failed to fetch user details" }, 500);

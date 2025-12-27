@@ -12,7 +12,7 @@ const CHANNELS_PREFIX = "channels:";
 const TELEGRAM_PREFIX = "telegram:";
 const LINK_PREFIX = "link:";
 
-export async function getSubscriptions(
+export async function getTrackedRepos(
   kv: KVNamespace,
   chatId: string,
 ): Promise<string[]> {
@@ -20,25 +20,25 @@ export async function getSubscriptions(
   return data ?? [];
 }
 
-export async function addSubscription(
+export async function addTrackedRepo(
   kv: KVNamespace,
   chatId: string,
   repo: string,
 ): Promise<void> {
-  const subscriptions = await getSubscriptions(kv, chatId);
-  if (!subscriptions.includes(repo)) {
-    subscriptions.push(repo);
-    await kv.put(`${CHAT_PREFIX}${chatId}`, JSON.stringify(subscriptions));
+  const trackedRepos = await getTrackedRepos(kv, chatId);
+  if (!trackedRepos.includes(repo)) {
+    trackedRepos.push(repo);
+    await kv.put(`${CHAT_PREFIX}${chatId}`, JSON.stringify(trackedRepos));
   }
 }
 
-export async function removeSubscription(
+export async function removeTrackedRepo(
   kv: KVNamespace,
   chatId: string,
   repo: string,
 ): Promise<void> {
-  const subscriptions = await getSubscriptions(kv, chatId);
-  const filtered = subscriptions.filter((r) => r !== repo);
+  const trackedRepos = await getTrackedRepos(kv, chatId);
+  const filtered = trackedRepos.filter((trackedRepo) => trackedRepo !== repo);
   if (filtered.length === 0) {
     await kv.delete(`${CHAT_PREFIX}${chatId}`);
   } else {
@@ -83,18 +83,18 @@ export async function setLastNotifiedTag(
   await kv.put(notifiedKey(chatId, repo), tag);
 }
 
-export async function getAllSubscriptions(
+export async function getAllTrackedRepos(
   kv: KVNamespace,
 ): Promise<Map<string, string[]>> {
-  const subscriptions = new Map<string, string[]>();
+  const trackedReposMap = new Map<string, string[]>();
   const chatIds = await getAllChatIds(kv);
 
   for (const chatId of chatIds) {
-    const repos = await getSubscriptions(kv, chatId);
-    subscriptions.set(chatId, repos);
+    const repos = await getTrackedRepos(kv, chatId);
+    trackedReposMap.set(chatId, repos);
   }
 
-  return subscriptions;
+  return trackedReposMap;
 }
 
 // Release analysis cache

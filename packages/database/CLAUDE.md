@@ -24,7 +24,7 @@ pnpm db:drop        # Drop migrations
 
 - `auth.ts` - BetterAuth tables (GENERATED - do not modify)
 - `user-channels.ts` - User notification channels
-- `user-repos.ts` - User repository subscriptions
+- `user-repos.ts` - User tracked repositories
 
 ## Environment
 

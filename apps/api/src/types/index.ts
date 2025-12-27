@@ -26,7 +26,7 @@ export type { AIAnalysisResult, ReleaseCategory } from "../services/ai.service";
 export interface SystemStats {
   uniqueUsers: number;
   reposWatched: number;
-  totalSubscriptions: number;
+  reposTracked: number;
   notificationsSent: number;
   releasesNotified: number;
 }
