@@ -56,7 +56,7 @@ export function AdminStatsCards() {
       <AdminStatsCard
         icon={FolderGit2}
         iconBg="bg-emerald-500"
-        label="Repos Watched"
+        label="Unique Repos"
         value={stats.reposWatched}
         delay={1}
       />
