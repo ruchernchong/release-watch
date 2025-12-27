@@ -1,6 +1,21 @@
 "use client";
 
+import * as React from "react";
 import {
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+  type ColumnDef,
+  type ColumnFiltersState,
+  type SortingState,
+  type VisibilityState,
+} from "@tanstack/react-table";
+import {
+  ArrowUpDown,
+  ChevronDown,
   ExternalLink,
   GitFork,
   MoreHorizontal,
@@ -9,12 +24,15 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -113,102 +131,301 @@ function getLanguageColor(language: string): string {
   return colors[language] || "bg-gray-400";
 }
 
+const columns: ColumnDef<Repo>[] = [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && "indeterminate")
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: "name",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Repository
+        <ArrowUpDown className="ml-2 size-4" />
+      </Button>
+    ),
+    cell: ({ row }) => {
+      const repo = row.original;
+      return (
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <a
+              href={`https://github.com/${repo.owner}/${repo.name}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium hover:underline"
+            >
+              {repo.owner}/{repo.name}
+            </a>
+            <ExternalLink className="size-3 text-muted-foreground" />
+          </div>
+          <p className="max-w-md truncate text-muted-foreground text-xs">
+            {repo.description}
+          </p>
+          <div className="flex items-center gap-1.5">
+            <span
+              className={`size-2.5 rounded-full ${getLanguageColor(repo.language)}`}
+            />
+            <span className="text-muted-foreground text-xs">
+              {repo.language}
+            </span>
+          </div>
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "latestRelease",
+    header: "Latest Release",
+    cell: ({ row }) => {
+      const release = row.getValue("latestRelease") as string | null;
+      return release ? (
+        <Badge variant="secondary">{release}</Badge>
+      ) : (
+        <span className="text-muted-foreground text-sm">—</span>
+      );
+    },
+  },
+  {
+    accessorKey: "stars",
+    header: ({ column }) => (
+      <div className="text-right">
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Stars
+          <ArrowUpDown className="ml-2 size-4" />
+        </Button>
+      </div>
+    ),
+    cell: ({ row }) => (
+      <div className="flex items-center justify-end gap-1">
+        <Star className="size-3.5 text-muted-foreground" />
+        <span>{formatNumber(row.getValue("stars"))}</span>
+      </div>
+    ),
+  },
+  {
+    accessorKey: "forks",
+    header: ({ column }) => (
+      <div className="text-right">
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Forks
+          <ArrowUpDown className="ml-2 size-4" />
+        </Button>
+      </div>
+    ),
+    cell: ({ row }) => (
+      <div className="flex items-center justify-end gap-1">
+        <GitFork className="size-3.5 text-muted-foreground" />
+        <span>{formatNumber(row.getValue("forks"))}</span>
+      </div>
+    ),
+  },
+  {
+    accessorKey: "lastChecked",
+    header: "Last Checked",
+    cell: ({ row }) => (
+      <span className="text-muted-foreground text-sm">
+        {row.getValue("lastChecked")}
+      </span>
+    ),
+  },
+  {
+    id: "actions",
+    enableHiding: false,
+    cell: ({ row }) => {
+      const repo = row.original;
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon-sm">
+              <MoreHorizontal className="size-4" />
+              <span className="sr-only">Actions</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={() =>
+                window.open(
+                  `https://github.com/${repo.owner}/${repo.name}`,
+                  "_blank",
+                )
+              }
+            >
+              <ExternalLink className="size-4" />
+              View on GitHub
+            </DropdownMenuItem>
+            <DropdownMenuItem className="text-destructive">
+              <Trash2 className="size-4" />
+              Remove
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    },
+  },
+];
+
 export function ReposTable() {
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    [],
+  );
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = React.useState({});
+
+  const table = useReactTable({
+    data: MOCK_REPOS,
+    columns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+    },
+  });
+
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Repository</TableHead>
-          <TableHead>Latest Release</TableHead>
-          <TableHead className="text-right">Stars</TableHead>
-          <TableHead className="text-right">Forks</TableHead>
-          <TableHead>Last Checked</TableHead>
-          <TableHead className="w-[50px]" />
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {MOCK_REPOS.map((repo) => (
-          <TableRow key={repo.id}>
-            <TableCell>
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <a
-                    href={`https://github.com/${repo.owner}/${repo.name}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-medium hover:underline"
-                  >
-                    {repo.owner}/{repo.name}
-                  </a>
-                  <ExternalLink className="size-3 text-muted-foreground" />
-                </div>
-                <p className="max-w-md truncate text-muted-foreground text-xs">
-                  {repo.description}
-                </p>
-                <div className="flex items-center gap-1.5">
-                  <span
-                    className={`size-2.5 rounded-full ${getLanguageColor(repo.language)}`}
-                  />
-                  <span className="text-muted-foreground text-xs">
-                    {repo.language}
-                  </span>
-                </div>
-              </div>
-            </TableCell>
-            <TableCell>
-              {repo.latestRelease ? (
-                <Badge variant="secondary">{repo.latestRelease}</Badge>
-              ) : (
-                <span className="text-muted-foreground text-sm">—</span>
-              )}
-            </TableCell>
-            <TableCell className="text-right">
-              <div className="flex items-center justify-end gap-1">
-                <Star className="size-3.5 text-muted-foreground" />
-                <span>{formatNumber(repo.stars)}</span>
-              </div>
-            </TableCell>
-            <TableCell className="text-right">
-              <div className="flex items-center justify-end gap-1">
-                <GitFork className="size-3.5 text-muted-foreground" />
-                <span>{formatNumber(repo.forks)}</span>
-              </div>
-            </TableCell>
-            <TableCell>
-              <span className="text-muted-foreground text-sm">
-                {repo.lastChecked}
-              </span>
-            </TableCell>
-            <TableCell>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon-sm">
-                    <MoreHorizontal className="size-4" />
-                    <span className="sr-only">Actions</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    onClick={() =>
-                      window.open(
-                        `https://github.com/${repo.owner}/${repo.name}`,
-                        "_blank",
-                      )
-                    }
-                  >
-                    <ExternalLink className="size-4" />
-                    View on GitHub
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="text-destructive">
-                    <Trash2 className="size-4" />
-                    Remove
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <div className="w-full">
+      <div className="flex items-center gap-4 py-4">
+        <Input
+          placeholder="Filter repositories..."
+          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+          onChange={(event) =>
+            table.getColumn("name")?.setFilterValue(event.target.value)
+          }
+          className="max-w-sm"
+        />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="ml-auto">
+              Columns <ChevronDown className="ml-2 size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {table
+              .getAllColumns()
+              .filter((column) => column.getCanHide())
+              .map((column) => (
+                <DropdownMenuCheckboxItem
+                  key={column.id}
+                  className="capitalize"
+                  checked={column.getIsVisible()}
+                  onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                >
+                  {column.id}
+                </DropdownMenuCheckboxItem>
+              ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <div className="overflow-hidden rounded-md border">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  No results.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <div className="flex items-center justify-end gap-2 py-4">
+        <div className="flex-1 text-muted-foreground text-sm">
+          {table.getFilteredSelectedRowModel().rows.length} of{" "}
+          {table.getFilteredRowModel().rows.length} row(s) selected.
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
