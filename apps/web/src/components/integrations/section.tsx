@@ -1,6 +1,13 @@
 "use client";
 
-import { ExternalLink, MessageCircle, Send } from "lucide-react";
+import {
+  Check,
+  ExternalLink,
+  Loader2,
+  MessageCircle,
+  Send,
+} from "lucide-react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,8 +16,31 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { TelegramLinkDialog } from "./telegram-link-dialog";
 
 export function IntegrationsSection() {
+  const [telegramLinked, setTelegramLinked] = useState<boolean | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  const fetchTelegramStatus = useCallback(() => {
+    startTransition(async () => {
+      try {
+        const res = await fetch("/api/integrations/telegram/status");
+        if (res.ok) {
+          const data = await res.json();
+          setTelegramLinked(data.linked);
+        }
+      } catch {
+        // Ignore errors
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    fetchTelegramStatus();
+  }, [fetchTelegramStatus]);
+
   return (
     <>
       <div className="flex flex-col gap-2">
@@ -37,19 +67,44 @@ export function IntegrationsSection() {
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <p className="text-muted-foreground text-sm">
-              Start a conversation with our bot to connect your Telegram
-              account.
+              Link your Telegram account to receive release notifications
+              directly in your chat.
             </p>
-            <Button asChild className="w-fit">
-              <a
-                href="https://t.me/ReleaseWatch_Bot"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <ExternalLink className="size-4" />
-                Open Telegram Bot
-              </a>
-            </Button>
+            {isPending ? (
+              <Button disabled className="w-fit">
+                <Loader2 className="size-4 animate-spin" />
+                Loading...
+              </Button>
+            ) : telegramLinked ? (
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 rounded-full bg-green-500/10 px-3 py-1 text-green-600 text-sm dark:text-green-400">
+                  <Check className="size-4" />
+                  Connected
+                </div>
+                <Button variant="outline" size="sm" asChild>
+                  <a
+                    href="https://t.me/ReleaseWatch_Bot"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <ExternalLink className="size-4" />
+                    Open Bot
+                  </a>
+                </Button>
+              </div>
+            ) : (
+              <>
+                <Button onClick={() => setDialogOpen(true)} className="w-fit">
+                  <Send className="size-4" />
+                  Link Telegram
+                </Button>
+                <TelegramLinkDialog
+                  open={dialogOpen}
+                  onOpenChange={setDialogOpen}
+                  onSuccess={fetchTelegramStatus}
+                />
+              </>
+            )}
           </CardContent>
         </Card>
 
