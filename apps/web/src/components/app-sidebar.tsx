@@ -8,6 +8,7 @@ import {
   LogOut,
   Plug,
   Settings,
+  Shield,
 } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
@@ -60,12 +61,19 @@ const navItems = [
   },
 ];
 
+const adminNavItem = {
+  title: "Admin",
+  href: "/dashboard/admin",
+  icon: Shield,
+};
+
 export function AppSidebar() {
   const pathname = usePathname();
   const { isMobile } = useSidebar();
   const { data: session } = useSession();
 
   const user = session?.user;
+  const isAdmin = user?.role === "admin";
 
   return (
     <Sidebar variant="inset" collapsible="icon">
@@ -105,6 +113,23 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              {isAdmin && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={
+                      pathname === adminNavItem.href ||
+                      pathname.startsWith(`${adminNavItem.href}/`)
+                    }
+                    tooltip={adminNavItem.title}
+                  >
+                    <Link href={adminNavItem.href as Route}>
+                      <adminNavItem.icon />
+                      <span>{adminNavItem.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
