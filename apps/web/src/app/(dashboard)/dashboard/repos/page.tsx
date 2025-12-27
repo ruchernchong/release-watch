@@ -1,3 +1,6 @@
+"use client";
+
+import { AddRepoForm } from "@/components/repos/add-repo-form";
 import { ReposTable } from "@/components/repos/table";
 import {
   Card,
@@ -8,6 +11,10 @@ import {
 } from "@/components/ui/card";
 
 export default function ReposPage() {
+  const handleSuccess = () => {
+    // TODO: Refresh the repos table when real data is connected
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
@@ -16,6 +23,9 @@ export default function ReposPage() {
           Repositories you're watching for new releases.
         </p>
       </div>
+
+      <AddRepoForm onSuccess={handleSuccess} />
+
       <Card>
         <CardHeader>
           <CardTitle>Watched Repositories</CardTitle>
