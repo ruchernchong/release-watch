@@ -33,7 +33,7 @@ export { ReleaseCheckWorkflow } from "./workflows/release-check";
 const app = new Hono<{ Bindings: Env }>();
 
 app.use(
-  "/api/*",
+  "/*",
   cors({
     origin: (origin) => {
       if (!origin) return origin;
@@ -556,8 +556,8 @@ admin.get("/stats", async (c) => {
   return c.json(stats);
 });
 
-app.route("/api", api);
-app.route("/api/admin", admin);
+app.route("/", api);
+app.route("/admin", admin);
 
 export default {
   fetch: app.fetch,

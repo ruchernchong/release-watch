@@ -23,27 +23,29 @@ wrangler types            # Generate CloudflareBindings types
 
 ## API Routes
 
+No versioning - internal API only.
+
 **Public:**
 - `GET /` - Health check
 - `GET /stats` - System statistics
 - `POST /webhook` - Telegram bot updates
 
 **Authenticated (JWT required):**
-- `GET /api/dashboard/stats` - User dashboard stats
-- `GET /api/dashboard/releases` - User's recent releases
-- `GET /api/subscriptions` - List user subscriptions
-- `POST /api/subscriptions` - Add subscription
-- `DELETE /api/subscriptions/:id` - Remove subscription
-- `GET /api/integrations/telegram/status` - Telegram link status
-- `POST /api/integrations/telegram/generate` - Generate link code
-- `PATCH /api/integrations/telegram/toggle` - Toggle notifications
+- `GET /dashboard/stats` - User dashboard stats
+- `GET /dashboard/releases` - User's recent releases
+- `GET /subscriptions` - List user subscriptions
+- `POST /subscriptions` - Add subscription
+- `DELETE /subscriptions/:id` - Remove subscription
+- `GET /integrations/telegram/status` - Telegram link status
+- `POST /integrations/telegram/generate` - Generate link code
+- `PATCH /integrations/telegram/toggle` - Toggle notifications
 
 **Admin (JWT + admin role):**
-- `GET /api/admin/users` - List users
-- `GET /api/admin/users/:id` - User details
-- `POST /api/admin/users/:id/ban` - Ban/unban user
-- `GET /api/admin/activity` - Session activity logs
-- `GET /api/admin/stats` - System stats
+- `GET /admin/users` - List users
+- `GET /admin/users/:id` - User details
+- `POST /admin/users/:id/ban` - Ban/unban user
+- `GET /admin/activity` - Session activity logs
+- `GET /admin/stats` - System stats
 
 ## Authentication
 

@@ -41,7 +41,7 @@ class ApiClient {
       throw new Error("Not authenticated");
     }
 
-    const response = await fetch(`${API_BASE}/api${path}`, {
+    const response = await fetch(`${API_BASE}${path}`, {
       ...options,
       headers: {
         Authorization: `Bearer ${token}`,
@@ -56,7 +56,7 @@ class ApiClient {
         throw new Error("Session expired");
       }
 
-      const retryResponse = await fetch(`${API_BASE}/api${path}`, {
+      const retryResponse = await fetch(`${API_BASE}${path}`, {
         ...options,
         headers: {
           Authorization: `Bearer ${newToken}`,
