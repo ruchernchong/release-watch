@@ -5,7 +5,7 @@ import {
   userRepos,
   users,
 } from "@release-watch/database";
-import { and, count, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, ilike, or } from "drizzle-orm";
 import { webhookCallback } from "grammy";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -356,9 +356,10 @@ admin.get("/users", async (c) => {
           banReason: users.banReason,
           banExpires: users.banExpires,
           createdAt: users.createdAt,
-          subscriptionCount: sql<number>`(
-            SELECT COUNT(*) FROM ${userRepos} WHERE ${userRepos.userId} = ${users.id}
-          )`,
+          subscriptionCount: database.$count(
+            userRepos,
+            eq(userRepos.userId, users.id),
+          ),
         })
         .from(users)
         .where(whereClause)
