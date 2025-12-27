@@ -8,11 +8,11 @@ export async function POST() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const apiUrl = process.env.RELEASEWATCH_API_URL;
-  const apiKey = process.env.RELEASEWATCH_API_KEY;
+  const apiUrl = process.env.RELEASE_WATCH_API_URL;
+  const apiKey = process.env.RELEASE_WATCH_API_KEY;
 
   if (!apiUrl || !apiKey) {
-    console.error("Missing RELEASEWATCH_API_URL or RELEASEWATCH_API_KEY");
+    console.error("Missing RELEASE_WATCH_API_URL or RELEASE_WATCH_API_KEY");
     return NextResponse.json(
       { error: "Server configuration error" },
       { status: 500 },
