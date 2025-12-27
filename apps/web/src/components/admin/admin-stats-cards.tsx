@@ -10,7 +10,7 @@ import { api } from "@/lib/api-client";
 interface AdminStats {
   uniqueUsers: number;
   reposWatched: number;
-  totalSubscriptions: number;
+  reposTracked: number;
   notificationsSent: number;
   releasesNotified: number;
 }
@@ -63,8 +63,8 @@ export function AdminStatsCards() {
       <AdminStatsCard
         icon={Bell}
         iconBg="bg-amber-500"
-        label="Subscriptions"
-        value={stats.totalSubscriptions}
+        label="Repos Tracked"
+        value={stats.reposTracked}
         delay={2}
       />
       <AdminStatsCard
