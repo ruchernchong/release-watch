@@ -50,5 +50,11 @@
   "ai": {
     "binding": "AI",
     "remote": true
-  }
+  },
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "29dcd845993e4b1eac9243e001b9034d"
+    }
+  ]
 }

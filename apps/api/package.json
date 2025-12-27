@@ -12,9 +12,12 @@
   },
   "dependencies": {
     "@octokit/rest": "^22.0.1",
+    "@release-watch/database": "workspace:*",
     "@release-watch/types": "workspace:*",
+    "drizzle-orm": "catalog:",
     "grammy": "^1.38.4",
-    "hono": "^4.11.2"
+    "hono": "^4.11.2",
+    "postgres": "^3.4.7"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20251225.0",
