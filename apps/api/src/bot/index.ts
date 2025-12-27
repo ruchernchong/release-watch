@@ -56,7 +56,8 @@ async function fetchAndFormatLatestRelease(
 
 export async function createBot(env: Env): Promise<Bot> {
   const bot = new Bot(env.TELEGRAM_BOT_TOKEN);
-  const kv = env.REPOS;
+  const reposKv = env.REPOS;
+  const channelsKv = env.CHANNELS;
 
   await bot.api.setMyCommands([
     {
@@ -85,7 +86,7 @@ export async function createBot(env: Env): Promise<Bot> {
 
   bot.command("check", async (ctx) => {
     const chatId = ctx.chat.id.toString();
-    const trackedRepos = await getTrackedRepos(kv, chatId);
+    const trackedRepos = await getTrackedRepos(reposKv, chatId);
 
     if (trackedRepos.length === 0) {
       await ctx.reply("No tracked repos yet. Paste a GitHub URL to start tracking.");
@@ -112,7 +113,7 @@ export async function createBot(env: Env): Promise<Bot> {
   bot.command("untrack", async (ctx) => {
     const repo = ctx.match?.trim();
     const chatId = ctx.chat.id.toString();
-    const trackedRepos = await getTrackedRepos(kv, chatId);
+    const trackedRepos = await getTrackedRepos(reposKv, chatId);
 
     if (trackedRepos.length === 0) {
       await ctx.reply("No tracked repos to remove.");
@@ -142,13 +143,13 @@ export async function createBot(env: Env): Promise<Bot> {
       return;
     }
 
-    await removeTrackedRepo(kv, chatId, matchedRepo);
+    await removeTrackedRepo(reposKv, chatId, matchedRepo);
     await ctx.reply(`✅ Stopped tracking ${matchedRepo}`);
   });
 
   bot.command("list", async (ctx) => {
     const chatId = ctx.chat.id.toString();
-    const trackedRepos = await getTrackedRepos(kv, chatId);
+    const trackedRepos = await getTrackedRepos(reposKv, chatId);
 
     if (trackedRepos.length === 0) {
       await ctx.reply("No tracked repos yet. Paste a GitHub URL to start tracking.");
@@ -184,7 +185,7 @@ export async function createBot(env: Env): Promise<Bot> {
       return;
     }
 
-    const result = await completeTelegramLink(kv, code, chatId);
+    const result = await completeTelegramLink(channelsKv, code, chatId);
 
     if (!result) {
       await ctx.reply(
@@ -213,14 +214,14 @@ export async function createBot(env: Env): Promise<Bot> {
       return;
     }
 
-    const trackedRepos = await getTrackedRepos(kv, chatId);
+    const trackedRepos = await getTrackedRepos(reposKv, chatId);
     if (!trackedRepos.includes(repo)) {
       await ctx.answerCallbackQuery({ text: "Already removed" });
       await ctx.editMessageText("Repository already removed.");
       return;
     }
 
-    await removeTrackedRepo(kv, chatId, repo);
+    await removeTrackedRepo(reposKv, chatId, repo);
     await ctx.answerCallbackQuery({ text: "Removed!" });
     await ctx.editMessageText(`✅ Stopped tracking ${repo}`);
   });
@@ -234,13 +235,13 @@ export async function createBot(env: Env): Promise<Bot> {
     const repo = match[1].replace(/\/$/, "");
     const chatId = ctx.chat.id.toString();
 
-    const trackedRepos = await getTrackedRepos(kv, chatId);
+    const trackedRepos = await getTrackedRepos(reposKv, chatId);
     if (trackedRepos.includes(repo)) {
       await ctx.reply(`Already tracking ${repo}`);
       return;
     }
 
-    await addTrackedRepo(kv, chatId, repo);
+    await addTrackedRepo(reposKv, chatId, repo);
     await ctx.reply(`✅ Now tracking ${repo}`);
 
     const latestRelease = await fetchAndFormatLatestRelease(env, repo);

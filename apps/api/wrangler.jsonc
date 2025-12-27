@@ -36,6 +36,21 @@
       "binding": "REPOS",
       "id": "01e881c80e1c4f60953a5a803f74871c",
       "remote": true
+    },
+    {
+      "binding": "NOTIFICATIONS",
+      "id": "e76ea40f05d243feb90386711052a2a4",
+      "remote": true
+    },
+    {
+      "binding": "CACHE",
+      "id": "cfdec08461684a0dbb8367b7637d1f7c",
+      "remote": true
+    },
+    {
+      "binding": "CHANNELS",
+      "id": "aaa813672c834fd2b9892a38cc49147d",
+      "remote": true
     }
   ],
   "triggers": {

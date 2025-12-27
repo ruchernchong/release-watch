@@ -5,9 +5,14 @@ import type {
   TelegramLinkRequest,
 } from "@release-watch/types";
 
+// Key prefixes for each KV namespace
+// REPOS KV - tracked repos per chat
 const CHAT_PREFIX = "chat:";
+// NOTIFICATIONS KV - last notified tag per chat/repo
 const NOTIFIED_PREFIX = "notified:";
+// CACHE KV - AI analysis cache per release
 const RELEASE_PREFIX = "release:";
+// CHANNELS KV - user notification channels + integration mappings
 const CHANNELS_PREFIX = "channels:";
 const TELEGRAM_PREFIX = "telegram:";
 const LINK_PREFIX = "link:";

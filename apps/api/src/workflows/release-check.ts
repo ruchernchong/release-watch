@@ -170,7 +170,7 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
             KV_RETRY_CONFIG,
             async () => {
               return getCachedAnalysis(
-                this.env.REPOS,
+                this.env.CACHE,
                 repoFullName,
                 tagName,
               );
@@ -206,7 +206,7 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
                 KV_RETRY_CONFIG,
                 async () => {
                   await setCachedAnalysis(
-                    this.env.REPOS,
+                    this.env.CACHE,
                     repoFullName,
                     tagName,
                     analysis,
@@ -232,7 +232,7 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
             KV_RETRY_CONFIG,
             async () => {
               return getLastNotifiedTag(
-                this.env.REPOS,
+                this.env.NOTIFICATIONS,
                 chatId,
                 repoFullName,
               );
@@ -279,7 +279,7 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
               KV_RETRY_CONFIG,
               async () => {
                 await setLastNotifiedTag(
-                  this.env.REPOS,
+                  this.env.NOTIFICATIONS,
                   chatId,
                   repoFullName,
                   tagName,

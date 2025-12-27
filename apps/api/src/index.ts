@@ -79,7 +79,7 @@ api.post("/integrations/telegram/generate", async (c) => {
   const user = c.get("user");
 
   try {
-    const code = await createTelegramLinkCode(c.env.REPOS, user.sub);
+    const code = await createTelegramLinkCode(c.env.CHANNELS, user.sub);
     return c.json({ code });
   } catch (err) {
     console.error("Failed to create Telegram link code:", err);
@@ -91,7 +91,7 @@ api.get("/integrations/telegram/status", async (c) => {
   const user = c.get("user");
 
   try {
-    const channels = await getChannels(c.env.REPOS, user.sub);
+    const channels = await getChannels(c.env.CHANNELS, user.sub);
     const telegramChannel = channels.find(
       (channel) => channel.type === "telegram",
     );
@@ -113,7 +113,7 @@ api.get("/dashboard/stats", async (c) => {
       columns: { id: true },
     });
 
-    const channels = await getChannels(c.env.REPOS, user.sub);
+    const channels = await getChannels(c.env.CHANNELS, user.sub);
     const activeChannels = channels.filter((ch) => ch.enabled).length;
 
     return c.json({
@@ -157,7 +157,7 @@ api.get("/dashboard/releases", async (c) => {
 
           const release = latestReleases[0];
           const aiAnalysis = await getCachedAnalysis(
-            c.env.REPOS,
+            c.env.CACHE,
             repoName,
             release.tag_name,
           );
@@ -211,7 +211,7 @@ api.patch("/integrations/telegram/toggle", async (c) => {
 
   try {
     await updateChannelEnabled(
-      c.env.REPOS,
+      c.env.CHANNELS,
       user.sub,
       "telegram",
       chatId,

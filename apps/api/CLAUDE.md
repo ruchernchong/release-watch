@@ -53,11 +53,21 @@ JWT tokens are issued by BetterAuth (Next.js) and verified here via JWKS.
 - Tokens fetched from `JWKS_URL` env var (e.g., `https://releasewatch.dev/api/auth/jwks`)
 - JWKS is cached per isolate for performance
 
-## KV Keys
+## KV Namespaces
 
-- `chat:{chatId}` - Tracked repos array
-- `notified:{chatId}:{repo}` - Last notified tag
-- `release:{repo}:{tag}` - Cached AI analysis
+- **REPOS** - Tracked repos per chat
+  - `chat:{chatId}` - Array of repo names
+
+- **NOTIFICATIONS** - Notification state
+  - `notified:{chatId}:{repo}` - Last notified tag
+
+- **CACHE** - AI analysis cache
+  - `release:{repo}:{tag}` - Cached AI analysis
+
+- **CHANNELS** - User notification channels
+  - `channels:{userId}` - Array of channel configs
+  - `telegram:{chatId}` - Maps chatId → userId
+  - `link:{code}` - Temporary link codes (10min TTL)
 
 ## Secrets (wrangler secret put)
 
@@ -65,4 +75,4 @@ JWT tokens are issued by BetterAuth (Next.js) and verified here via JWKS.
 
 ## Bindings (wrangler.jsonc)
 
-`REPOS` (KV), `STATS` (DO), `RELEASE_CHECK_WORKFLOW`, `AI`, `HYPERDRIVE`
+`REPOS` (KV), `NOTIFICATIONS` (KV), `CACHE` (KV), `CHANNELS` (KV), `STATS` (DO), `RELEASE_CHECK_WORKFLOW`, `AI`, `HYPERDRIVE`
