@@ -40,7 +40,7 @@ interface UserDetail {
     createdAt: string;
     updatedAt: string;
   };
-  subscriptions: {
+  repos: {
     id: string;
     repoName: string;
     lastNotifiedTag: string | null;
@@ -98,7 +98,7 @@ export function UserDetailCard({ userId }: UserDetailCardProps) {
     return <UserDetailCardSkeleton />;
   }
 
-  const { user, subscriptions, channels, connectedAccounts } = data;
+  const { user, repos, channels, connectedAccounts } = data;
   const isAdmin = user.role === "admin";
 
   return (
@@ -302,18 +302,18 @@ export function UserDetailCard({ userId }: UserDetailCardProps) {
           </Card>
         </div>
 
-        {/* Subscriptions */}
+        {/* Tracked Repos */}
         <Card className="lg:col-span-3">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FolderGit2 className="size-5" />
-              Subscriptions ({subscriptions.length})
+              Tracked Repos ({repos.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {subscriptions.length > 0 ? (
+            {repos.length > 0 ? (
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {subscriptions.map((sub) => (
+                {repos.map((sub) => (
                   <a
                     key={sub.id}
                     href={`https://github.com/${sub.repoName}`}
@@ -337,7 +337,7 @@ export function UserDetailCard({ userId }: UserDetailCardProps) {
             ) : (
               <div className="flex flex-col items-center gap-2 py-8 text-center">
                 <FolderGit2 className="size-8 text-muted-foreground/50" />
-                <p className="text-muted-foreground">No subscriptions yet</p>
+                <p className="text-muted-foreground">No tracked repos yet</p>
               </div>
             )}
           </CardContent>

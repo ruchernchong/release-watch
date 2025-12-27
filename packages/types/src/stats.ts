@@ -1,7 +1,7 @@
 export interface SystemStats {
   uniqueUsers: number;
   reposWatched: number;
-  totalSubscriptions: number;
+  reposTracked: number;
   notificationsSent: number;
   releasesNotified: number;
 }

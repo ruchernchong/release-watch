@@ -59,7 +59,7 @@ interface User {
   banReason: string | null;
   banExpires: string | null;
   createdAt: string;
-  subscriptionCount: number;
+  repoCount: number;
 }
 
 interface UsersResponse {
@@ -203,10 +203,10 @@ export function UsersTable() {
       },
     },
     {
-      accessorKey: "subscriptionCount",
+      accessorKey: "repoCount",
       header: "Repos",
       cell: ({ row }) => {
-        const count = row.getValue("subscriptionCount") as number;
+        const count = row.getValue("repoCount") as number;
         return <span className="font-mono text-sm">{count}</span>;
       },
     },

@@ -70,8 +70,8 @@ import { api } from "@/lib/api-client";
 
 // API client handles JWT automatically
 const stats = await api.get<StatsResponse>("/dashboard/stats");
-await api.post("/subscriptions", { repoName });
-await api.delete(`/subscriptions/${id}`);
+await api.post("/repos", { repoName });
+await api.delete(`/repos/${id}`);
 ```
 
 ## Environment

@@ -153,7 +153,7 @@ export function AddRepoForm({ onSuccess }: AddRepoFormProps) {
 
     startSubmitTransition(async () => {
       try {
-        await api.post("/subscriptions", { repoName });
+        await api.post("/repos", { repoName });
         setRepoInput("");
         setPreview(null);
         setError(null);

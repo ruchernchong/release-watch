@@ -9,6 +9,7 @@ import { and, count, desc, eq, ilike, or } from "drizzle-orm";
 import { webhookCallback } from "grammy";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { logger } from "hono/logger";
 import { createBot } from "./bot";
 import { db } from "./db";
 import { handleSchedule } from "./handlers/schedule";
@@ -31,6 +32,8 @@ export { Stats } from "./durable-objects/stats";
 export { ReleaseCheckWorkflow } from "./workflows/release-check";
 
 const app = new Hono<{ Bindings: Env }>();
+
+// app.use(logger());
 
 app.use(
   "/*",

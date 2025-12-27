@@ -16,7 +16,7 @@ Built entirely on Cloudflare:
 
 - **Workers**: Hono web framework with cron triggers
 - **Workflows**: Durable execution for reliable release checking
-- **KV**: Subscription storage and AI analysis cache
+- **KV**: Repo tracking and AI analysis cache
 - **Durable Objects**: SQLite-backed statistics tracking
 - **AI**: Release summarization with Llama 3.1 8B (with JSON Schema support)
 
@@ -38,9 +38,12 @@ bun install
 
 ### Configuration
 
-1. Create KV namespace:
+1. Create KV namespaces:
    ```bash
-   wrangler kv:namespace create SUBSCRIPTIONS
+   wrangler kv:namespace create REPOS
+   wrangler kv:namespace create NOTIFICATIONS
+   wrangler kv:namespace create CACHE
+   wrangler kv:namespace create CHANNELS
    ```
 
 2. Set secrets:
@@ -82,9 +85,9 @@ const app = new Hono<{ Bindings: Env }>();
 ### Telegram Bot Commands
 
 - `/start` - Get started and see available commands
-- `/check` - Manually trigger a release check for all your subscriptions
-- `/list` - View all your repository subscriptions
-- `/unsubscribe` - Unsubscribe from a repository (interactive menu)
+- `/check` - Manually trigger a release check for all your tracked repos
+- `/list` - View all your tracked repositories
+- `/unsubscribe` - Stop tracking a repository (interactive menu)
 
 **To subscribe**: Simply paste a GitHub repository URL (e.g., `https://github.com/owner/repo`)
 

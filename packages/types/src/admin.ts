@@ -9,7 +9,7 @@ export interface AdminUser {
   banReason: string | null;
   banExpires: Date | null;
   createdAt: Date;
-  subscriptionCount: number;
+  repoCount: number;
 }
 
 export interface AdminUserDetail {
@@ -42,7 +42,7 @@ export interface ActivityLog {
 }
 
 // User Related Types
-export interface UserSubscription {
+export interface UserRepo {
   id: string;
   repoName: string;
   lastNotifiedTag: string | null;
@@ -78,7 +78,7 @@ export interface ActivityApiResponse {
 
 export interface UserDetailApiResponse {
   user: AdminUserDetail;
-  subscriptions: UserSubscription[];
+  repos: UserRepo[];
   channels: UserChannel[];
   connectedAccounts: ConnectedAccount[];
 }
