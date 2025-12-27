@@ -13,7 +13,7 @@ export interface AIAnalysisResult {
   highlights: string[];
 }
 
-const MODEL = "@cf/meta/llama-3.1-8b-instruct-fp8";
+const MODEL = "@cf/meta/llama-3-8b-instruct";
 
 const ANALYSIS_SCHEMA = {
   type: "object",
