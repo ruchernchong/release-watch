@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import { AdminNav } from "@/components/admin/admin-nav";
 import { AdminStatsCards } from "@/components/admin/admin-stats-cards";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function AdminPage() {
   return (

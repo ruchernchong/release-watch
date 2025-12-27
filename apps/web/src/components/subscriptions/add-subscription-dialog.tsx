@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { api } from "@/lib/api-client";
 
 interface AddSubscriptionDialogProps {
   open: boolean;
@@ -47,24 +48,14 @@ export function AddSubscriptionDialog({
 
     startTransition(async () => {
       try {
-        const res = await fetch("/api/subscriptions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ repoName }),
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          setError(data.error || "Failed to add subscription");
-          return;
-        }
-
+        await api.post("/subscriptions", { repoName });
         setRepoInput("");
         onOpenChange(false);
         onSuccess();
-      } catch {
-        setError("Failed to add subscription");
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to add subscription",
+        );
       }
     });
   };

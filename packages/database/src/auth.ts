@@ -12,6 +12,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import {
   admin,
+  jwt,
   lastLoginMethod,
   oAuthProxy,
   twoFactor,
@@ -73,6 +74,7 @@ export const auth = betterAuth({
       ],
     }),
     twoFactor(),
+    jwt(),
     nextCookies(), // This must always be the last in the array
   ],
   socialProviders: {

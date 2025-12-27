@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState, useTransition } from "react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { api } from "@/lib/api-client";
 
 interface AdminStats {
   uniqueUsers: number;
@@ -21,11 +22,8 @@ export function AdminStatsCards() {
   const fetchStats = useCallback(() => {
     startTransition(async () => {
       try {
-        const res = await fetch("/api/admin/stats");
-        if (res.ok) {
-          const data = await res.json();
-          setStats(data);
-        }
+        const data = await api.get<AdminStats>("/admin/stats");
+        setStats(data);
       } catch {
         // Ignore errors
       }
@@ -39,8 +37,8 @@ export function AdminStatsCards() {
   if (isPending || !stats) {
     return (
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <AdminStatsCardSkeleton key={i} />
+        {["s0", "s1", "s2", "s3", "s4"].map((id) => (
+          <AdminStatsCardSkeleton key={id} />
         ))}
       </div>
     );
@@ -123,7 +121,7 @@ function AdminStatsCard({
         </div>
         <div className="flex min-w-0 flex-col gap-0.5">
           <p className="truncate text-muted-foreground text-xs">{label}</p>
-          <span className="font-mono text-2xl font-bold tracking-tight">
+          <span className="font-bold font-mono text-2xl tracking-tight">
             {formatNumber(value)}
           </span>
         </div>

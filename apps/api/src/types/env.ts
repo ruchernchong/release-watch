@@ -3,7 +3,7 @@ export interface Env extends Cloudflare.Env {
   DEBUG?: string;
   GITHUB_TOKEN: string;
   TELEGRAM_BOT_TOKEN: string;
-  DASHBOARD_API_KEY: string;
+  JWKS_URL: string;
 
   // Deprioritized
   DISCORD_WEBHOOK_URL?: string;

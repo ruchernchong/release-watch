@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState, useTransition } from "react";
+import { TelegramLinkDialog } from "@/components/integrations/telegram-link-dialog";
+import { AddRepoForm } from "@/components/repos/add-repo-form";
 import {
   Card,
   CardContent,
@@ -8,8 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { TelegramLinkDialog } from "@/components/integrations/telegram-link-dialog";
-import { AddRepoForm } from "@/components/repos/add-repo-form";
+import { api } from "@/lib/api-client";
 import { IntegrationToggle } from "./integration-toggle";
 
 interface TelegramChannel {
@@ -17,25 +18,30 @@ interface TelegramChannel {
   enabled: boolean;
 }
 
+interface TelegramStatusResponse {
+  linked: boolean;
+  channel?: TelegramChannel;
+}
+
 export function QuickActions() {
   const [telegramLinked, setTelegramLinked] = useState(false);
-  const [telegramChannel, setTelegramChannel] = useState<TelegramChannel | null>(null);
+  const [telegramChannel, setTelegramChannel] =
+    useState<TelegramChannel | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [_isPending, startTransition] = useTransition();
 
   const fetchTelegramStatus = useCallback(() => {
     startTransition(async () => {
       try {
-        const res = await fetch("/api/integrations/telegram/status");
-        if (res.ok) {
-          const data = await res.json();
-          setTelegramLinked(data.linked);
-          if (data.linked && data.channel) {
-            setTelegramChannel({
-              chatId: data.channel.chatId,
-              enabled: data.channel.enabled,
-            });
-          }
+        const data = await api.get<TelegramStatusResponse>(
+          "/integrations/telegram/status",
+        );
+        setTelegramLinked(data.linked);
+        if (data.linked && data.channel) {
+          setTelegramChannel({
+            chatId: data.channel.chatId,
+            enabled: data.channel.enabled,
+          });
         }
       } catch {
         // Ignore errors

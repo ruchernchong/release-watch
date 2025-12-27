@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { api } from "@/lib/api-client";
 
 interface AddRepoFormProps {
   onSuccess?: () => void;
@@ -152,25 +153,15 @@ export function AddRepoForm({ onSuccess }: AddRepoFormProps) {
 
     startSubmitTransition(async () => {
       try {
-        const res = await fetch("/api/subscriptions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ repoName }),
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          setError(data.error || "Failed to add repository");
-          return;
-        }
-
+        await api.post("/subscriptions", { repoName });
         setRepoInput("");
         setPreview(null);
         setError(null);
         onSuccess?.();
-      } catch {
-        setError("Failed to add repository");
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to add repository",
+        );
       }
     });
   };

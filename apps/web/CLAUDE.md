@@ -2,7 +2,7 @@
 
 ## Overview
 
-Next.js 16 dashboard with React 19, BetterAuth, and shadcn/ui.
+Next.js 16 dashboard with React 19, BetterAuth, and shadcn/ui. Handles authentication only; all API calls go to Hono.
 
 ## Commands
 
@@ -33,14 +33,15 @@ pnpm typecheck  # Type-check
 
 ## Authentication
 
-Uses BetterAuth with Next.js 16 proxy pattern.
+Uses BetterAuth with JWT plugin for API authentication.
 
 **Key Files:**
 
 - `src/proxy.ts` - Route protection (Next.js 16 proxy, replaces middleware)
 - `src/lib/auth.ts` - Server-side auth (`getSession()` helper)
 - `src/lib/auth-client.ts` - Client-side auth (`signIn`, `signOut`, `useSession`)
-- `src/app/api/auth/[...all]/route.ts` - Auth API handler
+- `src/lib/api-client.ts` - API client with JWT handling
+- `src/app/api/auth/[...all]/route.ts` - Auth API handler (only API route)
 
 **Server Components:**
 
@@ -62,11 +63,23 @@ signIn.social({ provider: "github", callbackURL: "/dashboard" });
 signOut();
 ```
 
+**API Calls (Client Components):**
+
+```tsx
+import { api } from "@/lib/api-client";
+
+// API client handles JWT automatically
+const stats = await api.get<StatsResponse>("/dashboard/stats");
+await api.post("/subscriptions", { repoName });
+await api.delete(`/subscriptions/${id}`);
+```
+
 ## Environment
 
 - `DATABASE_URL` - Neon Postgres connection
 - `BETTER_AUTH_SECRET` - Auth secret
 - `BETTER_AUTH_URL` - Auth callback URL (e.g., `http://localhost:3000`)
+- `NEXT_PUBLIC_API_URL` - Hono API URL (e.g., `https://api.releasewatch.dev`)
 - `GITHUB_CLIENT_ID` - GitHub OAuth client ID
 - `GITHUB_CLIENT_SECRET` - GitHub OAuth client secret
 - `GOOGLE_CLIENT_ID` - Google OAuth client ID

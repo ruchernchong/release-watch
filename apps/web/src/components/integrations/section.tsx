@@ -19,7 +19,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useNotifications } from "@/hooks/use-notifications";
+import { api } from "@/lib/api-client";
 import { TelegramLinkDialog } from "./telegram-link-dialog";
+
+interface TelegramStatusResponse {
+  linked: boolean;
+}
 
 export function IntegrationsSection() {
   const [telegramLinked, setTelegramLinked] = useState<boolean | null>(null);
@@ -30,11 +35,10 @@ export function IntegrationsSection() {
   const fetchTelegramStatus = useCallback(() => {
     startTransition(async () => {
       try {
-        const res = await fetch("/api/integrations/telegram/status");
-        if (res.ok) {
-          const data = await res.json();
-          setTelegramLinked(data.linked);
-        }
+        const data = await api.get<TelegramStatusResponse>(
+          "/integrations/telegram/status",
+        );
+        setTelegramLinked(data.linked);
       } catch {
         // Ignore errors
       }

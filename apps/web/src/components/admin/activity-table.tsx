@@ -1,16 +1,14 @@
 "use client";
 
 import {
+  type ColumnDef,
   flexRender,
   getCoreRowModel,
   getPaginationRowModel,
   useReactTable,
-  type ColumnDef,
 } from "@tanstack/react-table";
 import {
   Activity,
-  Chrome,
-  Globe,
   Laptop,
   Loader2,
   Monitor,
@@ -33,6 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { api } from "@/lib/api-client";
 
 interface ActivityLog {
   id: string;
@@ -98,15 +97,6 @@ function DeviceIcon({ device }: { device: "desktop" | "mobile" | "tablet" }) {
   }
 }
 
-function BrowserIcon({ browser }: { browser: string }) {
-  switch (browser.toLowerCase()) {
-    case "chrome":
-      return <Chrome className="size-4" />;
-    default:
-      return <Globe className="size-4" />;
-  }
-}
-
 export function ActivityTable() {
   const [data, setData] = useState<ActivityResponse | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -120,11 +110,10 @@ export function ActivityTable() {
           offset: String(offset),
         });
 
-        const res = await fetch(`/api/admin/activity?${params}`);
-        if (res.ok) {
-          const responseData = await res.json();
-          setData(responseData);
-        }
+        const responseData = await api.get<ActivityResponse>(
+          `/admin/activity?${params}`,
+        );
+        setData(responseData);
       } catch {
         // Ignore
       }
@@ -360,8 +349,8 @@ function ActivityTableSkeleton() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {Array.from({ length: 5 }).map((_, i) => (
-              <TableRow key={i}>
+            {["s0", "s1", "s2", "s3", "s4"].map((id) => (
+              <TableRow key={id}>
                 <TableCell>
                   <div className="flex items-center gap-3">
                     <Skeleton className="size-8 rounded-full" />

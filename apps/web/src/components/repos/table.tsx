@@ -1,16 +1,15 @@
 "use client";
 
-import * as React from "react";
 import {
+  type ColumnDef,
+  type ColumnFiltersState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  useReactTable,
-  type ColumnDef,
-  type ColumnFiltersState,
   type SortingState,
+  useReactTable,
   type VisibilityState,
 } from "@tanstack/react-table";
 import {
@@ -22,6 +21,7 @@ import {
   Star,
   Trash2,
 } from "lucide-react";
+import * as React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";

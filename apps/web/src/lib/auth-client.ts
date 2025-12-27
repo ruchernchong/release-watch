@@ -1,8 +1,5 @@
-import { adminClient } from "better-auth/client/plugins";
-import { createAuthClient } from "better-auth/react";
+import { authClient } from "@release-watch/database/auth-client";
 
-export const authClient = createAuthClient({
-  plugins: [adminClient()],
-});
+export { authClient };
 
 export const { signIn, signOut, useSession, admin } = authClient;

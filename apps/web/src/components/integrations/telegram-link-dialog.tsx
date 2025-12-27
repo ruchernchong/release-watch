@@ -10,11 +10,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { api } from "@/lib/api-client";
 
 interface TelegramLinkDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
+}
+
+interface GenerateCodeResponse {
+  code: string;
 }
 
 export function TelegramLinkDialog({
@@ -32,20 +37,14 @@ export function TelegramLinkDialog({
 
     startTransition(async () => {
       try {
-        const res = await fetch("/api/integrations/telegram/generate", {
-          method: "POST",
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          setError(data.error || "Failed to generate code");
-          return;
-        }
-
+        const data = await api.post<GenerateCodeResponse>(
+          "/integrations/telegram/generate",
+        );
         setCode(data.code);
-      } catch {
-        setError("Failed to generate code");
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to generate code",
+        );
       }
     });
   };
