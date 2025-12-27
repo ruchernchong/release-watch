@@ -1,16 +1,19 @@
 import { db, userRepos } from "@release-watch/database";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
-
-// TODO: Add auth session check later
-const MOCK_USER_ID = "mock-user-id";
+import { getSession } from "@/lib/auth";
 
 export async function GET() {
   try {
+    const session = await getSession();
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const subscriptions = await db
       .select()
       .from(userRepos)
-      .where(eq(userRepos.userId, MOCK_USER_ID));
+      .where(eq(userRepos.userId, session.user.id));
 
     return NextResponse.json({ subscriptions });
   } catch (error) {
@@ -24,6 +27,11 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const session = await getSession();
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
     const { repoName } = body;
 
@@ -73,7 +81,7 @@ export async function POST(request: Request) {
     const [subscription] = await db
       .insert(userRepos)
       .values({
-        userId: MOCK_USER_ID,
+        userId: session.user.id,
         repoName: normalizedRepo,
       })
       .onConflictDoNothing()

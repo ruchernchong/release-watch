@@ -1,20 +1,23 @@
 import { db, userRepos } from "@release-watch/database";
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
-
-// TODO: Add auth session check later
-const MOCK_USER_ID = "mock-user-id";
+import { getSession } from "@/lib/auth";
 
 export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const session = await getSession();
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
 
     const [deleted] = await db
       .delete(userRepos)
-      .where(and(eq(userRepos.id, id), eq(userRepos.userId, MOCK_USER_ID)))
+      .where(and(eq(userRepos.id, id), eq(userRepos.userId, session.user.id)))
       .returning();
 
     if (!deleted) {
