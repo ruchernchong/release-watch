@@ -9,7 +9,7 @@ ReleaseWatch monitors GitHub releases and sends Telegram notifications with AI s
 ## Structure
 
 - `apps/api` - Cloudflare Worker (Hono + Grammy bot)
-- `apps/web` - Next.js 16 dashboard
+- `apps/web` - Next.js 16 dashboard (Vercel)
 - `packages/database` - Drizzle + BetterAuth + Neon
 - `packages/types` - Shared types
 

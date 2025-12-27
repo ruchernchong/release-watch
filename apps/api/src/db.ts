@@ -1,6 +1,18 @@
+import {
+  userChannels,
+  userChannelsRelations,
+  userRepos,
+  userReposRelations,
+} from "@release-watch/database";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import * as schema from "@release-watch/database";
+
+const schema = {
+  userRepos,
+  userReposRelations,
+  userChannels,
+  userChannelsRelations,
+};
 
 export function db(hyperdrive: Hyperdrive) {
   const sql = postgres(hyperdrive.connectionString, {
