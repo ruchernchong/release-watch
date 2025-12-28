@@ -1,0 +1,1 @@
+ALTER TABLE "user_repos" ADD COLUMN "paused" boolean DEFAULT false NOT NULL;
