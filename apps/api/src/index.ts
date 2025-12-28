@@ -17,14 +17,21 @@ import { db } from "./db";
 import { handleSchedule } from "./handlers/schedule";
 import { type AuthEnv, adminOnly, jwtAuth } from "./middleware/auth";
 import {
+  fetchGuildChannels,
+  fetchUserGuilds,
+  isBotInGuild,
+} from "./services/discord.service";
+import {
   createOctokit,
   getLatestReleases,
   parseFullName,
 } from "./services/github.service";
 import {
+  addChannel,
   createTelegramLinkCode,
   getCachedAnalysis,
   getChannels,
+  removeChannel,
   updateChannelEnabled,
 } from "./services/kv.service";
 import { getSystemStats } from "./services/stats.service";
@@ -240,6 +247,196 @@ api.patch("/integrations/telegram/toggle", async (c) => {
     return c.json({ success: true, enabled });
   } catch (err) {
     console.error("Error toggling telegram channel:", err);
+    return c.json({ error: "Failed to toggle channel" }, 500);
+  }
+});
+
+api.get("/integrations/discord/status", async (c) => {
+  const user = c.get("user");
+
+  try {
+    const database = c.get("db");
+
+    const discordAccount = await database.query.accounts.findFirst({
+      where: (accounts, { and, eq }) =>
+        and(eq(accounts.userId, user.sub), eq(accounts.providerId, "discord")),
+    });
+
+    const channels = await getChannels(c.env.CHANNELS, user.sub);
+    const discordChannels = channels.filter(
+      (channel) => channel.type === "discord",
+    );
+
+    return c.json({
+      connected: !!discordAccount,
+      channels: discordChannels.map((channel) => ({
+        channelId: channel.channelId,
+        channelName: channel.channelName,
+        guildId: channel.guildId,
+        guildName: channel.guildName,
+        enabled: channel.enabled,
+      })),
+    });
+  } catch (err) {
+    console.error("Error fetching Discord status:", err);
+    return c.json({ error: "Failed to fetch status" }, 500);
+  }
+});
+
+api.get("/integrations/discord/guilds", async (c) => {
+  const user = c.get("user");
+  const database = c.get("db");
+
+  try {
+    const discordAccount = await database.query.accounts.findFirst({
+      where: (accounts, { and, eq }) =>
+        and(eq(accounts.userId, user.sub), eq(accounts.providerId, "discord")),
+    });
+
+    if (!discordAccount?.accessToken) {
+      return c.json({ error: "Discord not connected" }, 400);
+    }
+
+    const userGuilds = await fetchUserGuilds(discordAccount.accessToken);
+
+    const guildsWithBotStatus = await Promise.all(
+      userGuilds.map(async (guild) => {
+        const botPresent = await isBotInGuild(
+          c.env.DISCORD_BOT_TOKEN,
+          guild.id,
+        );
+        return {
+          id: guild.id,
+          name: guild.name,
+          icon: guild.icon,
+          botPresent,
+        };
+      }),
+    );
+
+    return c.json({ guilds: guildsWithBotStatus });
+  } catch (err) {
+    console.error("Error fetching Discord guilds:", err);
+    return c.json({ error: "Failed to fetch guilds" }, 500);
+  }
+});
+
+api.get("/integrations/discord/guilds/:guildId/channels", async (c) => {
+  const guildId = c.req.param("guildId");
+
+  try {
+    const botPresent = await isBotInGuild(c.env.DISCORD_BOT_TOKEN, guildId);
+
+    if (!botPresent) {
+      return c.json(
+        {
+          error: "Bot not in server",
+          inviteUrl: `https://discord.com/oauth2/authorize?client_id=${c.env.DISCORD_CLIENT_ID}&permissions=2048&scope=bot&guild_id=${guildId}`,
+        },
+        400,
+      );
+    }
+
+    const channels = await fetchGuildChannels(c.env.DISCORD_BOT_TOKEN, guildId);
+
+    return c.json({
+      channels: channels.map((channel) => ({
+        id: channel.id,
+        name: channel.name,
+        parentId: channel.parent_id,
+      })),
+    });
+  } catch (err) {
+    console.error("Error fetching Discord channels:", err);
+    return c.json({ error: "Failed to fetch channels" }, 500);
+  }
+});
+
+api.post("/integrations/discord/channels", async (c) => {
+  const user = c.get("user");
+
+  let body: {
+    guildId: string;
+    guildName: string;
+    channelId: string;
+    channelName: string;
+  };
+
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "Invalid JSON body" }, 400);
+  }
+
+  const { guildId, guildName, channelId, channelName } = body;
+
+  if (!guildId || !channelId || !guildName || !channelName) {
+    return c.json({ error: "Missing required fields" }, 400);
+  }
+
+  try {
+    const botPresent = await isBotInGuild(c.env.DISCORD_BOT_TOKEN, guildId);
+    if (!botPresent) {
+      return c.json({ error: "Bot not in server" }, 400);
+    }
+
+    await addChannel(c.env.CHANNELS, user.sub, {
+      type: "discord",
+      guildId,
+      guildName,
+      channelId,
+      channelName,
+      enabled: true,
+      addedAt: new Date().toISOString(),
+    });
+
+    return c.json({ success: true }, 201);
+  } catch (err) {
+    console.error("Error adding Discord channel:", err);
+    return c.json({ error: "Failed to add channel" }, 500);
+  }
+});
+
+api.delete("/integrations/discord/channels/:channelId", async (c) => {
+  const user = c.get("user");
+  const channelId = c.req.param("channelId");
+
+  try {
+    await removeChannel(c.env.CHANNELS, user.sub, "discord", channelId);
+    return c.json({ success: true });
+  } catch (err) {
+    console.error("Error removing Discord channel:", err);
+    return c.json({ error: "Failed to remove channel" }, 500);
+  }
+});
+
+api.patch("/integrations/discord/toggle", async (c) => {
+  const user = c.get("user");
+
+  let body: { channelId: string; enabled: boolean };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "Invalid JSON body" }, 400);
+  }
+
+  const { channelId, enabled } = body;
+
+  if (!channelId) {
+    return c.json({ error: "channelId is required" }, 400);
+  }
+
+  try {
+    await updateChannelEnabled(
+      c.env.CHANNELS,
+      user.sub,
+      "discord",
+      channelId,
+      enabled,
+    );
+    return c.json({ success: true, enabled });
+  } catch (err) {
+    console.error("Error toggling Discord channel:", err);
     return c.json({ error: "Failed to toggle channel" }, 500);
   }
 });

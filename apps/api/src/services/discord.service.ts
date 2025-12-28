@@ -1,5 +1,24 @@
 import type { NotificationPayload, ReleaseCategory } from "../types";
 
+const DISCORD_API_BASE = "https://discord.com/api/v10";
+
+export interface DiscordGuild {
+  id: string;
+  name: string;
+  icon: string | null;
+  owner: boolean;
+  permissions: string;
+}
+
+export interface DiscordChannel {
+  id: string;
+  type: number; // 0 = text channel
+  name: string;
+  guild_id: string;
+  position: number;
+  parent_id: string | null; // Category ID
+}
+
 const CATEGORY_COLOR: Record<ReleaseCategory, number> = {
   major: 0x5865f2, // Discord blurple
   minor: 0x57f287, // Green
@@ -67,6 +86,96 @@ export async function validateDiscordWebhook(url: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/**
+ * Send notification to a Discord channel using Bot token
+ */
+export async function sendDiscordBotNotification(
+  botToken: string,
+  channelId: string,
+  payload: NotificationPayload,
+): Promise<boolean> {
+  const embed = formatDiscordEmbed(payload);
+
+  const response = await fetch(
+    `${DISCORD_API_BASE}/channels/${channelId}/messages`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bot ${botToken}`,
+      },
+      body: JSON.stringify({ embeds: [embed] }),
+    },
+  );
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Discord API error: ${error}`);
+  }
+
+  return true;
+}
+
+/**
+ * Fetch user's guilds using their OAuth access token
+ */
+export async function fetchUserGuilds(
+  accessToken: string,
+): Promise<DiscordGuild[]> {
+  const response = await fetch(`${DISCORD_API_BASE}/users/@me/guilds`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch user guilds");
+  }
+
+  return response.json() as Promise<DiscordGuild[]>;
+}
+
+/**
+ * Check if bot is in a guild
+ */
+export async function isBotInGuild(
+  botToken: string,
+  guildId: string,
+): Promise<boolean> {
+  const response = await fetch(`${DISCORD_API_BASE}/guilds/${guildId}`, {
+    headers: {
+      Authorization: `Bot ${botToken}`,
+    },
+  });
+
+  return response.ok;
+}
+
+/**
+ * Fetch text channels from a guild (requires bot to be in guild)
+ */
+export async function fetchGuildChannels(
+  botToken: string,
+  guildId: string,
+): Promise<DiscordChannel[]> {
+  const response = await fetch(
+    `${DISCORD_API_BASE}/guilds/${guildId}/channels`,
+    {
+      headers: {
+        Authorization: `Bot ${botToken}`,
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch guild channels");
+  }
+
+  const channels = (await response.json()) as DiscordChannel[];
+
+  return channels.filter((channel) => channel.type === 0);
 }
 
 function formatDiscordEmbed(payload: NotificationPayload): DiscordEmbed {

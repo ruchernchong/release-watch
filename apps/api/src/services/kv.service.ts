@@ -153,7 +153,7 @@ export async function addChannel(
       return existingChannel.chatId === channel.chatId;
     }
     if (existingChannel.type === "discord" && channel.type === "discord") {
-      return existingChannel.webhookUrl === channel.webhookUrl;
+      return existingChannel.channelId === channel.channelId;
     }
     return false;
   });
@@ -176,7 +176,7 @@ export async function removeChannel(
     if (existingChannel.type === "telegram")
       return existingChannel.chatId !== identifier;
     if (existingChannel.type === "discord")
-      return existingChannel.webhookUrl !== identifier;
+      return existingChannel.channelId !== identifier;
     return true;
   });
 
@@ -208,7 +208,7 @@ export async function updateChannelEnabled(
     }
     if (
       existingChannel.type === "discord" &&
-      existingChannel.webhookUrl === identifier
+      existingChannel.channelId === identifier
     ) {
       if (existingChannel.enabled === enabled) return existingChannel;
       changed = true;

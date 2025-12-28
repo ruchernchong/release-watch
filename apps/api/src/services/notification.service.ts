@@ -1,6 +1,6 @@
 import type { ChannelConfig, ChannelType, NotificationPayload } from "../types";
 import type { Env } from "../types/env";
-import { sendDiscordNotification } from "./discord.service";
+import { sendDiscordBotNotification } from "./discord.service";
 import { sendTelegramNotification } from "./telegram.service";
 
 export interface NotificationResult {
@@ -64,7 +64,11 @@ async function sendToChannel(
       break;
 
     case "discord":
-      await sendDiscordNotification(channel.webhookUrl, payload);
+      await sendDiscordBotNotification(
+        env.DISCORD_BOT_TOKEN,
+        channel.channelId,
+        payload,
+      );
       break;
 
     default: {
