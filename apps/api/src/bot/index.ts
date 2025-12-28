@@ -42,8 +42,9 @@ async function fetchAndFormatLatestRelease(
 ): Promise<string | null> {
   try {
     const octokit = createOctokit(env.GITHUB_TOKEN);
-    const { owner, repo: repoName } = parseFullName(repo);
-    const releases = await getLatestReleases(octokit, owner, repoName, 1);
+    const parsed = parseFullName(repo);
+    if (!parsed) return null;
+    const releases = await getLatestReleases(octokit, parsed.owner, parsed.repo, 1);
 
     if (releases.length > 0) {
       return formatLatestRelease(releases[0]);

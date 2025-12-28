@@ -121,7 +121,9 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
             GITHUB_RETRY_CONFIG,
             async () => {
               const octokit = createOctokit(this.env.GITHUB_TOKEN);
-              const { owner, repo } = parseFullName(repoFullName);
+              const parsed = parseFullName(repoFullName);
+              if (!parsed) return null;
+              const { owner, repo } = parsed;
 
               // Try GitHub releases first
               const releases = await getLatestReleases(octokit, owner, repo, 1);

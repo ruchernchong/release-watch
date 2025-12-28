@@ -5,10 +5,12 @@ import {
   userRepos,
   users,
 } from "@release-watch/database";
+import { zValidator } from "@hono/zod-validator";
 import { and, count, desc, eq, ilike, or } from "drizzle-orm";
 import { webhookCallback } from "grammy";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import * as z from "zod";
 import { logger } from "hono/logger";
 import { createBot } from "./bot";
 import { db } from "./db";
@@ -35,14 +37,19 @@ const app = new Hono<{ Bindings: Env }>();
 
 // app.use(logger());
 
+const ALLOWED_ORIGINS = [
+  "http://localhost:3000",
+  "http://localhost:8787",
+  "https://releasewatch.dev",
+  "https://www.releasewatch.dev",
+];
+
 app.use(
   "/*",
   cors({
     origin: (origin) => {
       if (!origin) return origin;
-      if (origin.includes("localhost")) return origin;
-      if (origin.includes("releasewatch.dev")) return origin;
-      return null;
+      return ALLOWED_ORIGINS.includes(origin) ? origin : null;
     },
     credentials: true,
     allowHeaders: ["Authorization", "Content-Type"],
@@ -130,71 +137,81 @@ api.get("/dashboard/stats", async (c) => {
   }
 });
 
-api.get("/dashboard/releases", async (c) => {
-  const user = c.get("user");
-  const limitParam = c.req.query("limit");
-  const limit = limitParam ? Math.min(Number.parseInt(limitParam, 10), 20) : 5;
+api.get(
+  "/dashboard/releases",
+  zValidator(
+    "query",
+    z.object({
+      limit: z.coerce.number().int().min(1).max(20).default(5),
+    }),
+  ),
+  async (c) => {
+    const user = c.get("user");
+    const { limit } = c.req.valid("query");
 
-  try {
-    const database = c.get("db");
-    const octokit = createOctokit(c.env.GITHUB_TOKEN);
+    try {
+      const database = c.get("db");
+      const octokit = createOctokit(c.env.GITHUB_TOKEN);
 
-    const repos = await database.query.userRepos.findMany({
-      where: (userRepos, { eq }) => eq(userRepos.userId, user.sub),
-      columns: { repoName: true },
-      limit: 10,
-    });
+      const repos = await database.query.userRepos.findMany({
+        where: (userRepos, { eq }) => eq(userRepos.userId, user.sub),
+        columns: { repoName: true },
+        limit: 10,
+      });
 
-    const releases = await Promise.all(
-      repos.map(async ({ repoName }) => {
-        try {
-          const { owner, repo } = parseFullName(repoName);
-          const latestReleases = await getLatestReleases(
-            octokit,
-            owner,
-            repo,
-            1,
-          );
+      const releases = await Promise.all(
+        repos.map(async ({ repoName }) => {
+          try {
+            const parsed = parseFullName(repoName);
+            if (!parsed) return null;
+            const { owner, repo } = parsed;
+            const latestReleases = await getLatestReleases(
+              octokit,
+              owner,
+              repo,
+              1,
+            );
 
-          if (latestReleases.length === 0) return null;
+            if (latestReleases.length === 0) return null;
 
-          const release = latestReleases[0];
-          const aiAnalysis = await getCachedAnalysis(
-            c.env.CACHE,
-            repoName,
-            release.tag_name,
-          );
+            const release = latestReleases[0];
+            const aiAnalysis = await getCachedAnalysis(
+              c.env.CACHE,
+              repoName,
+              release.tag_name,
+            );
 
-          return {
-            repoName,
-            tagName: release.tag_name,
-            releaseName: release.name,
-            url: release.html_url,
-            publishedAt: release.published_at,
-            author: release.author?.login ?? null,
-            aiAnalysis,
-          };
-        } catch {
-          return null;
-        }
-      }),
-    );
+            return {
+              repoName,
+              tagName: release.tag_name,
+              releaseName: release.name,
+              url: release.html_url,
+              publishedAt: release.published_at,
+              author: release.author?.login ?? null,
+              aiAnalysis,
+            };
+          } catch {
+            return null;
+          }
+        }),
+      );
 
-    const validReleases = releases
-      .filter((r) => r !== null)
-      .sort((a, b) => {
-        const dateA = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
-        const dateB = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
-        return dateB - dateA;
-      })
-      .slice(0, limit);
+      const validReleases = releases
+        .filter((r) => r !== null)
+        .sort((a, b) => {
+          const dateA = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
+          const dateB = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
+          return dateB - dateA;
+        })
+        .slice(0, limit);
 
-    return c.json({ releases: validReleases });
-  } catch (err) {
-    console.error("Error fetching releases:", err);
-    return c.json({ error: "Failed to fetch releases" }, 500);
-  }
-});
+      return c.json({ releases: validReleases });
+    } catch (err) {
+      console.error("Error fetching releases:", err);
+      return c.json({ error: "Failed to fetch releases" }, 500);
+    }
+  },
+);
 
 api.patch("/integrations/telegram/toggle", async (c) => {
   const user = c.get("user");
@@ -268,7 +285,11 @@ api.post("/repos", async (c) => {
 
   try {
     const octokit = createOctokit(c.env.GITHUB_TOKEN);
-    const { owner, repo } = parseFullName(normalizedRepo);
+    const parsed = parseFullName(normalizedRepo);
+    if (!parsed) {
+      return c.json({ error: "Invalid repository format" }, 400);
+    }
+    const { owner, repo } = parsed;
 
     try {
       await octokit.repos.get({ owner, repo });
@@ -331,54 +352,68 @@ admin.use("*", async (c, next) => {
   await next();
 });
 
-admin.get("/users", async (c) => {
-  const search = c.req.query("search") || "";
-  const limit = Math.min(
-    Number.parseInt(c.req.query("limit") || "20", 10),
-    100,
-  );
-  const offset = Number.parseInt(c.req.query("offset") || "0", 10);
-  const sortOrder = c.req.query("sortOrder") || "desc";
+admin.get(
+  "/users",
+  zValidator(
+    "query",
+    z.object({
+      search: z.string().default(""),
+      limit: z.coerce.number().int().min(1).max(100).default(20),
+      offset: z.coerce.number().int().min(0).default(0),
+      sortOrder: z.enum(["asc", "desc"]).default("desc"),
+    }),
+  ),
+  async (c) => {
+    const { search, limit, offset, sortOrder } = c.req.valid("query");
 
-  try {
-    const database = c.get("db");
+    try {
+      const database = c.get("db");
 
-    const whereClause = search
-      ? or(ilike(users.name, `%${search}%`), ilike(users.email, `%${search}%`))
-      : undefined;
+      const whereClause = search
+        ? or(
+            ilike(users.name, `%${search}%`),
+            ilike(users.email, `%${search}%`),
+          )
+        : undefined;
 
-    const [userList, totalCount] = await Promise.all([
-      database
-        .select({
-          id: users.id,
-          name: users.name,
-          email: users.email,
-          image: users.image,
-          role: users.role,
-          banned: users.banned,
-          banReason: users.banReason,
-          banExpires: users.banExpires,
-          createdAt: users.createdAt,
-          repoCount: database.$count(userRepos, eq(userRepos.userId, users.id)),
-        })
-        .from(users)
-        .where(whereClause)
-        .orderBy(sortOrder === "asc" ? users.createdAt : desc(users.createdAt))
-        .limit(limit)
-        .offset(offset),
-      database
-        .select({ count: count() })
-        .from(users)
-        .where(whereClause)
-        .then((res) => res[0]?.count ?? 0),
-    ]);
+      const [userList, totalCount] = await Promise.all([
+        database
+          .select({
+            id: users.id,
+            name: users.name,
+            email: users.email,
+            image: users.image,
+            role: users.role,
+            banned: users.banned,
+            banReason: users.banReason,
+            banExpires: users.banExpires,
+            createdAt: users.createdAt,
+            repoCount: database.$count(
+              userRepos,
+              eq(userRepos.userId, users.id),
+            ),
+          })
+          .from(users)
+          .where(whereClause)
+          .orderBy(
+            sortOrder === "asc" ? users.createdAt : desc(users.createdAt),
+          )
+          .limit(limit)
+          .offset(offset),
+        database
+          .select({ count: count() })
+          .from(users)
+          .where(whereClause)
+          .then((res) => res[0]?.count ?? 0),
+      ]);
 
-    return c.json({ users: userList, total: totalCount, limit, offset });
-  } catch (err) {
-    console.error("Failed to fetch users:", err);
-    return c.json({ error: "Failed to fetch users" }, 500);
-  }
-});
+      return c.json({ users: userList, total: totalCount, limit, offset });
+    } catch (err) {
+      console.error("Failed to fetch users:", err);
+      return c.json({ error: "Failed to fetch users" }, 500);
+    }
+  },
+);
 
 admin.get("/users/:id", async (c) => {
   const id = c.req.param("id");
@@ -516,41 +551,47 @@ admin.post("/users/:id/ban", async (c) => {
   }
 });
 
-admin.get("/activity", async (c) => {
-  const limit = Math.min(
-    Number.parseInt(c.req.query("limit") || "50", 10),
-    100,
-  );
-  const offset = Number.parseInt(c.req.query("offset") || "0", 10);
+admin.get(
+  "/activity",
+  zValidator(
+    "query",
+    z.object({
+      limit: z.coerce.number().int().min(1).max(100).default(50),
+      offset: z.coerce.number().int().min(0).default(0),
+    }),
+  ),
+  async (c) => {
+    const { limit, offset } = c.req.valid("query");
 
-  try {
-    const database = c.get("db");
+    try {
+      const database = c.get("db");
 
-    const activityLogs = await database
-      .select({
-        id: sessions.id,
-        userId: sessions.userId,
-        userName: users.name,
-        userEmail: users.email,
-        userImage: users.image,
-        ipAddress: sessions.ipAddress,
-        userAgent: sessions.userAgent,
-        createdAt: sessions.createdAt,
-        expiresAt: sessions.expiresAt,
-        impersonatedBy: sessions.impersonatedBy,
-      })
-      .from(sessions)
-      .leftJoin(users, eq(sessions.userId, users.id))
-      .orderBy(desc(sessions.createdAt))
-      .limit(limit)
-      .offset(offset);
+      const activityLogs = await database
+        .select({
+          id: sessions.id,
+          userId: sessions.userId,
+          userName: users.name,
+          userEmail: users.email,
+          userImage: users.image,
+          ipAddress: sessions.ipAddress,
+          userAgent: sessions.userAgent,
+          createdAt: sessions.createdAt,
+          expiresAt: sessions.expiresAt,
+          impersonatedBy: sessions.impersonatedBy,
+        })
+        .from(sessions)
+        .leftJoin(users, eq(sessions.userId, users.id))
+        .orderBy(desc(sessions.createdAt))
+        .limit(limit)
+        .offset(offset);
 
-    return c.json({ activity: activityLogs, limit, offset });
-  } catch (err) {
-    console.error("Failed to fetch activity logs:", err);
-    return c.json({ error: "Failed to fetch activity logs" }, 500);
-  }
-});
+      return c.json({ activity: activityLogs, limit, offset });
+    } catch (err) {
+      console.error("Failed to fetch activity logs:", err);
+      return c.json({ error: "Failed to fetch activity logs" }, 500);
+    }
+  },
+);
 
 admin.get("/stats", async (c) => {
   const stats = await getSystemStats(c.env);

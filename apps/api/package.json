@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@hono/zod-validator": "^0.7.6",
     "@octokit/rest": "^22.0.1",
     "@release-watch/database": "workspace:*",
     "@release-watch/types": "workspace:*",
@@ -18,7 +19,8 @@
     "grammy": "^1.38.4",
     "hono": "^4.11.2",
     "jose": "^6.1.3",
-    "postgres": "^3.4.7"
+    "postgres": "^3.4.7",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20251225.0",

@@ -29,11 +29,11 @@ export async function getLatestReleases(
   return response.data.filter((release) => !release.draft);
 }
 
-export function parseFullName(fullName: string): {
-  owner: string;
-  repo: string;
-} {
-  const [owner, repo] = fullName.split("/");
+export function parseFullName(
+  fullName: string,
+): { owner: string; repo: string } | null {
+  const [owner, repo, ...rest] = fullName.split("/");
+  if (!owner || !repo || rest.length > 0) return null;
   return { owner, repo };
 }
 
