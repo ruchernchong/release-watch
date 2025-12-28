@@ -98,7 +98,11 @@ const highlights = [
   },
 ];
 
-export function PricingCards() {
+interface PricingCardsProps {
+  onCheckout?: () => void;
+}
+
+export function PricingCards({ onCheckout }: PricingCardsProps = {}) {
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly");
   const currentPricing = pricing[billingPeriod];
 
@@ -196,10 +200,13 @@ export function PricingCards() {
                 asChild
               >
                 {tier.href ? (
-                  <Link href={tier.href as "/login"}>{tier.cta}</Link>
+                  <Link href={tier.href as "/login"} onClick={onCheckout}>
+                    {tier.cta}
+                  </Link>
                 ) : (
                   <a
                     href={`/api/auth/checkout/pro-${billingPeriod === "annual" ? "annual" : "monthly"}`}
+                    onClick={onCheckout}
                   >
                     {tier.cta}
                   </a>

@@ -1,7 +1,7 @@
 "use client";
 
-import { CreditCard, Crown, ExternalLink, Loader2, Sparkles } from "lucide-react";
-import Link from "next/link";
+import { CreditCard, Crown, ExternalLink, Sparkles } from "lucide-react";
+import { PricingDialog } from "@/components/pricing/pricing-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -137,9 +137,9 @@ export function SubscriptionSection() {
                 </div>
               </div>
               <div className="flex gap-3">
-                <Button asChild>
-                  <Link href="/pricing">View Plans</Link>
-                </Button>
+                <PricingDialog>
+                  <Button>View Plans</Button>
+                </PricingDialog>
                 <Button variant="outline" asChild>
                   <a href="/api/auth/checkout/pro-monthly">
                     Subscribe — $3/mo
