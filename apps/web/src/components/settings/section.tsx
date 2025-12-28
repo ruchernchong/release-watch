@@ -93,7 +93,7 @@ export function SettingsSection() {
         <Card className="overflow-hidden">
           <CardHeader className="border-b bg-muted/30">
             <div className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary/20 to-primary/5">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-linear-to-br from-primary/20 to-primary/5">
                 <User className="size-5 text-primary" />
               </div>
               <div className="flex flex-col gap-2">
@@ -154,7 +154,7 @@ export function SettingsSection() {
         <Card>
           <CardHeader className="border-b bg-muted/30">
             <div className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/5">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-linear-to-br from-amber-500/20 to-orange-500/5">
                 <Bell className="size-5 text-amber-600 dark:text-amber-400" />
               </div>
               <div className="flex flex-col gap-2">
@@ -202,7 +202,7 @@ export function SettingsSection() {
         <Card>
           <CardHeader className="border-b bg-muted/30">
             <div className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500/20 to-indigo-500/5">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-linear-to-br from-violet-500/20 to-indigo-500/5">
                 <Sun className="size-5 text-violet-600 dark:hidden dark:text-violet-400" />
                 <Moon className="hidden size-5 text-violet-400 dark:block" />
               </div>
@@ -285,7 +285,7 @@ export function SettingsSection() {
         <Card>
           <CardHeader className="border-b bg-muted/30">
             <div className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500/20 to-teal-500/5">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-linear-to-br from-emerald-500/20 to-teal-500/5">
                 <Shield className="size-5 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div className="flex flex-col gap-2">

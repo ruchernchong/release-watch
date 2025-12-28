@@ -13,8 +13,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { authClient } from "@/lib/auth-client";
 import { useUserTier } from "@/hooks/use-user-tier";
+import { authClient } from "@/lib/auth-client";
 
 export function SubscriptionSection() {
   const { tier, isLoading, billingPeriod, currentPeriodEnd } = useUserTier();
@@ -96,7 +96,8 @@ export function SubscriptionSection() {
                 {tier === "pro" ? (
                   <div className="flex flex-col gap-1 text-muted-foreground text-sm">
                     <p>
-                      Billed {billingPeriod === "annual" ? "annually" : "monthly"}
+                      Billed{" "}
+                      {billingPeriod === "annual" ? "annually" : "monthly"}
                     </p>
                     {currentPeriodEnd && (
                       <p>

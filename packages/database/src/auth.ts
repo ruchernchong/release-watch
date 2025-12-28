@@ -61,6 +61,7 @@ export const auth = betterAuth({
               slug: "pro-annual",
             },
           ],
+          successUrl: "/dashboard/settings?checkout=success",
           authenticatedUsersOnly: true,
         }),
         portal(),
