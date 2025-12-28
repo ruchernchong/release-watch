@@ -31,6 +31,7 @@ Browser → Hono API (with JWT) → Database
 **Key Files:**
 - `apps/api/src/middleware/auth.ts` - JWT verification middleware
 - `apps/web/src/lib/api-client.ts` - Frontend API client with JWT handling
+- `apps/web/src/proxy.ts` - Route protection (Next.js 16 proxy, replaces middleware)
 - `packages/database/src/auth.ts` - BetterAuth config with JWT plugin
 
 ## Commands
@@ -46,7 +47,37 @@ pnpm db:migrate           # Run migrations
 pnpm auth:generate        # Regenerate BetterAuth schema
 ```
 
+## Environment Variables
+
+**apps/api** (Cloudflare Secrets + .env):
+- `GITHUB_TOKEN` - GitHub API access
+- `TELEGRAM_BOT_TOKEN` - Telegram bot token
+- `DASHBOARD_API_KEY` - Admin API key
+- `JWKS_URL` - BetterAuth JWKS endpoint (e.g., `https://releasewatch.dev/api/auth/jwks`)
+- `DISCORD_WEBHOOK_URL` - Optional Discord notifications
+- `DEBUG` - Optional debug mode
+
+**apps/web** (.env):
+- `DATABASE_URL` - Neon Postgres connection string
+- `BETTER_AUTH_SECRET` - Auth secret (generate random string)
+- `BETTER_AUTH_URL` - Auth callback URL (e.g., `http://localhost:3000`)
+- `GITHUB_CLIENT_ID` - GitHub OAuth client ID
+- `GITHUB_CLIENT_SECRET` - GitHub OAuth client secret
+- `GOOGLE_CLIENT_ID` - Google OAuth client ID
+- `GOOGLE_CLIENT_SECRET` - Google OAuth client secret
+- `NEXT_PUBLIC_API_URL` - Hono API URL (e.g., `https://api.releasewatch.dev`)
+- `POLAR_ACCESS_TOKEN` - Polar.sh access token (optional)
+- `POLAR_WEBHOOK_SECRET` - Polar.sh webhook secret (optional)
+- `POLAR_SERVER` - Polar.sh server (`"sandbox"` or `"production"`)
+
+**packages/database** (.env):
+- `DATABASE_URL` - Neon Postgres connection string
+- OAuth secrets (same as apps/web)
+- Polar secrets (same as apps/web)
+
 ## Code Standards
 
 - **Linter/Formatter:** Biome (double quotes, space indent, organized imports)
 - **Commits:** Conventional commits (commitlint + husky)
+- **Package Manager:** pnpm 10.22.0 (workspaces + catalog)
+- **Monorepo:** Turborepo for task orchestration
