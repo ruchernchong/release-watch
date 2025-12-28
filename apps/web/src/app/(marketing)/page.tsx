@@ -1,5 +1,6 @@
 import { Bell, Github, MessageCircle, Webhook } from "lucide-react";
 import Link from "next/link";
+import { GitHubStars } from "@/components/marketing/github-stars";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -90,7 +91,8 @@ export default function Home() {
       </main>
 
       <footer className="border-t">
-        <div className="container mx-auto flex items-center justify-center px-4 py-8 text-muted-foreground text-sm">
+        <div className="container mx-auto flex flex-col items-center justify-center gap-4 px-4 py-8 text-muted-foreground text-sm">
+          <GitHubStars />
           <p>Built with Cloudflare Workers, Next.js, and Neon PostgreSQL.</p>
         </div>
       </footer>
