@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  Bell,
-  Download,
-  Moon,
-  Shield,
-  Sun,
-  Trash2,
-  User,
-  Zap,
-} from "lucide-react";
+import { Bell, Download, Shield, Trash2, User, Zap } from "lucide-react";
 import { useState } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -73,7 +64,6 @@ export function SettingsSection() {
   const { data: session } = useSession();
   const user = session?.user;
 
-  const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
   const [releaseNotifications, setReleaseNotifications] = useState(true);
   const [weeklyDigest, setWeeklyDigest] = useState(false);
   const [aiSummaries, setAiSummaries] = useState(true);
@@ -191,89 +181,6 @@ export function SettingsSection() {
             >
               <Switch checked={aiSummaries} onCheckedChange={setAiSummaries} />
             </SettingRow>
-          </CardContent>
-        </Card>
-
-        {/* Appearance Section */}
-        <Card>
-          <CardHeader className="border-b bg-muted/30">
-            <div className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500/20 to-indigo-500/5">
-                <Sun className="size-5 text-violet-600 dark:hidden dark:text-violet-400" />
-                <Moon className="hidden size-5 text-violet-400 dark:block" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <CardTitle>Appearance</CardTitle>
-                <CardDescription>
-                  Customize how ReleaseWatch looks on your device.
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="flex flex-col gap-4">
-              <Label>Theme preference</Label>
-              <div className="grid grid-cols-3 gap-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTheme("light");
-                    document.documentElement.classList.remove("dark");
-                  }}
-                  className={`group flex flex-col items-center gap-4 rounded-xl border-2 p-4 transition-all hover:border-primary/50 ${
-                    theme === "light"
-                      ? "border-primary bg-primary/5"
-                      : "border-transparent bg-muted/50"
-                  }`}
-                >
-                  <div className="flex size-12 items-center justify-center rounded-full bg-amber-100 transition-transform group-hover:scale-110 dark:bg-amber-900/30">
-                    <Sun className="size-6 text-amber-600 dark:text-amber-400" />
-                  </div>
-                  <span className="font-medium text-sm">Light</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTheme("dark");
-                    document.documentElement.classList.add("dark");
-                  }}
-                  className={`group flex flex-col items-center gap-4 rounded-xl border-2 p-4 transition-all hover:border-primary/50 ${
-                    theme === "dark"
-                      ? "border-primary bg-primary/5"
-                      : "border-transparent bg-muted/50"
-                  }`}
-                >
-                  <div className="flex size-12 items-center justify-center rounded-full bg-slate-800 transition-transform group-hover:scale-110 dark:bg-slate-700">
-                    <Moon className="size-6 text-slate-300" />
-                  </div>
-                  <span className="font-medium text-sm">Dark</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTheme("system");
-                    const prefersDark = window.matchMedia(
-                      "(prefers-color-scheme: dark)",
-                    ).matches;
-                    document.documentElement.classList.toggle(
-                      "dark",
-                      prefersDark,
-                    );
-                  }}
-                  className={`group flex flex-col items-center gap-4 rounded-xl border-2 p-4 transition-all hover:border-primary/50 ${
-                    theme === "system"
-                      ? "border-primary bg-primary/5"
-                      : "border-transparent bg-muted/50"
-                  }`}
-                >
-                  <div className="flex size-12 items-center justify-center rounded-full bg-muted transition-transform group-hover:scale-110">
-                    <Sun className="size-4 text-amber-600" />
-                    <Moon className="size-4 text-slate-500 dark:text-slate-300" />
-                  </div>
-                  <span className="font-medium text-sm">System</span>
-                </button>
-              </div>
-            </div>
           </CardContent>
         </Card>
 
