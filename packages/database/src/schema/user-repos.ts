@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm";
 import {
+  boolean,
   index,
   pgTable,
   text,
@@ -18,6 +19,7 @@ export const userRepos = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     repoName: text().notNull(),
     lastNotifiedTag: text(),
+    paused: boolean().default(false).notNull(),
     createdAt: timestamp().defaultNow().notNull(),
   },
   (table) => [

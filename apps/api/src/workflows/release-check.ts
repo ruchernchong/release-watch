@@ -3,6 +3,9 @@ import {
   type WorkflowEvent,
   type WorkflowStep,
 } from "cloudflare:workers";
+import { userRepos } from "@release-watch/database";
+import { eq } from "drizzle-orm";
+import { db } from "../db";
 import { type AIAnalysisResult, analyzeRelease } from "../services/ai.service";
 import {
   type ChangelogEntry,
@@ -16,6 +19,7 @@ import {
   getAllTrackedRepos,
   getCachedAnalysis,
   getLastNotifiedTag,
+  getUserIdByTelegramChat,
   setCachedAnalysis,
   setLastNotifiedTag,
 } from "../services/kv.service";
@@ -84,6 +88,29 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
       async () => {
         const reposMap = await getAllTrackedRepos(this.env.REPOS);
         return Array.from(reposMap.entries());
+      },
+    );
+
+    // Fetch paused repos from database to filter them out
+    const pausedReposSet = await step.do(
+      "fetch-paused-repos",
+      KV_RETRY_CONFIG,
+      async () => {
+        const database = db(this.env.HYPERDRIVE);
+        const pausedRepos = await database
+          .select({ repoName: userRepos.repoName, userId: userRepos.userId })
+          .from(userRepos)
+          .where(eq(userRepos.paused, true));
+
+        // Build a map of userId -> Set<repoName> for efficient lookup
+        const pausedMap = new Map<string, Set<string>>();
+        for (const { userId, repoName } of pausedRepos) {
+          if (!pausedMap.has(userId)) {
+            pausedMap.set(userId, new Set());
+          }
+          pausedMap.get(userId)?.add(repoName);
+        }
+        return pausedMap;
       },
     );
 
@@ -225,6 +252,30 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
         }
 
         for (const chatId of chatIds) {
+          // Check if this repo is paused for this user
+          const isPaused = await step.do(
+            `check-paused:${repoFullName}:${chatId}`,
+            KV_RETRY_CONFIG,
+            async () => {
+              const userId = await getUserIdByTelegramChat(
+                this.env.CHANNELS,
+                chatId,
+              );
+              if (!userId) return false;
+              return (
+                pausedReposSet.has(userId) &&
+                (pausedReposSet.get(userId)?.has(repoFullName) ?? false)
+              );
+            },
+          );
+
+          if (isPaused) {
+            console.log(
+              `[Workflow] Skipping paused repo ${repoFullName} for chat ${chatId}`,
+            );
+            continue;
+          }
+
           const lastNotified = await step.do(
             `check:${repoFullName}:${chatId}`,
             KV_RETRY_CONFIG,

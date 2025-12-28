@@ -25,6 +25,38 @@ pnpm typecheck  # Type-check
 - Gap values: even numbers (`gap-2`, `gap-4`, `gap-6`)
 - Use `size-*` for square dimensions instead of `h-*` + `w-*`
 
+## Code Style Guidelines
+
+**Descriptive Variable Names:**
+- Use descriptive variable names in callbacks and arrow functions
+- Avoid single-letter or overly abbreviated names like `r`, `p`, `x`
+- Short descriptive names are fine: `prev`, `accum`, `curr`
+- Prefer context-aware names: `previousRepos`, `currentRepo`, `repoToDelete`
+
+Examples:
+
+```tsx
+// Bad
+setRepos((prev) => prev.filter((r) => r.id !== id));
+
+// Good
+setRepos((previousRepos) =>
+  previousRepos.filter((repo) => repo.id !== id)
+);
+
+// Bad
+setRepos((prev) =>
+  prev.map((r) => r.id === id ? updated : r)
+);
+
+// Good
+setRepos((previousRepos) =>
+  previousRepos.map((currentRepo) =>
+    currentRepo.id === id ? updatedRepo : currentRepo
+  )
+);
+```
+
 ## Generated Files (DO NOT MODIFY)
 
 - `src/components/ui/*` - shadcn/ui components

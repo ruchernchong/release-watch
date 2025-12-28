@@ -342,6 +342,77 @@ api.delete("/repos/:id", async (c) => {
   }
 });
 
+api.patch("/repos/:id/pause", async (c) => {
+  const user = c.get("user");
+  const id = c.req.param("id");
+
+  let body: { paused: boolean };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "Invalid JSON body" }, 400);
+  }
+
+  const { paused } = body;
+
+  if (typeof paused !== "boolean") {
+    return c.json({ error: "paused must be a boolean" }, 400);
+  }
+
+  try {
+    const database = c.get("db");
+
+    // First verify the repo exists and belongs to the user
+    const [repo] = await database
+      .select()
+      .from(userRepos)
+      .where(and(eq(userRepos.id, id), eq(userRepos.userId, user.sub)))
+      .limit(1);
+
+    if (!repo) {
+      return c.json({ error: "Repo not found" }, 404);
+    }
+
+    // If unpausing, update lastNotifiedTag to latest release to avoid spam
+    const updateData: { paused: boolean; lastNotifiedTag?: string } = {
+      paused,
+    };
+
+    if (!paused) {
+      try {
+        const octokit = createOctokit(c.env.GITHUB_TOKEN);
+        const parsed = parseFullName(repo.repoName);
+        if (parsed) {
+          const { owner, repo: repoName } = parsed;
+          const latestReleases = await getLatestReleases(
+            octokit,
+            owner,
+            repoName,
+            1,
+          );
+          if (latestReleases.length > 0) {
+            updateData.lastNotifiedTag = latestReleases[0].tag_name;
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch latest release when unpausing:", err);
+        // Continue anyway - we'll just not update lastNotifiedTag
+      }
+    }
+
+    const [updated] = await database
+      .update(userRepos)
+      .set(updateData)
+      .where(and(eq(userRepos.id, id), eq(userRepos.userId, user.sub)))
+      .returning();
+
+    return c.json({ repo: updated });
+  } catch (err) {
+    console.error("Failed to update repo pause status:", err);
+    return c.json({ error: "Failed to update repo pause status" }, 500);
+  }
+});
+
 const admin = new Hono<AuthEnv>();
 
 admin.use("*", jwtAuth);

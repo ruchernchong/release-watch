@@ -18,6 +18,8 @@ import {
   ExternalLink,
   Loader2,
   MoreHorizontal,
+  Pause,
+  Play,
   Trash2,
 } from "lucide-react";
 import * as React from "react";
@@ -56,6 +58,7 @@ interface Repo {
   id: string;
   repoName: string;
   lastNotifiedTag: string | null;
+  paused: boolean;
   createdAt: string;
 }
 
@@ -69,6 +72,7 @@ function formatDate(dateString: string): string {
 
 function createColumns(
   onRequestDelete: (repo: Repo) => void,
+  onTogglePause: (repo: Repo) => void,
 ): ColumnDef<Repo>[] {
   return [
     {
@@ -122,6 +126,24 @@ function createColumns(
       },
     },
     {
+      accessorKey: "paused",
+      header: "Status",
+      cell: ({ row }) => {
+        const isPaused = row.getValue("paused") as boolean;
+        return isPaused ? (
+          <Badge variant="secondary" className="gap-1">
+            <Pause className="size-3" />
+            Paused
+          </Badge>
+        ) : (
+          <Badge variant="default" className="gap-1">
+            <Play className="size-3" />
+            Active
+          </Badge>
+        );
+      },
+    },
+    {
       accessorKey: "lastNotifiedTag",
       header: "Last Release",
       cell: ({ row }) => {
@@ -163,6 +185,19 @@ function createColumns(
               >
                 <ExternalLink className="size-4" />
                 View on GitHub
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onTogglePause(repo)}>
+                {repo.paused ? (
+                  <>
+                    <Play className="size-4" />
+                    Resume tracking
+                  </>
+                ) : (
+                  <>
+                    <Pause className="size-4" />
+                    Pause tracking
+                  </>
+                )}
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="text-destructive"
@@ -211,7 +246,9 @@ export function ReposTable() {
   const handleDelete = React.useCallback(async (id: string) => {
     try {
       await api.delete(`/repos/${id}`);
-      setRepos((prev) => prev.filter((repo) => repo.id !== id));
+      setRepos((previousRepos) =>
+        previousRepos.filter((repo) => repo.id !== id),
+      );
       setRepoToDelete(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete repo");
@@ -219,7 +256,28 @@ export function ReposTable() {
     }
   }, []);
 
-  const columns = React.useMemo(() => createColumns(setRepoToDelete), []);
+  const handleTogglePause = React.useCallback(async (repoToToggle: Repo) => {
+    try {
+      const updatedRepo = await api.patch<{ repo: Repo }>(
+        `/repos/${repoToToggle.id}/pause`,
+        { paused: !repoToToggle.paused },
+      );
+      setRepos((previousRepos) =>
+        previousRepos.map((currentRepo) =>
+          currentRepo.id === repoToToggle.id ? updatedRepo.repo : currentRepo,
+        ),
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to update repo status",
+      );
+    }
+  }, []);
+
+  const columns = React.useMemo(
+    () => createColumns(setRepoToDelete, handleTogglePause),
+    [handleTogglePause],
+  );
 
   const table = useReactTable({
     data: repos,
