@@ -100,9 +100,10 @@ const highlights = [
 
 interface PricingCardsProps {
   onCheckout?: () => void;
+  compact?: boolean;
 }
 
-export function PricingCards({ onCheckout }: PricingCardsProps = {}) {
+export function PricingCards({ onCheckout, compact = false }: PricingCardsProps = {}) {
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly");
   const currentPricing = pricing[billingPeriod];
 
@@ -247,28 +248,30 @@ export function PricingCards({ onCheckout }: PricingCardsProps = {}) {
         ))}
       </div>
 
-      {/* Pro Highlights */}
-      <div className="mx-auto w-full">
-        <h2 className="mb-8 text-center font-bold text-2xl">
-          Everything in Pro
-        </h2>
+      {/* Pro Highlights - hidden in compact mode */}
+      {!compact && (
+        <div className="mx-auto w-full">
+          <h2 className="mb-8 text-center font-bold text-2xl">
+            Everything in Pro
+          </h2>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {highlights.map((highlight) => (
-            <Card key={highlight.title}>
-              <CardHeader>
-                <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
-                  <highlight.icon className="size-5 text-primary" />
-                </div>
-                <CardTitle className="text-base whitespace-nowrap">
-                  {highlight.title}
-                </CardTitle>
-                <CardDescription>{highlight.description}</CardDescription>
-              </CardHeader>
-            </Card>
-          ))}
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {highlights.map((highlight) => (
+              <Card key={highlight.title}>
+                <CardHeader>
+                  <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
+                    <highlight.icon className="size-5 text-primary" />
+                  </div>
+                  <CardTitle className="text-base whitespace-nowrap">
+                    {highlight.title}
+                  </CardTitle>
+                  <CardDescription>{highlight.description}</CardDescription>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
