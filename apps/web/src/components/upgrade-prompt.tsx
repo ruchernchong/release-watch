@@ -49,7 +49,9 @@ export function UpgradePrompt({
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <h4 className="font-medium">
-              {isAtLimit ? `${label} limit reached` : `Approaching ${label} limit`}
+              {isAtLimit
+                ? `${label} limit reached`
+                : `Approaching ${label} limit`}
             </h4>
             <Badge
               variant={isAtLimit ? "destructive" : "secondary"}

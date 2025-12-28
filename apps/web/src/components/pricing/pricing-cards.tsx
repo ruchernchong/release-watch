@@ -104,7 +104,10 @@ interface PricingCardsProps {
   compact?: boolean;
 }
 
-export function PricingCards({ onCheckout, compact = false }: PricingCardsProps = {}) {
+export function PricingCards({
+  onCheckout,
+  compact = false,
+}: PricingCardsProps = {}) {
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly");
   const [isPending, startTransition] = useTransition();
   const currentPricing = pricing[billingPeriod];
@@ -193,11 +196,18 @@ export function PricingCards({ onCheckout, compact = false }: PricingCardsProps 
                       variant="secondary"
                       className="w-fit bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                     >
-                      Launch Price — Save {Math.round((1 - currentPricing.price / currentPricing.regularPrice) * 100)}%
+                      Launch Price — Save{" "}
+                      {Math.round(
+                        (1 -
+                          currentPricing.price / currentPricing.regularPrice) *
+                          100,
+                      )}
+                      %
                     </Badge>
                     {billingPeriod === "annual" && (
                       <p className="text-emerald-600 text-sm dark:text-emerald-400">
-                        ${pricing.annual.monthlyEquivalent}/mo when billed annually
+                        ${pricing.annual.monthlyEquivalent}/mo when billed
+                        annually
                       </p>
                     )}
                   </div>
@@ -206,12 +216,7 @@ export function PricingCards({ onCheckout, compact = false }: PricingCardsProps 
 
               {/* CTA */}
               {tier.href ? (
-                <Button
-                  size="lg"
-                  className="w-full"
-                  variant="outline"
-                  asChild
-                >
+                <Button size="lg" className="w-full" variant="outline" asChild>
                   <Link href={tier.href as "/login"}>{tier.cta}</Link>
                 </Button>
               ) : (

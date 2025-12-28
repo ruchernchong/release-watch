@@ -37,7 +37,9 @@ export default async function DashboardLayout({
               <UserMenu />
             </div>
           </header>
-          <main className="flex flex-1 flex-col gap-6 px-4 pb-6">{children}</main>
+          <main className="flex flex-1 flex-col gap-6 px-4 pb-6">
+            {children}
+          </main>
         </SidebarInset>
       </SidebarProvider>
     </NuqsAdapter>

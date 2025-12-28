@@ -48,8 +48,8 @@ export function SubscriptionSection() {
     ? Math.max(
         0,
         Math.ceil(
-          (currentPeriodEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-        )
+          (currentPeriodEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+        ),
       )
     : 0;
 

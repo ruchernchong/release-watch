@@ -45,7 +45,7 @@ export function ThemeToggle() {
               "absolute size-4 transition-all duration-300 ease-out",
               isDark
                 ? "rotate-90 scale-0 opacity-0"
-                : "rotate-0 scale-100 opacity-100"
+                : "rotate-0 scale-100 opacity-100",
             )}
           />
           <Moon
@@ -53,7 +53,7 @@ export function ThemeToggle() {
               "absolute size-4 transition-all duration-300 ease-out",
               isDark
                 ? "rotate-0 scale-100 opacity-100"
-                : "-rotate-90 scale-0 opacity-0"
+                : "-rotate-90 scale-0 opacity-0",
             )}
           />
           <span className="sr-only">Toggle theme</span>
