@@ -21,14 +21,12 @@ description: ReleaseWatch subscription tiers, pricing strategy, and Pro feature 
 ## Pricing Strategy
 
 **Launch (Early Adopters):**
-- Monthly: $X/mo (locked in forever)
-- Annual: $Y/yr
+- Monthly: $3/mo (locked in forever)
+- Annual: $30/yr (2 months free)
 
 **Regular (After Launch):**
-- Monthly: $X+2/mo
-- Annual: $Y+18/yr
-
-Pricing TBD - finalize after core features are built.
+- Monthly: $5/mo
+- Annual: $50/yr (2 months free)
 
 ## Grandfathering
 
@@ -84,9 +82,18 @@ Apply middleware to:
 
 ## Polar Integration
 
-Products to create:
-- `pro-monthly` (launch price)
-- `pro-annual` (launch price)
+Environment variables (set per environment):
+- `POLAR_SERVER` - `sandbox` or `production`
+- `POLAR_PRODUCT_ID_PRO_MONTHLY` - Product ID for monthly plan
+- `POLAR_PRODUCT_ID_PRO_ANNUAL` - Product ID for annual plan
+
+Sandbox Product IDs:
+- `pro-monthly`: `c43ab049-bafd-45ff-a48c-c6dbc3167411`
+- `pro-annual`: `b1bc732e-3bf3-4672-8e0a-e34267202903`
+
+Checkout URLs:
+- `/api/auth/checkout/pro-monthly`
+- `/api/auth/checkout/pro-annual`
 
 Webhook handlers:
 - `onSubscriptionCreated` → Update user tier to 'pro'
