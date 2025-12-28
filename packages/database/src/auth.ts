@@ -78,6 +78,11 @@ export const auth = betterAuth({
     nextCookies(), // This must always be the last in the array
   ],
   socialProviders: {
+    discord: {
+      clientId: process.env.DISCORD_CLIENT_ID as string,
+      clientSecret: process.env.DISCORD_CLIENT_SECRET as string,
+      scope: ["identify", "guilds"],
+    },
     github: {
       clientId: process.env.GITHUB_CLIENT_ID as string,
       clientSecret: process.env.GITHUB_CLIENT_SECRET as string,

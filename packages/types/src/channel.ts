@@ -14,7 +14,10 @@ export interface TelegramChannelConfig {
 
 export interface DiscordChannelConfig {
   type: "discord";
-  webhookUrl: string;
+  guildId: string;
+  guildName: string;
+  channelId: string;
+  channelName: string;
   enabled: boolean;
   addedAt: ISODateString;
 }

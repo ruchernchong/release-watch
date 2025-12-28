@@ -1,4 +1,6 @@
 import {
+  accounts,
+  accountsRelations,
   userChannels,
   userChannelsRelations,
   userRepos,
@@ -8,6 +10,8 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
 const schema = {
+  accounts,
+  accountsRelations,
   userRepos,
   userReposRelations,
   userChannels,
