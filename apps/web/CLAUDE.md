@@ -27,6 +27,11 @@ pnpm typecheck  # Type-check
 
 ## Code Style Guidelines
 
+**Server Components by Default:**
+- Keep `page.tsx` files as Server Components (no `"use client"` directive)
+- Extract interactive parts (useState, useEffect, event handlers) to separate client components
+- Place client components in `/components` directory with `"use client"` directive
+
 **Descriptive Variable Names:**
 - Use descriptive variable names in callbacks and arrow functions
 - Avoid single-letter or overly abbreviated names like `r`, `p`, `x`

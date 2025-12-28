@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
+import { SubscriptionSection } from "@/components/settings/subscription-section";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -145,6 +146,9 @@ export function SettingsSection() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Subscription Section */}
+        <SubscriptionSection />
 
         {/* Notifications Section */}
         <Card>

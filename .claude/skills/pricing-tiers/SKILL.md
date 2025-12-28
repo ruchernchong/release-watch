@@ -15,7 +15,7 @@ description: ReleaseWatch subscription tiers, pricing strategy, and Pro feature 
 | Webhooks | 1 | 5 |
 | Check frequency | 15 min | 15 min |
 | Release type filters | Yes | Yes |
-| Notification history | - | 30 days |
+| Notification history | 7 days | 90 days |
 | GitHub stars import | - | Yes |
 
 ## Pricing Strategy
@@ -40,7 +40,7 @@ Polar handles automatically:
 ### Notification History
 - Store notification events in `notification_history` table
 - `GET /notifications/history` endpoint (Pro only)
-- 30-day retention
+- 90-day retention
 - UI: `/dashboard/history`
 
 ### Webhook Integrations
