@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { authClient, useSession } from "@/lib/auth-client";
 
 export type UserTier = "free" | "pro";
+export type SubscriptionStatus = "active" | "canceled" | "past_due" | "none";
 
 export interface TierLimits {
   maxRepos: number;
@@ -14,11 +15,13 @@ export interface TierLimits {
 export interface UserTierInfo {
   tier: UserTier;
   limits: TierLimits;
-  isLoading: boolean;
+  isPending: boolean;
   error: string | null;
   billingPeriod?: "monthly" | "annual";
   currentPeriodEnd?: Date;
-  refetch: () => Promise<void>;
+  subscriptionStatus: SubscriptionStatus;
+  cancelAtPeriodEnd: boolean;
+  refetch: () => void;
 }
 
 const TIER_LIMITS: Record<UserTier, TierLimits> = {
@@ -40,59 +43,60 @@ const TIER_LIMITS: Record<UserTier, TierLimits> = {
 
 export function useUserTier(): UserTierInfo {
   const { data: session } = useSession();
+  const [isPending, startTransition] = useTransition();
   const [tier, setTier] = useState<UserTier>("free");
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [billingPeriod, setBillingPeriod] = useState<
     "monthly" | "annual" | undefined
   >();
   const [currentPeriodEnd, setCurrentPeriodEnd] = useState<Date | undefined>();
+  const [subscriptionStatus, setSubscriptionStatus] =
+    useState<SubscriptionStatus>("none");
+  const [cancelAtPeriodEnd, setCancelAtPeriodEnd] = useState(false);
 
-  const fetchSubscription = useCallback(async () => {
+  const fetchSubscription = useCallback(() => {
     if (!session?.user) {
       setTier("free");
-      setIsLoading(false);
       return;
     }
 
-    try {
-      setIsLoading(true);
-      setError(null);
+    startTransition(async () => {
+      try {
+        setError(null);
 
-      const { data: subscriptions } =
-        await authClient.customer.subscriptions.list({
-          query: {
-            page: 1,
-            limit: 10,
-            active: true,
-          },
-        });
+        // Use customer.state() for comprehensive subscription info
+        const { data: customerState } = await authClient.customer.state();
 
-      if (subscriptions && subscriptions.length > 0) {
-        const activeSubscription = subscriptions[0];
-        setTier("pro");
+        const activeSubscriptions = customerState?.activeSubscriptions ?? [];
+        const activeSubscription = activeSubscriptions[0];
 
-        if (activeSubscription.recurringInterval === "year") {
-          setBillingPeriod("annual");
+        if (activeSubscription) {
+          const isActive = activeSubscription.status === "active";
+          const isCanceling = activeSubscription.cancelAtPeriodEnd === true;
+
+          setTier("pro");
+          setSubscriptionStatus(isActive ? "active" : "none");
+          setCancelAtPeriodEnd(isCanceling);
+
+          const interval = activeSubscription.recurringInterval;
+          setBillingPeriod(interval === "year" ? "annual" : "monthly");
+
+          if (activeSubscription.currentPeriodEnd) {
+            setCurrentPeriodEnd(new Date(activeSubscription.currentPeriodEnd));
+          }
         } else {
-          setBillingPeriod("monthly");
+          setTier("free");
+          setSubscriptionStatus("none");
+          setCancelAtPeriodEnd(false);
+          setBillingPeriod(undefined);
+          setCurrentPeriodEnd(undefined);
         }
-
-        if (activeSubscription.currentPeriodEnd) {
-          setCurrentPeriodEnd(new Date(activeSubscription.currentPeriodEnd));
-        }
-      } else {
+      } catch (err) {
+        console.error("Failed to fetch subscription:", err);
+        setError("Failed to load subscription status");
         setTier("free");
-        setBillingPeriod(undefined);
-        setCurrentPeriodEnd(undefined);
       }
-    } catch (err) {
-      console.error("Failed to fetch subscription:", err);
-      setError("Failed to load subscription status");
-      setTier("free");
-    } finally {
-      setIsLoading(false);
-    }
+    });
   }, [session?.user]);
 
   useEffect(() => {
@@ -102,10 +106,12 @@ export function useUserTier(): UserTierInfo {
   return {
     tier,
     limits: TIER_LIMITS[tier],
-    isLoading,
+    isPending,
     error,
     billingPeriod,
     currentPeriodEnd,
+    subscriptionStatus,
+    cancelAtPeriodEnd,
     refetch: fetchSubscription,
   };
 }
