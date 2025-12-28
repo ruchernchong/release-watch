@@ -9,9 +9,10 @@ description: ReleaseWatch subscription tiers, pricing strategy, and Pro feature 
 
 | Feature | Free | Pro |
 |---------|------|-----|
-| Repos tracked | 5 | 25 |
-| AI summaries | 3/month | Unlimited |
-| Channels | Telegram, Discord, Email | + 3 webhooks |
+| Repos tracked | 25 | Unlimited |
+| AI summaries | 25/month | Unlimited |
+| Channels | Telegram, Discord, Email | All + webhooks |
+| Webhooks | 1 | 5 |
 | Check frequency | 15 min | 15 min |
 | Release type filters | Yes | Yes |
 | Notification history | - | 30 days |
@@ -45,8 +46,8 @@ Polar handles automatically:
 - UI: `/dashboard/history`
 
 ### Webhook Integrations
-- Free: 0 webhooks
-- Pro: 3 webhooks
+- Free: 1 webhook
+- Pro: 5 webhooks
 - Store in `user_webhooks` table
 - Fire on release notification
 
@@ -54,7 +55,6 @@ Polar handles automatically:
 - Pro-only feature
 - Fetch starred repos via GitHub API
 - UI: Cherry-pick which repos to import
-- Respects repo limit (25 for Pro)
 
 ## Database Schema
 
@@ -64,7 +64,7 @@ export const userLimits = pgTable("user_limits", {
   userId: text().primaryKey().references(() => users.id, { onDelete: "cascade" }),
   tier: text().default("free").notNull(), // 'free' | 'pro'
   aiSummariesUsed: integer().default(0).notNull(),
-  aiSummariesResetAt: timestamp(),
+  aiSummariesResetAt: timestamp(), // Reset monthly
 });
 ```
 
@@ -72,13 +72,14 @@ export const userLimits = pgTable("user_limits", {
 
 ```typescript
 const TIER_LIMITS = {
-  free: { maxRepos: 5, maxChannels: 1, aiSummariesPerMonth: 3 },
-  pro: { maxRepos: 25, maxChannels: 3, aiSummariesPerMonth: Infinity },
+  free: { maxRepos: 25, maxAiSummaries: 25, maxWebhooks: 1 },
+  pro: { maxRepos: Infinity, maxAiSummaries: Infinity, maxWebhooks: 5 },
 };
 ```
 
 Apply middleware to:
 - `POST /repos` - Check repo count vs tier limit
+- `POST /webhooks` - Check webhook count vs tier limit
 - AI analysis in workflow - Check monthly AI summary usage
 
 ## Polar Integration
