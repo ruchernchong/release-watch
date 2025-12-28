@@ -51,7 +51,17 @@ export const auth = betterAuth({
       createCustomerOnSignUp: true,
       use: [
         checkout({
-          products: [],
+          products: [
+            {
+              productId: process.env.POLAR_PRODUCT_ID_PRO_MONTHLY as string,
+              slug: "pro-monthly",
+            },
+            {
+              productId: process.env.POLAR_PRODUCT_ID_PRO_ANNUAL as string,
+              slug: "pro-annual",
+            },
+          ],
+          successUrl: "/dashboard/settings?checkout=success",
           authenticatedUsersOnly: true,
         }),
         portal(),

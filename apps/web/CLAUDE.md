@@ -27,6 +27,34 @@ pnpm typecheck  # Type-check
 
 ## Code Style Guidelines
 
+**Server Components by Default:**
+- Keep `page.tsx` files as Server Components (no `"use client"` directive)
+- Extract interactive parts (useState, useEffect, event handlers) to separate client components
+- Place client components in `/components` directory with `"use client"` directive
+
+**Use useTransition for Loading States:**
+- Use `useTransition` instead of `useState` for loading/pending states
+- Wrap async operations in `startTransition` to get `isPending` state automatically
+- This provides better UX with React 19's concurrent features
+
+```tsx
+// Bad
+const [isLoading, setIsLoading] = useState(false);
+const handleClick = async () => {
+  setIsLoading(true);
+  await doSomething();
+  setIsLoading(false);
+};
+
+// Good
+const [isPending, startTransition] = useTransition();
+const handleClick = () => {
+  startTransition(async () => {
+    await doSomething();
+  });
+};
+```
+
 **Descriptive Variable Names:**
 - Use descriptive variable names in callbacks and arrow functions
 - Avoid single-letter or overly abbreviated names like `r`, `p`, `x`

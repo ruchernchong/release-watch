@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import type { ReactNode } from "react";
 
 import { AppSidebar } from "@/components/app-sidebar";
@@ -20,17 +21,19 @@ export default async function DashboardLayout({
   }
 
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
-          </div>
-        </header>
-        <main className="flex flex-1 flex-col gap-6 px-4 pb-6">{children}</main>
-      </SidebarInset>
-    </SidebarProvider>
+    <NuqsAdapter>
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center gap-2">
+            <div className="flex items-center gap-2 px-4">
+              <SidebarTrigger className="-ml-1" />
+              <Separator orientation="vertical" className="mr-2 h-4" />
+            </div>
+          </header>
+          <main className="flex flex-1 flex-col gap-6 px-4 pb-6">{children}</main>
+        </SidebarInset>
+      </SidebarProvider>
+    </NuqsAdapter>
   );
 }

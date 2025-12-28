@@ -36,6 +36,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useUserTier } from "@/hooks/use-user-tier";
 import { signOut, useSession } from "@/lib/auth-client";
 
 const navItems = [
@@ -71,9 +72,11 @@ export function AppSidebar() {
   const pathname = usePathname();
   const { isMobile } = useSidebar();
   const { data: session } = useSession();
+  const { tier } = useUserTier();
 
   const user = session?.user;
   const isAdmin = user?.role === "admin";
+  const tierLabel = tier === "pro" ? "Pro" : "Free";
 
   return (
     <Sidebar variant="inset" collapsible="icon">
@@ -155,7 +158,7 @@ export function AppSidebar() {
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold">{user?.name}</span>
                     <span className="truncate text-muted-foreground text-xs">
-                      Free
+                      {tierLabel}
                     </span>
                   </div>
                   <ChevronsUpDown className="ml-auto size-4" />
@@ -183,7 +186,7 @@ export function AppSidebar() {
                         {user?.name}
                       </span>
                       <span className="truncate text-muted-foreground text-xs">
-                        Free
+                        {tierLabel}
                       </span>
                     </div>
                   </div>

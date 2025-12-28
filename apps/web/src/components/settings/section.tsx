@@ -3,6 +3,7 @@
 import { Bell, Download, Shield, Trash2, User, Zap } from "lucide-react";
 import { useState } from "react";
 
+import { SubscriptionSection } from "@/components/settings/subscription-section";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -82,7 +83,7 @@ export function SettingsSection() {
         <Card className="overflow-hidden">
           <CardHeader className="border-b bg-muted/30">
             <div className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary/20 to-primary/5">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-linear-to-br from-primary/20 to-primary/5">
                 <User className="size-5 text-primary" />
               </div>
               <div className="flex flex-col gap-2">
@@ -136,11 +137,14 @@ export function SettingsSection() {
           </CardContent>
         </Card>
 
+        {/* Subscription Section */}
+        <SubscriptionSection />
+
         {/* Notifications Section */}
         <Card>
           <CardHeader className="border-b bg-muted/30">
             <div className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/5">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-linear-to-br from-amber-500/20 to-orange-500/5">
                 <Bell className="size-5 text-amber-600 dark:text-amber-400" />
               </div>
               <div className="flex flex-col gap-2">
@@ -188,7 +192,7 @@ export function SettingsSection() {
         <Card>
           <CardHeader className="border-b bg-muted/30">
             <div className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500/20 to-teal-500/5">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-linear-to-br from-emerald-500/20 to-teal-500/5">
                 <Shield className="size-5 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div className="flex flex-col gap-2">
