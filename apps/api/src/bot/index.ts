@@ -44,7 +44,12 @@ async function fetchAndFormatLatestRelease(
     const octokit = createOctokit(env.GITHUB_TOKEN);
     const parsed = parseFullName(repo);
     if (!parsed) return null;
-    const releases = await getLatestReleases(octokit, parsed.owner, parsed.repo, 1);
+    const releases = await getLatestReleases(
+      octokit,
+      parsed.owner,
+      parsed.repo,
+      1,
+    );
 
     if (releases.length > 0) {
       return formatLatestRelease(releases[0]);
@@ -90,7 +95,9 @@ export async function createBot(env: Env): Promise<Bot> {
     const trackedRepos = await getTrackedRepos(reposKv, chatId);
 
     if (trackedRepos.length === 0) {
-      await ctx.reply("No tracked repos yet. Paste a GitHub URL to start tracking.");
+      await ctx.reply(
+        "No tracked repos yet. Paste a GitHub URL to start tracking.",
+      );
       return;
     }
 
@@ -153,7 +160,9 @@ export async function createBot(env: Env): Promise<Bot> {
     const trackedRepos = await getTrackedRepos(reposKv, chatId);
 
     if (trackedRepos.length === 0) {
-      await ctx.reply("No tracked repos yet. Paste a GitHub URL to start tracking.");
+      await ctx.reply(
+        "No tracked repos yet. Paste a GitHub URL to start tracking.",
+      );
       return;
     }
 
@@ -236,13 +245,12 @@ export async function createBot(env: Env): Promise<Bot> {
     const repo = match[1].replace(/\/$/, "");
     const chatId = ctx.chat.id.toString();
 
-    const trackedRepos = await getTrackedRepos(reposKv, chatId);
-    if (trackedRepos.includes(repo)) {
+    const { added } = await addTrackedRepo(reposKv, chatId, repo);
+    if (!added) {
       await ctx.reply(`Already tracking ${repo}`);
       return;
     }
 
-    await addTrackedRepo(reposKv, chatId, repo);
     await ctx.reply(`✅ Now tracking ${repo}`);
 
     const latestRelease = await fetchAndFormatLatestRelease(env, repo);

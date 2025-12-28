@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { AddRepoForm } from "@/components/repos/add-repo-form";
 import { ReposTable } from "@/components/repos/table";
 import {
@@ -11,8 +12,10 @@ import {
 } from "@/components/ui/card";
 
 export default function ReposPage() {
+  const [tableKey, setTableKey] = useState(0);
+
   const handleSuccess = () => {
-    // TODO: Refresh the repos table when real data is connected
+    setTableKey((prev) => prev + 1);
   };
 
   return (
@@ -35,7 +38,7 @@ export default function ReposPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ReposTable />
+          <ReposTable key={tableKey} />
         </CardContent>
       </Card>
     </div>

@@ -49,11 +49,13 @@ export function BanUserDialog({
 }: BanUserDialogProps) {
   const [reason, setReason] = useState("");
   const [duration, setDuration] = useState<string>("604800");
+  const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const handleBan = () => {
     startTransition(async () => {
       try {
+        setError(null);
         await api.post(`/admin/users/${user.id}/ban`, {
           action: "ban",
           banReason: reason || undefined,
@@ -63,8 +65,8 @@ export function BanUserDialog({
         onOpenChange(false);
         setReason("");
         setDuration("604800");
-      } catch {
-        // Handle error
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to ban user");
       }
     });
   };
@@ -93,6 +95,12 @@ export function BanUserDialog({
               will not be able to log in until unbanned.
             </p>
           </div>
+
+          {error && (
+            <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3">
+              <p className="text-destructive text-sm">{error}</p>
+            </div>
+          )}
 
           <div className="flex flex-col gap-2">
             <Label htmlFor="duration">Duration</Label>

@@ -171,11 +171,7 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
             `ai-cache-get:${repoFullName}:${tagName}`,
             KV_RETRY_CONFIG,
             async () => {
-              return getCachedAnalysis(
-                this.env.CACHE,
-                repoFullName,
-                tagName,
-              );
+              return getCachedAnalysis(this.env.CACHE, repoFullName, tagName);
             },
           );
 

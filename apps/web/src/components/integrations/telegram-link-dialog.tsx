@@ -60,10 +60,14 @@ export function TelegramLinkDialog({
   const handleOpenChange = (newOpen: boolean) => {
     onOpenChange(newOpen);
     if (!newOpen) {
+      // Only trigger refresh if a code was generated (user may have completed linking)
+      const shouldRefresh = !!code;
       setCode(null);
       setError(null);
       setCopied(false);
-      onSuccess?.();
+      if (shouldRefresh) {
+        onSuccess?.();
+      }
     }
   };
 

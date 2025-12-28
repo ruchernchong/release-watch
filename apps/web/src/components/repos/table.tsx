@@ -169,7 +169,7 @@ function createColumns(onDelete: (id: string) => void): ColumnDef<Repo>[] {
 
 export function ReposTable() {
   const [repos, setRepos] = React.useState<Repo[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [isPending, startTransition] = React.useTransition();
   const [error, setError] = React.useState<string | null>(null);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -179,34 +179,30 @@ export function ReposTable() {
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
 
-  const fetchRepos = React.useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const data = await api.get<{ repos: Repo[] }>("/repos");
-      setRepos(data.repos);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch repos");
-    } finally {
-      setIsLoading(false);
-    }
+  const fetchRepos = React.useCallback(() => {
+    startTransition(async () => {
+      try {
+        setError(null);
+        const data = await api.get<{ repos: Repo[] }>("/repos");
+        setRepos(data.repos);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to fetch repos");
+      }
+    });
   }, []);
 
   React.useEffect(() => {
     fetchRepos();
   }, [fetchRepos]);
 
-  const handleDelete = React.useCallback(
-    async (id: string) => {
-      try {
-        await api.delete(`/repos/${id}`);
-        setRepos((prev) => prev.filter((repo) => repo.id !== id));
-      } catch (err) {
-        console.error("Failed to delete repo:", err);
-      }
-    },
-    [],
-  );
+  const handleDelete = React.useCallback(async (id: string) => {
+    try {
+      await api.delete(`/repos/${id}`);
+      setRepos((prev) => prev.filter((repo) => repo.id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete repo");
+    }
+  }, []);
 
   const columns = React.useMemo(
     () => createColumns(handleDelete),
@@ -232,7 +228,7 @@ export function ReposTable() {
     },
   });
 
-  if (isLoading) {
+  if (isPending && repos.length === 0) {
     return (
       <div className="flex h-48 items-center justify-center">
         <Loader2 className="size-6 animate-spin text-muted-foreground" />
@@ -240,7 +236,7 @@ export function ReposTable() {
     );
   }
 
-  if (error) {
+  if (error && repos.length === 0) {
     return (
       <div className="flex h-48 flex-col items-center justify-center gap-2">
         <p className="text-destructive text-sm">{error}</p>
@@ -253,6 +249,14 @@ export function ReposTable() {
 
   return (
     <div className="w-full">
+      {error && (
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3">
+          <p className="text-destructive text-sm">{error}</p>
+          <Button variant="ghost" size="sm" onClick={() => setError(null)}>
+            Dismiss
+          </Button>
+        </div>
+      )}
       <div className="flex items-center gap-4 py-4">
         <Input
           placeholder="Filter repositories..."

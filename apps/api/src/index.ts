@@ -1,3 +1,4 @@
+import { zValidator } from "@hono/zod-validator";
 import {
   accounts,
   sessions,
@@ -5,13 +6,12 @@ import {
   userRepos,
   users,
 } from "@release-watch/database";
-import { zValidator } from "@hono/zod-validator";
 import { and, count, desc, eq, ilike, or } from "drizzle-orm";
 import { webhookCallback } from "grammy";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import * as z from "zod";
 import { logger } from "hono/logger";
+import * as z from "zod";
 import { createBot } from "./bot";
 import { db } from "./db";
 import { handleSchedule } from "./handlers/schedule";

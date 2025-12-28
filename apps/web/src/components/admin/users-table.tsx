@@ -71,6 +71,7 @@ interface UsersResponse {
 
 export function UsersTable() {
   const [data, setData] = useState<UsersResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -80,6 +81,7 @@ export function UsersTable() {
   const fetchUsers = useCallback((search = "") => {
     startTransition(async () => {
       try {
+        setError(null);
         const params = new URLSearchParams({ limit: "20", offset: "0" });
         if (search) params.set("search", search);
 
@@ -87,8 +89,8 @@ export function UsersTable() {
           `/admin/users?${params}`,
         );
         setData(responseData);
-      } catch {
-        // Ignore
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load users");
       }
     });
   }, []);
@@ -108,8 +110,8 @@ export function UsersTable() {
     try {
       await api.post(`/admin/users/${userId}/ban`, { action: "unban" });
       fetchUsers(searchQuery);
-    } catch {
-      // Handle error
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to unban user");
     }
   };
 
@@ -280,6 +282,18 @@ export function UsersTable() {
   return (
     <>
       <div className="flex flex-col gap-4">
+        {error && (
+          <div className="flex items-center justify-between rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3">
+            <p className="text-destructive text-sm">{error}</p>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => fetchUsers(searchQuery)}
+            >
+              Retry
+            </Button>
+          </div>
+        )}
         <div className="flex items-center gap-4">
           <div className="relative max-w-sm flex-1">
             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />

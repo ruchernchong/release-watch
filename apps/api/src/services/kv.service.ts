@@ -29,12 +29,14 @@ export async function addTrackedRepo(
   kv: KVNamespace,
   chatId: string,
   repo: string,
-): Promise<void> {
+): Promise<{ added: boolean }> {
   const trackedRepos = await getTrackedRepos(kv, chatId);
-  if (!trackedRepos.includes(repo)) {
-    trackedRepos.push(repo);
-    await kv.put(`${CHAT_PREFIX}${chatId}`, JSON.stringify(trackedRepos));
+  if (trackedRepos.includes(repo)) {
+    return { added: false };
   }
+  trackedRepos.push(repo);
+  await kv.put(`${CHAT_PREFIX}${chatId}`, JSON.stringify(trackedRepos));
+  return { added: true };
 }
 
 export async function removeTrackedRepo(
