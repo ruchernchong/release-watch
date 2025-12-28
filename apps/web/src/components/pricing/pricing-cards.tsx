@@ -2,9 +2,10 @@
 
 import { Check, History, Sparkles, Star, X, Zap } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { authClient } from "@/lib/auth-client";
 import {
   Card,
   CardContent,
@@ -105,7 +106,17 @@ interface PricingCardsProps {
 
 export function PricingCards({ onCheckout, compact = false }: PricingCardsProps = {}) {
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly");
+  const [isPending, startTransition] = useTransition();
   const currentPricing = pricing[billingPeriod];
+
+  const handleCheckout = () => {
+    startTransition(async () => {
+      await authClient.checkout({
+        slug: `pro-${billingPeriod}`,
+      });
+      onCheckout?.();
+    });
+  };
 
   return (
     <div className="flex flex-col gap-12">
@@ -194,25 +205,25 @@ export function PricingCards({ onCheckout, compact = false }: PricingCardsProps 
               </div>
 
               {/* CTA */}
-              <Button
-                size="lg"
-                className="w-full"
-                variant={tier.highlighted ? "default" : "outline"}
-                asChild
-              >
-                {tier.href ? (
-                  <Link href={tier.href as "/login"} onClick={onCheckout}>
-                    {tier.cta}
-                  </Link>
-                ) : (
-                  <a
-                    href={`/api/auth/checkout/pro-${billingPeriod === "annual" ? "annual" : "monthly"}`}
-                    onClick={onCheckout}
-                  >
-                    {tier.cta}
-                  </a>
-                )}
-              </Button>
+              {tier.href ? (
+                <Button
+                  size="lg"
+                  className="w-full"
+                  variant="outline"
+                  asChild
+                >
+                  <Link href={tier.href as "/login"}>{tier.cta}</Link>
+                </Button>
+              ) : (
+                <Button
+                  size="lg"
+                  className="w-full"
+                  onClick={handleCheckout}
+                  disabled={isPending}
+                >
+                  {isPending ? "Loading..." : tier.cta}
+                </Button>
+              )}
 
               {/* Features */}
               <ul className="flex flex-col gap-3">

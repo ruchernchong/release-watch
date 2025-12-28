@@ -1,6 +1,7 @@
 "use client";
 
 import { CreditCard, Crown, ExternalLink, Sparkles } from "lucide-react";
+import { useTransition } from "react";
 import { PricingDialog } from "@/components/pricing/pricing-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,12 +18,19 @@ import { useUserTier } from "@/hooks/use-user-tier";
 
 export function SubscriptionSection() {
   const { tier, isLoading, billingPeriod, currentPeriodEnd } = useUserTier();
+  const [isPending, startTransition] = useTransition();
 
   const handleManageSubscription = async () => {
     const result = await authClient.customer.portal();
     if (result.data?.url) {
       window.open(result.data.url, "_blank");
     }
+  };
+
+  const handleQuickCheckout = () => {
+    startTransition(async () => {
+      await authClient.checkout({ slug: "pro-monthly" });
+    });
   };
 
   if (isLoading) {
@@ -140,10 +148,12 @@ export function SubscriptionSection() {
                 <PricingDialog>
                   <Button>View Plans</Button>
                 </PricingDialog>
-                <Button variant="outline" asChild>
-                  <a href="/api/auth/checkout/pro-monthly">
-                    Subscribe — $3/mo
-                  </a>
+                <Button
+                  variant="outline"
+                  onClick={handleQuickCheckout}
+                  disabled={isPending}
+                >
+                  {isPending ? "Loading..." : "Subscribe — $3/mo"}
                 </Button>
               </div>
             </div>
