@@ -21,6 +21,16 @@ import {
   Trash2,
 } from "lucide-react";
 import * as React from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -57,7 +67,9 @@ function formatDate(dateString: string): string {
   });
 }
 
-function createColumns(onDelete: (id: string) => void): ColumnDef<Repo>[] {
+function createColumns(
+  onRequestDelete: (repo: Repo) => void,
+): ColumnDef<Repo>[] {
   return [
     {
       id: "select",
@@ -154,7 +166,7 @@ function createColumns(onDelete: (id: string) => void): ColumnDef<Repo>[] {
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="text-destructive"
-                onClick={() => onDelete(repo.id)}
+                onClick={() => onRequestDelete(repo)}
               >
                 <Trash2 className="size-4" />
                 Remove
@@ -171,6 +183,7 @@ export function ReposTable() {
   const [repos, setRepos] = React.useState<Repo[]>([]);
   const [isPending, startTransition] = React.useTransition();
   const [error, setError] = React.useState<string | null>(null);
+  const [repoToDelete, setRepoToDelete] = React.useState<Repo | null>(null);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
@@ -199,15 +212,14 @@ export function ReposTable() {
     try {
       await api.delete(`/repos/${id}`);
       setRepos((prev) => prev.filter((repo) => repo.id !== id));
+      setRepoToDelete(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete repo");
+      setRepoToDelete(null);
     }
   }, []);
 
-  const columns = React.useMemo(
-    () => createColumns(handleDelete),
-    [handleDelete],
-  );
+  const columns = React.useMemo(() => createColumns(setRepoToDelete), []);
 
   const table = useReactTable({
     data: repos,
@@ -363,6 +375,33 @@ export function ReposTable() {
           </Button>
         </div>
       </div>
+
+      <AlertDialog
+        open={!!repoToDelete}
+        onOpenChange={(open) => !open && setRepoToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove repository?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will stop tracking{" "}
+              <span className="font-medium text-foreground">
+                {repoToDelete?.repoName}
+              </span>{" "}
+              and you will no longer receive notifications for new releases.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => repoToDelete && handleDelete(repoToDelete.id)}
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

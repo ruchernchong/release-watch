@@ -28,6 +28,7 @@ interface TelegramStatusResponse {
 
 export function IntegrationsSection() {
   const [telegramLinked, setTelegramLinked] = useState<boolean | null>(null);
+  const [telegramError, setTelegramError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const { isSupported, permission, requestPermission } = useNotifications();
@@ -35,12 +36,15 @@ export function IntegrationsSection() {
   const fetchTelegramStatus = useCallback(() => {
     startTransition(async () => {
       try {
+        setTelegramError(null);
         const data = await api.get<TelegramStatusResponse>(
           "/integrations/telegram/status",
         );
         setTelegramLinked(data.linked);
-      } catch {
-        // Ignore errors
+      } catch (err) {
+        setTelegramError(
+          err instanceof Error ? err.message : "Failed to check status",
+        );
       }
     });
   }, []);
@@ -83,6 +87,19 @@ export function IntegrationsSection() {
                 <Loader2 className="size-4 animate-spin" />
                 Loading...
               </Button>
+            ) : telegramError ? (
+              <div className="flex items-center gap-2">
+                <span className="text-destructive text-sm">
+                  {telegramError}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={fetchTelegramStatus}
+                >
+                  Retry
+                </Button>
+              </div>
             ) : telegramLinked ? (
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-2 rounded-full bg-green-500/10 px-3 py-1 text-green-600 text-sm dark:text-green-400">
