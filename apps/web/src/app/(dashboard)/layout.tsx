@@ -3,6 +3,7 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 import type { ReactNode } from "react";
 
 import { AppSidebar } from "@/components/app-sidebar";
+import { RepoSearch } from "@/components/repos/repo-search";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -27,10 +28,13 @@ export default async function DashboardLayout({
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center justify-between gap-2 px-4">
+          <header className="flex h-16 shrink-0 items-center justify-between gap-4 px-4">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="-ml-1" />
               <Separator orientation="vertical" className="mr-2 h-4" />
+            </div>
+            <div className="hidden flex-1 md:block">
+              <RepoSearch />
             </div>
             <div className="flex items-center gap-2">
               <ThemeToggle />
