@@ -2,6 +2,7 @@
 
 import {
   AlertCircle,
+  Check,
   ExternalLink,
   GitFork,
   Github,
@@ -10,7 +11,14 @@ import {
   Search,
   Star,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -51,15 +59,36 @@ function parseRepoInput(input: string): string | null {
   return match ? match[1] : null;
 }
 
+interface TrackedRepo {
+  repoName: string;
+}
+
 export function RepoSearch() {
   const [repoInput, setRepoInput] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<RepoPreview | null>(null);
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isTracked, setIsTracked] = useState(false);
   const [isPending, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const trackedReposRef = useRef<Set<string>>(new Set());
+
+  const fetchTrackedRepos = useEffectEvent(async () => {
+    try {
+      const data = await api.get<{ repos: TrackedRepo[] }>("/repos");
+      trackedReposRef.current = new Set(
+        data.repos.map((repo) => repo.repoName.toLowerCase())
+      );
+    } catch {
+      // Ignore errors
+    }
+  });
+
+  useEffect(() => {
+    fetchTrackedRepos();
+  }, []);
 
   const fetchRepoPreview = useCallback((repoName: string) => {
     startTransition(async () => {
@@ -97,6 +126,8 @@ export function RepoSearch() {
           }
         }
 
+        const repoFullName = `${data.owner.login}/${data.name}`.toLowerCase();
+        setIsTracked(trackedReposRef.current.has(repoFullName));
         setPreview({
           name: data.name,
           owner: data.owner.login,
@@ -125,6 +156,7 @@ export function RepoSearch() {
     if (!repoName) {
       setPreview(null);
       setOpen(false);
+      setIsTracked(false);
       if (repoInput.trim() && !repoInput.includes("/")) {
         setError("Use owner/repo format");
       } else {
@@ -153,6 +185,7 @@ export function RepoSearch() {
 
     try {
       await api.post("/repos", { repoName });
+      trackedReposRef.current.add(repoName.toLowerCase());
       setRepoInput("");
       setPreview(null);
       setError(null);
@@ -167,7 +200,7 @@ export function RepoSearch() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && preview && !isPending && !isSubmitting) {
+    if (e.key === "Enter" && preview && !isPending && !isSubmitting && !isTracked) {
       e.preventDefault();
       handleSubmit();
     }
@@ -273,10 +306,16 @@ export function RepoSearch() {
             <Button
               size="sm"
               onClick={handleSubmit}
-              disabled={isSubmitting}
+              disabled={isSubmitting || isTracked}
+              variant={isTracked ? "secondary" : "default"}
               className="w-full"
             >
-              {isSubmitting ? (
+              {isTracked ? (
+                <>
+                  <Check className="size-4" />
+                  Tracked
+                </>
+              ) : isSubmitting ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
                   Adding...

@@ -33,7 +33,7 @@ export default async function DashboardLayout({
               <SidebarTrigger className="-ml-1" />
               <Separator orientation="vertical" className="mr-2 h-4" />
             </div>
-            <div className="hidden flex-1 md:block">
+            <div className="hidden flex-1 justify-center md:flex">
               <RepoSearch />
             </div>
             <div className="flex items-center gap-2">
