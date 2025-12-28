@@ -1,5 +1,6 @@
 const REPO_OWNER = "ruchernchong";
 const REPO_NAME = "release-watch";
+const STAR_THRESHOLD = 50;
 
 async function getGitHubStars(): Promise<number | null> {
   try {
@@ -35,6 +36,10 @@ function formatStarCount(count: number): string {
 export async function GitHubStars() {
   const stars = await getGitHubStars();
 
+  if (stars === null || stars < STAR_THRESHOLD) {
+    return null;
+  }
+
   return (
     <a
       href={`https://github.com/${REPO_OWNER}/${REPO_NAME}`}
@@ -57,9 +62,7 @@ export async function GitHubStars() {
         </svg>
         <span className="font-medium">Star</span>
       </div>
-      <div className="px-3">
-        {stars !== null ? formatStarCount(stars) : "—"}
-      </div>
+      <div className="px-3">{formatStarCount(stars)}</div>
     </a>
   );
 }
