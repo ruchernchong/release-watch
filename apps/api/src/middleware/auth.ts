@@ -1,5 +1,5 @@
 import { createMiddleware } from "hono/factory";
-import { createRemoteJWKSet, jwtVerify } from "jose";
+import { type JWK, importJWK, jwtVerify } from "jose";
 import type { Database } from "../db";
 import type { Env } from "../types/env";
 
@@ -24,17 +24,78 @@ export type AuthEnv = {
   Variables: AuthVariables;
 };
 
-// Cache JWKS per isolate to avoid refetching on every request
-let cachedJWKS: ReturnType<typeof createRemoteJWKSet> | null = null;
-let cachedJWKSUrl: string | null = null;
+interface JWKSResponse {
+  keys: JWK[];
+}
 
-function getJWKS(jwksUrl: string) {
-  if (cachedJWKS && cachedJWKSUrl === jwksUrl) {
-    return cachedJWKS;
+// Cache JWKS keys per isolate with TTL
+let cachedKeys: Map<string, CryptoKey> | null = null;
+let cachedJWKSUrl: string | null = null;
+let cacheExpiry = 0;
+let fetchPromise: Promise<Map<string, CryptoKey>> | null = null;
+
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+async function fetchAndCacheJWKS(
+  jwksUrl: string
+): Promise<Map<string, CryptoKey>> {
+  const response = await fetch(jwksUrl, {
+    headers: { Accept: "application/json" },
+    cf: { cacheTtl: 600, cacheEverything: true }, // Cloudflare edge cache for 10 min
+  } as RequestInit);
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch JWKS: ${response.status}`);
   }
-  cachedJWKS = createRemoteJWKSet(new URL(jwksUrl));
+
+  const jwks: JWKSResponse = await response.json();
+  const keyMap = new Map<string, CryptoKey>();
+
+  for (const jwk of jwks.keys) {
+    if (jwk.kid) {
+      const key = await importJWK(jwk, jwk.alg || "RS256");
+      keyMap.set(jwk.kid, key as CryptoKey);
+    }
+  }
+
+  return keyMap;
+}
+
+async function getKey(jwksUrl: string, kid: string): Promise<CryptoKey> {
+  const now = Date.now();
+
+  // Return cached key if valid
+  if (cachedKeys && cachedJWKSUrl === jwksUrl && now < cacheExpiry) {
+    const key = cachedKeys.get(kid);
+    if (key) return key;
+  }
+
+  // Deduplicate concurrent fetches with singleton promise
+  if (!fetchPromise) {
+    fetchPromise = fetchAndCacheJWKS(jwksUrl).finally(() => {
+      fetchPromise = null;
+    });
+  }
+
+  const keys = await fetchPromise;
+  cachedKeys = keys;
   cachedJWKSUrl = jwksUrl;
-  return cachedJWKS;
+  cacheExpiry = now + CACHE_TTL_MS;
+
+  const key = keys.get(kid);
+  if (!key) {
+    throw new Error(`Key with kid "${kid}" not found in JWKS`);
+  }
+  return key;
+}
+
+function getKeyResolver(jwksUrl: string) {
+  return async (protectedHeader: { kid?: string }) => {
+    if (!protectedHeader.kid) {
+      throw new Error("JWT missing kid header");
+    }
+    return getKey(jwksUrl, protectedHeader.kid);
+  };
 }
 
 export const jwtAuth = createMiddleware<AuthEnv>(async (c, next) => {
@@ -53,8 +114,8 @@ export const jwtAuth = createMiddleware<AuthEnv>(async (c, next) => {
   }
 
   try {
-    const JWKS = getJWKS(jwksUrl);
-    const { payload } = await jwtVerify(token, JWKS);
+    const keyResolver = getKeyResolver(jwksUrl);
+    const { payload } = await jwtVerify(token, keyResolver);
 
     c.set("user", payload as JWTPayload);
     await next();
