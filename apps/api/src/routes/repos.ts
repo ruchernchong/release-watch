@@ -1,6 +1,8 @@
+import { zValidator } from "@hono/zod-validator";
 import { userRepos } from "@release-watch/database";
 import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
+import * as z from "zod";
 import { logger } from "../lib/logger";
 import type { AuthEnv } from "../middleware/auth";
 import {
@@ -12,8 +14,8 @@ import {
   getCached,
   invalidateRepoRelatedCaches,
   invalidateUserReposCache,
-  reposCacheKey,
   REPOS_CACHE_TTL,
+  reposCacheKey,
   setCache,
 } from "../services/kv.service";
 
@@ -43,71 +45,68 @@ const app = new Hono<AuthEnv>()
       return c.json({ error: "Failed to fetch repos" }, 500);
     }
   })
-  .post("/", async (c) => {
-    const user = c.get("user");
+  .post(
+    "/",
+    zValidator(
+      "json",
+      z.object({
+        repoName: z.string().min(1),
+      }),
+    ),
+    async (c) => {
+      const user = c.get("user");
+      const { repoName } = c.req.valid("json");
 
-    let body: { repoName: string };
-    try {
-      body = await c.req.json();
-    } catch {
-      return c.json({ error: "Invalid JSON body" }, 400);
-    }
+      const normalizedRepo = repoName.trim().toLowerCase();
+      const repoPattern = /^[a-z0-9_.-]+\/[a-z0-9_.-]+$/i;
 
-    const { repoName } = body;
-
-    if (!repoName) {
-      return c.json({ error: "repoName is required" }, 400);
-    }
-
-    const normalizedRepo = repoName.trim().toLowerCase();
-    const repoPattern = /^[a-z0-9_.-]+\/[a-z0-9_.-]+$/i;
-
-    if (!repoPattern.test(normalizedRepo)) {
-      return c.json(
-        { error: "Invalid repository format. Use owner/repo" },
-        400,
-      );
-    }
-
-    try {
-      const octokit = createOctokit(c.env.GITHUB_TOKEN);
-      const parsed = parseFullName(normalizedRepo);
-      if (!parsed) {
-        return c.json({ error: "Invalid repository format" }, 400);
+      if (!repoPattern.test(normalizedRepo)) {
+        return c.json(
+          { error: "Invalid repository format. Use owner/repo" },
+          400,
+        );
       }
-      const { owner, repo } = parsed;
 
       try {
-        await octokit.repos.get({ owner, repo });
-      } catch {
-        return c.json({ error: "Repository not found on GitHub" }, 404);
-      }
+        const octokit = createOctokit(c.env.GITHUB_TOKEN);
+        const parsed = parseFullName(normalizedRepo);
+        if (!parsed) {
+          return c.json({ error: "Invalid repository format" }, 400);
+        }
+        const { owner, repo } = parsed;
 
-      const database = c.get("db");
+        try {
+          await octokit.repos.get({ owner, repo });
+        } catch {
+          return c.json({ error: "Repository not found on GitHub" }, 404);
+        }
 
-      const [trackedRepo] = await database
-        .insert(userRepos)
-        .values({
+        const database = c.get("db");
+
+        const [trackedRepo] = await database
+          .insert(userRepos)
+          .values({
+            userId: user.sub,
+            repoName: normalizedRepo,
+          })
+          .onConflictDoNothing()
+          .returning();
+
+        if (!trackedRepo) {
+          return c.json({ error: "Already tracking this repository" }, 409);
+        }
+
+        await invalidateRepoRelatedCaches(c.env.CACHE, user.sub);
+        return c.json({ repo: trackedRepo }, 201);
+      } catch (err) {
+        logger.api.error("Failed to add repo", err, {
           userId: user.sub,
           repoName: normalizedRepo,
-        })
-        .onConflictDoNothing()
-        .returning();
-
-      if (!trackedRepo) {
-        return c.json({ error: "Already tracking this repository" }, 409);
+        });
+        return c.json({ error: "Failed to add repo" }, 500);
       }
-
-      await invalidateRepoRelatedCaches(c.env.CACHE, user.sub);
-      return c.json({ repo: trackedRepo }, 201);
-    } catch (err) {
-      logger.api.error("Failed to add repo", err, {
-        userId: user.sub,
-        repoName: normalizedRepo,
-      });
-      return c.json({ error: "Failed to add repo" }, 500);
-    }
-  })
+    },
+  )
   .delete("/:id", async (c) => {
     const user = c.get("user");
     const id = c.req.param("id");
@@ -134,82 +133,79 @@ const app = new Hono<AuthEnv>()
       return c.json({ error: "Failed to delete repo" }, 500);
     }
   })
-  .patch("/:id/pause", async (c) => {
-    const user = c.get("user");
-    const id = c.req.param("id");
+  .patch(
+    "/:id/pause",
+    zValidator(
+      "json",
+      z.object({
+        paused: z.boolean(),
+      }),
+    ),
+    async (c) => {
+      const user = c.get("user");
+      const id = c.req.param("id");
+      const { paused } = c.req.valid("json");
 
-    let body: { paused: boolean };
-    try {
-      body = await c.req.json();
-    } catch {
-      return c.json({ error: "Invalid JSON body" }, 400);
-    }
+      try {
+        const database = c.get("db");
 
-    const { paused } = body;
+        const [repo] = await database
+          .select()
+          .from(userRepos)
+          .where(and(eq(userRepos.id, id), eq(userRepos.userId, user.sub)))
+          .limit(1);
 
-    if (typeof paused !== "boolean") {
-      return c.json({ error: "paused must be a boolean" }, 400);
-    }
-
-    try {
-      const database = c.get("db");
-
-      const [repo] = await database
-        .select()
-        .from(userRepos)
-        .where(and(eq(userRepos.id, id), eq(userRepos.userId, user.sub)))
-        .limit(1);
-
-      if (!repo) {
-        return c.json({ error: "Repo not found" }, 404);
-      }
-
-      const updateData: { paused: boolean; lastNotifiedTag?: string } = {
-        paused,
-      };
-
-      if (!paused) {
-        try {
-          const octokit = createOctokit(c.env.GITHUB_TOKEN);
-          const parsed = parseFullName(repo.repoName);
-          if (parsed) {
-            const { owner, repo: repoName } = parsed;
-            const latestReleases = await getLatestReleases(
-              octokit,
-              owner,
-              repoName,
-              1,
-            );
-            if (latestReleases.length > 0) {
-              updateData.lastNotifiedTag = latestReleases[0].tag_name;
-            }
-          }
-        } catch (err) {
-          logger.api.warn(
-            "Failed to fetch latest release when unpausing",
-            err,
-            {
-              repoName: repo.repoName,
-            },
-          );
+        if (!repo) {
+          return c.json({ error: "Repo not found" }, 404);
         }
+
+        const updateData: { paused: boolean; lastNotifiedTag?: string } = {
+          paused,
+        };
+
+        if (!paused) {
+          try {
+            const octokit = createOctokit(c.env.GITHUB_TOKEN);
+            const parsed = parseFullName(repo.repoName);
+            if (parsed) {
+              const { owner, repo: repoName } = parsed;
+              const latestReleases = await getLatestReleases(
+                octokit,
+                owner,
+                repoName,
+                1,
+              );
+              if (latestReleases.length > 0) {
+                updateData.lastNotifiedTag = latestReleases[0].tag_name;
+              }
+            }
+          } catch (err) {
+            logger.api.warn(
+              "Failed to fetch latest release when unpausing",
+              err,
+              {
+                repoName: repo.repoName,
+              },
+            );
+          }
+        }
+
+        const [updated] = await database
+          .update(userRepos)
+          .set(updateData)
+          .where(and(eq(userRepos.id, id), eq(userRepos.userId, user.sub)))
+          .returning();
+
+        await invalidateUserReposCache(c.env.CACHE, user.sub);
+        return c.json({ repo: updated });
+      } catch (err) {
+        logger.api.error("Failed to update repo pause status", err, {
+          userId: user.sub,
+          repoId: id,
+        });
+        return c.json({ error: "Failed to update repo pause status" }, 500);
       }
-
-      const [updated] = await database
-        .update(userRepos)
-        .set(updateData)
-        .where(and(eq(userRepos.id, id), eq(userRepos.userId, user.sub)))
-        .returning();
-
-      await invalidateUserReposCache(c.env.CACHE, user.sub);
-      return c.json({ repo: updated });
-    } catch (err) {
-      logger.api.error("Failed to update repo pause status", err, {
-        userId: user.sub,
-        repoId: id,
-      });
-      return c.json({ error: "Failed to update repo pause status" }, 500);
-    }
-  });
+    },
+  );
 
 export default app;

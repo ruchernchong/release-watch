@@ -14,6 +14,7 @@
     "resolveJsonModule": true,
     "verbatimModuleSyntax": true,
     "paths": {
+      "@/*": ["apps/web/src/*"],
       "@db/*": ["packages/database/src/*"]
     }
   },

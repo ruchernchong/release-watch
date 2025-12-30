@@ -2,7 +2,7 @@
 
 ## Overview
 
-Next.js 16 dashboard with React 19, BetterAuth, and shadcn/ui. Handles authentication only; all API calls go to Hono.
+Next.js 16 dashboard with React 19, BetterAuth, and shadcn/ui. Handles authentication only; all API calls go to Hono via RPC.
 
 ## Commands
 
@@ -12,12 +12,89 @@ pnpm build      # Build for production
 pnpm typecheck  # Type-check
 ```
 
-## Structure
+## Project Structure
 
-- `(auth)/` - Login/signup routes
-- `(dashboard)/` - Protected dashboard routes
-- `(marketing)/` - Public marketing pages
-- `components/ui/` - shadcn/ui components (generated)
+```
+src/
+  app/
+    (auth)/                    # Login/signup routes
+    (dashboard)/
+      dashboard/
+        page.tsx               # Server Component - fetches data
+        actions.ts             # Server Actions - mutations (colocated)
+        repos/
+          page.tsx
+          actions.ts
+    (marketing)/               # Public marketing pages
+  components/
+    ui/                        # shadcn/ui (generated - DO NOT MODIFY)
+    dashboard/                 # Dashboard-specific components
+    repos/                     # Repo-related components
+  lib/
+    api.ts                     # Hono RPC client (server-side only)
+    api-client.ts              # Legacy client API (deprecated)
+    auth.ts                    # Server-side auth
+    auth-client.ts             # Client-side auth
+    data/                      # Data fetching functions
+      repos.ts                 # getRepos(), getRepo()
+      dashboard.ts             # getDashboardStats(), getReleases()
+      channels.ts              # getChannelStatus()
+```
+
+## Data Fetching & Mutations (Next.js Guidelines)
+
+**Data Fetching** - Use `lib/data/` functions in Server Components:
+```tsx
+// lib/data/repos.ts
+import { getApi } from "@/lib/api";
+
+export async function getRepos() {
+  const api = await getApi();
+  const res = await api.repos.$get();
+  return res.json();
+}
+
+// app/(dashboard)/dashboard/repos/page.tsx
+import { getRepos } from "@/lib/data/repos";
+
+export default async function ReposPage() {
+  const { repos } = await getRepos();
+  return <ReposTable repos={repos} />;
+}
+```
+
+**Mutations** - Colocate Server Actions with routes:
+```tsx
+// app/(dashboard)/dashboard/repos/actions.ts
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { getApi } from "@/lib/api";
+
+export async function createRepo(repoName: string) {
+  const api = await getApi();
+  const res = await api.repos.$post({ json: { repoName } });
+
+  if (!res.ok) throw new Error("Failed to create repo");
+
+  revalidatePath("/dashboard/repos");
+  return res.json();
+}
+
+// Used in Client Component:
+import { createRepo } from "./actions";
+
+<form action={async (formData) => {
+  "use server";
+  await createRepo(formData.get("repoName") as string);
+}}>
+```
+
+**Key Principles:**
+- `page.tsx` = Server Component (fetch data directly)
+- `actions.ts` = Server Actions (mutations only, colocated with route)
+- `lib/data/*.ts` = Reusable data fetching functions
+- Client Components receive data as props from Server Components
 
 ## UI Guidelines
 

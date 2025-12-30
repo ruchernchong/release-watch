@@ -1,3 +1,5 @@
+import type { GitHubRepoResponse } from "@/lib/github";
+
 const REPO_OWNER = "ruchernchong";
 const REPO_NAME = "release-watch";
 const STAR_THRESHOLD = 50;
@@ -18,7 +20,7 @@ async function getGitHubStars(): Promise<number | null> {
       return null;
     }
 
-    const data = await response.json();
+    const data: GitHubRepoResponse = await response.json();
     return data.stargazers_count;
   } catch {
     return null;

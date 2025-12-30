@@ -301,7 +301,7 @@ export function IntegrationsSection() {
               </Button>
             ) : discordChannels.length === 0 ? (
               <>
-                <div className="flex items-center gap-2 rounded-full bg-green-500/10 px-3 py-1 text-green-600 text-sm w-fit dark:text-green-400">
+                <div className="flex w-fit items-center gap-2 rounded-full bg-green-500/10 px-3 py-1 text-green-600 text-sm dark:text-green-400">
                   <Check className="size-4" />
                   Discord Connected
                 </div>

@@ -16,13 +16,16 @@ import {
   ArrowUpDown,
   ChevronDown,
   ExternalLink,
-  Loader2,
   MoreHorizontal,
   Pause,
   Play,
   Trash2,
 } from "lucide-react";
 import * as React from "react";
+import {
+  deleteRepo,
+  toggleRepoPause,
+} from "@/app/(dashboard)/dashboard/repos/actions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,7 +55,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { api } from "@/lib/api-client";
 
 interface Repo {
   id: string;
@@ -60,6 +62,10 @@ interface Repo {
   lastNotifiedTag: string | null;
   paused: boolean;
   createdAt: string;
+}
+
+interface ReposTableProps {
+  initialRepos: Repo[];
 }
 
 function formatDate(dateString: string): string {
@@ -214,9 +220,8 @@ function createColumns(
   ];
 }
 
-export function ReposTable() {
-  const [repos, setRepos] = React.useState<Repo[]>([]);
-  const [isPending, startTransition] = React.useTransition();
+export function ReposTable({ initialRepos }: ReposTableProps) {
+  const [repos, setRepos] = React.useState<Repo[]>(initialRepos);
   const [error, setError] = React.useState<string | null>(null);
   const [repoToDelete, setRepoToDelete] = React.useState<Repo | null>(null);
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -227,25 +232,9 @@ export function ReposTable() {
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
 
-  const fetchRepos = React.useCallback(() => {
-    startTransition(async () => {
-      try {
-        setError(null);
-        const data = await api.get<{ repos: Repo[] }>("/repos");
-        setRepos(data.repos);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to fetch repos");
-      }
-    });
-  }, []);
-
-  React.useEffect(() => {
-    fetchRepos();
-  }, [fetchRepos]);
-
   const handleDelete = React.useCallback(async (id: string) => {
     try {
-      await api.delete(`/repos/${id}`);
+      await deleteRepo(id);
       setRepos((previousRepos) =>
         previousRepos.filter((repo) => repo.id !== id),
       );
@@ -258,13 +247,13 @@ export function ReposTable() {
 
   const handleTogglePause = React.useCallback(async (repoToToggle: Repo) => {
     try {
-      const updatedRepo = await api.patch<{ repo: Repo }>(
-        `/repos/${repoToToggle.id}/pause`,
-        { paused: !repoToToggle.paused },
+      const result = await toggleRepoPause(
+        repoToToggle.id,
+        !repoToToggle.paused,
       );
       setRepos((previousRepos) =>
         previousRepos.map((currentRepo) =>
-          currentRepo.id === repoToToggle.id ? updatedRepo.repo : currentRepo,
+          currentRepo.id === repoToToggle.id ? result.repo : currentRepo,
         ),
       );
     } catch (err) {
@@ -297,25 +286,6 @@ export function ReposTable() {
       rowSelection,
     },
   });
-
-  if (isPending && repos.length === 0) {
-    return (
-      <div className="flex h-48 items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  if (error && repos.length === 0) {
-    return (
-      <div className="flex h-48 flex-col items-center justify-center gap-2">
-        <p className="text-destructive text-sm">{error}</p>
-        <Button variant="outline" size="sm" onClick={fetchRepos}>
-          Retry
-        </Button>
-      </div>
-    );
-  }
 
   return (
     <div className="w-full">

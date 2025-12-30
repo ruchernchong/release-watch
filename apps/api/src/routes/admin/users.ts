@@ -159,10 +159,7 @@ const app = new Hono<AuthEnv>()
     const { action, banReason, banExpiresIn } = body;
 
     if (action !== "ban" && action !== "unban") {
-      return c.json(
-        { error: "Invalid action. Must be 'ban' or 'unban'" },
-        400,
-      );
+      return c.json({ error: "Invalid action. Must be 'ban' or 'unban'" }, 400);
     }
 
     try {

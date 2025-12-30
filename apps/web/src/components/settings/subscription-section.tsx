@@ -224,7 +224,7 @@ export function SubscriptionSection() {
                       After expiration, you&apos;ll lose access to:
                     </span>
                   </div>
-                  <ul className="grid gap-2 text-amber-700/80 text-sm dark:text-amber-300/70 sm:grid-cols-2">
+                  <ul className="grid gap-2 text-amber-700/80 text-sm sm:grid-cols-2 dark:text-amber-300/70">
                     <li className="flex items-center gap-2">
                       <span className="size-1 rounded-full bg-amber-500/50" />
                       Unlimited repositories
@@ -249,7 +249,7 @@ export function SubscriptionSection() {
                   <Button
                     onClick={handleQuickCheckout}
                     disabled={isPending}
-                    className="bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/20 transition-all hover:from-amber-600 hover:to-orange-600 hover:shadow-amber-500/30"
+                    className="bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-amber-500/20 shadow-lg transition-all hover:from-amber-600 hover:to-orange-600 hover:shadow-amber-500/30"
                   >
                     <RefreshCw
                       className={`mr-2 size-4 ${isPending ? "animate-spin" : ""}`}

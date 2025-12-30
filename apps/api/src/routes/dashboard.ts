@@ -12,11 +12,11 @@ import {
   getCached,
   getCachedAnalysis,
   getChannels,
-  releasesCacheKey,
   RELEASES_CACHE_TTL,
+  releasesCacheKey,
+  STATS_CACHE_TTL,
   setCache,
   statsCacheKey,
-  STATS_CACHE_TTL,
 } from "../services/kv.service";
 
 const app = new Hono<AuthEnv>()

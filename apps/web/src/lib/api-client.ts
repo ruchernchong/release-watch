@@ -66,7 +66,9 @@ class ApiClient {
       });
 
       if (!retryResponse.ok) {
-        const error = await retryResponse.json().catch(() => ({}));
+        const error = (await retryResponse.json().catch(() => ({}))) as {
+          error?: string;
+        };
         throw new Error(error.error || "Request failed");
       }
 
@@ -74,7 +76,9 @@ class ApiClient {
     }
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
+      const error = (await response.json().catch(() => ({}))) as {
+        error?: string;
+      };
       throw new Error(error.error || "Request failed");
     }
 

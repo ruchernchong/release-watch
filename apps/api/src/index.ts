@@ -1,15 +1,15 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { handleSchedule } from "./handlers/schedule";
-import { adminOnly, jwtAuth, type AuthEnv } from "./middleware/auth";
+import { type AuthEnv, adminOnly, jwtAuth } from "./middleware/auth";
 import { dbMiddleware } from "./middleware/db";
 import adminActivity from "./routes/admin/activity";
 import adminStats from "./routes/admin/stats";
 import adminUsers from "./routes/admin/users";
-import dashboard from "./routes/dashboard";
-import health from "./routes/health";
 import discord from "./routes/channels/discord";
 import telegram from "./routes/channels/telegram";
+import dashboard from "./routes/dashboard";
+import health from "./routes/health";
 import repos from "./routes/repos";
 import stats from "./routes/stats";
 import webhook from "./routes/webhook";

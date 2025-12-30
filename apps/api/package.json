@@ -2,6 +2,9 @@
   "name": "@release-watch/api",
   "private": true,
   "type": "module",
+  "exports": {
+    "./types": "./src/types.ts"
+  },
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy --minify",

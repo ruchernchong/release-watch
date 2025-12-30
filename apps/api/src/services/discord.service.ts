@@ -1,4 +1,7 @@
-import type { NotificationPayload, ReleaseCategory } from "../types";
+import type {
+  NotificationPayload,
+  ReleaseCategory,
+} from "@release-watch/types";
 
 const DISCORD_API_BASE = "https://discord.com/api/v10";
 
@@ -216,7 +219,7 @@ function formatDiscordEmbed(payload: NotificationPayload): DiscordEmbed {
       {
         name: "Highlights",
         value: analysis.highlights
-          .map((highlight) => `• ${highlight}`)
+          .map((highlight: string) => `• ${highlight}`)
           .join("\n"),
       },
     ];

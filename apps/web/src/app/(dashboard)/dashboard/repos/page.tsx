@@ -1,6 +1,3 @@
-"use client";
-
-import { useState } from "react";
 import { AddRepoForm } from "@/components/repos/add-repo-form";
 import { ReposTable } from "@/components/repos/table";
 import {
@@ -10,13 +7,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getRepos } from "@/lib/data/repos";
 
-export default function ReposPage() {
-  const [tableKey, setTableKey] = useState(0);
-
-  const handleSuccess = () => {
-    setTableKey((prev) => prev + 1);
-  };
+export default async function ReposPage() {
+  const { repos } = await getRepos();
 
   return (
     <div className="flex flex-col gap-6">
@@ -27,7 +21,7 @@ export default function ReposPage() {
         </p>
       </div>
 
-      <AddRepoForm onSuccess={handleSuccess} />
+      <AddRepoForm />
 
       <Card>
         <CardHeader>
@@ -38,7 +32,7 @@ export default function ReposPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ReposTable key={tableKey} />
+          <ReposTable initialRepos={repos} />
         </CardContent>
       </Card>
     </div>

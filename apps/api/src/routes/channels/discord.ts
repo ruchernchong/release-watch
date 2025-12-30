@@ -1,4 +1,6 @@
+import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
+import * as z from "zod";
 import { logger } from "../../lib/logger";
 import type { AuthEnv } from "../../middleware/auth";
 import {
@@ -127,55 +129,50 @@ const app = new Hono<AuthEnv>()
       return c.json({ error: "Failed to fetch channels" }, 500);
     }
   })
-  .post("/channels", async (c) => {
-    const user = c.get("user");
+  .post(
+    "/channels",
+    zValidator(
+      "json",
+      z.object({
+        guildId: z.string().min(1),
+        guildName: z.string().min(1),
+        channelId: z.string().min(1),
+        channelName: z.string().min(1),
+      }),
+    ),
+    async (c) => {
+      const user = c.get("user");
+      const { guildId, guildName, channelId, channelName } =
+        c.req.valid("json");
 
-    let body: {
-      guildId: string;
-      guildName: string;
-      channelId: string;
-      channelName: string;
-    };
+      try {
+        const botPresent = await isBotInGuild(c.env.DISCORD_BOT_TOKEN, guildId);
+        if (!botPresent) {
+          return c.json({ error: "Bot not in server" }, 400);
+        }
 
-    try {
-      body = await c.req.json();
-    } catch {
-      return c.json({ error: "Invalid JSON body" }, 400);
-    }
+        await addChannel(c.env.CHANNELS, user.sub, {
+          type: "discord",
+          guildId,
+          guildName,
+          channelId,
+          channelName,
+          enabled: true,
+          addedAt: new Date().toISOString(),
+        });
 
-    const { guildId, guildName, channelId, channelName } = body;
-
-    if (!guildId || !channelId || !guildName || !channelName) {
-      return c.json({ error: "Missing required fields" }, 400);
-    }
-
-    try {
-      const botPresent = await isBotInGuild(c.env.DISCORD_BOT_TOKEN, guildId);
-      if (!botPresent) {
-        return c.json({ error: "Bot not in server" }, 400);
+        await invalidateUserStatsCache(c.env.CACHE, user.sub);
+        return c.json({ success: true }, 201);
+      } catch (err) {
+        logger.discord.error("Failed to add channel", err, {
+          userId: user.sub,
+          guildId,
+          channelId,
+        });
+        return c.json({ error: "Failed to add channel" }, 500);
       }
-
-      await addChannel(c.env.CHANNELS, user.sub, {
-        type: "discord",
-        guildId,
-        guildName,
-        channelId,
-        channelName,
-        enabled: true,
-        addedAt: new Date().toISOString(),
-      });
-
-      await invalidateUserStatsCache(c.env.CACHE, user.sub);
-      return c.json({ success: true }, 201);
-    } catch (err) {
-      logger.discord.error("Failed to add channel", err, {
-        userId: user.sub,
-        guildId,
-        channelId,
-      });
-      return c.json({ error: "Failed to add channel" }, 500);
-    }
-  })
+    },
+  )
   .delete("/channels/:channelId", async (c) => {
     const user = c.get("user");
     const channelId = c.req.param("channelId");
@@ -192,39 +189,37 @@ const app = new Hono<AuthEnv>()
       return c.json({ error: "Failed to remove channel" }, 500);
     }
   })
-  .patch("/toggle", async (c) => {
-    const user = c.get("user");
+  .patch(
+    "/toggle",
+    zValidator(
+      "json",
+      z.object({
+        channelId: z.string().min(1),
+        enabled: z.boolean(),
+      }),
+    ),
+    async (c) => {
+      const user = c.get("user");
+      const { channelId, enabled } = c.req.valid("json");
 
-    let body: { channelId: string; enabled: boolean };
-    try {
-      body = await c.req.json();
-    } catch {
-      return c.json({ error: "Invalid JSON body" }, 400);
-    }
-
-    const { channelId, enabled } = body;
-
-    if (!channelId) {
-      return c.json({ error: "channelId is required" }, 400);
-    }
-
-    try {
-      await updateChannelEnabled(
-        c.env.CHANNELS,
-        user.sub,
-        "discord",
-        channelId,
-        enabled,
-      );
-      await invalidateUserStatsCache(c.env.CACHE, user.sub);
-      return c.json({ success: true, enabled });
-    } catch (err) {
-      logger.discord.error("Failed to toggle channel", err, {
-        userId: user.sub,
-        channelId,
-      });
-      return c.json({ error: "Failed to toggle channel" }, 500);
-    }
-  });
+      try {
+        await updateChannelEnabled(
+          c.env.CHANNELS,
+          user.sub,
+          "discord",
+          channelId,
+          enabled,
+        );
+        await invalidateUserStatsCache(c.env.CACHE, user.sub);
+        return c.json({ success: true, enabled });
+      } catch (err) {
+        logger.discord.error("Failed to toggle channel", err, {
+          userId: user.sub,
+          channelId,
+        });
+        return c.json({ error: "Failed to toggle channel" }, 500);
+      }
+    },
+  );
 
 export default app;

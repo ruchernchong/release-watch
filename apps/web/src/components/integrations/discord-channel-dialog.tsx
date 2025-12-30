@@ -1,7 +1,7 @@
 "use client";
 
 import { ExternalLink, Hash, Loader2, RefreshCw, Server } from "lucide-react";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useEffectEvent, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -65,19 +66,11 @@ export function DiscordChannelDialog({
   const [isPending, startTransition] = useTransition();
   const [isSaving, startSaving] = useTransition();
 
-  useEffect(() => {
-    if (open) {
-      fetchGuilds();
-    }
-  }, [open]);
-
-  const fetchGuilds = () => {
+  const fetchGuilds = useEffectEvent(() => {
     startTransition(async () => {
       try {
         setError(null);
-        const data = await api.get<GuildsResponse>(
-          "/channels/discord/guilds",
-        );
+        const data = await api.get<GuildsResponse>("/channels/discord/guilds");
         setGuilds(data.guilds);
       } catch (err) {
         setError(
@@ -85,7 +78,13 @@ export function DiscordChannelDialog({
         );
       }
     });
-  };
+  });
+
+  useEffect(() => {
+    if (open) {
+      fetchGuilds();
+    }
+  }, [open]);
 
   const fetchChannels = (guildId: string) => {
     startTransition(async () => {
@@ -183,14 +182,14 @@ export function DiscordChannelDialog({
           )}
 
           <div className="flex flex-col gap-2">
-            <label className="font-medium text-sm">Server</label>
+            <Label htmlFor="server-select">Server</Label>
             <div className="flex items-center gap-2">
               <Select
                 value={selectedGuild?.id}
                 onValueChange={handleGuildSelect}
                 disabled={isPending}
               >
-                <SelectTrigger className="flex-1">
+                <SelectTrigger id="server-select" className="flex-1">
                   <SelectValue placeholder="Select a server" />
                 </SelectTrigger>
                 <SelectContent>
@@ -246,13 +245,13 @@ export function DiscordChannelDialog({
 
           {selectedGuild?.botPresent && channels.length > 0 && (
             <div className="flex flex-col gap-2">
-              <label className="font-medium text-sm">Channel</label>
+              <Label htmlFor="channel-select">Channel</Label>
               <Select
                 value={selectedChannel?.id}
                 onValueChange={handleChannelSelect}
                 disabled={isPending}
               >
-                <SelectTrigger>
+                <SelectTrigger id="channel-select">
                   <SelectValue placeholder="Select a channel" />
                 </SelectTrigger>
                 <SelectContent>

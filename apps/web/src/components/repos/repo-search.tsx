@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api-client";
+import type { GitHubLanguageColors, GitHubRepoResponse } from "@/lib/github";
 import { cn } from "@/lib/utils";
 
 interface RepoPreview {
@@ -109,7 +110,7 @@ export function RepoSearch() {
           return;
         }
 
-        const data = await res.json();
+        const data: GitHubRepoResponse = await res.json();
 
         let languageColor: string | null = null;
         if (data.language) {
@@ -118,7 +119,7 @@ export function RepoSearch() {
               "https://raw.githubusercontent.com/ozh/github-colors/master/colors.json",
             );
             if (colorsRes.ok) {
-              const colors = await colorsRes.json();
+              const colors: GitHubLanguageColors = await colorsRes.json();
               languageColor = colors[data.language]?.color || null;
             }
           } catch {
@@ -226,7 +227,7 @@ export function RepoSearch() {
             onKeyDown={handleKeyDown}
             disabled={isSubmitting}
             className={cn(
-              "h-9 pl-9 pr-9 font-mono text-sm",
+              "h-9 pr-9 pl-9 font-mono text-sm",
               error && repoInput && "border-destructive/50",
             )}
           />

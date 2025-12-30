@@ -1,4 +1,7 @@
-import type { NotificationPayload, ReleaseCategory } from "../types";
+import type {
+  NotificationPayload,
+  ReleaseCategory,
+} from "@release-watch/types";
 
 const CATEGORY_EMOJI: Record<ReleaseCategory, string> = {
   major: "🚀",

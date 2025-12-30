@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { authClient } from "@/lib/auth-client";
 import {
   Card,
   CardContent,
@@ -14,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
 type BillingPeriod = "monthly" | "annual";
@@ -181,7 +181,7 @@ export function PricingCards({
                     ${tier.price ?? currentPricing.price}
                   </span>
                   {tier.highlighted && (
-                    <span className="text-muted-foreground text-lg line-through">
+                    <span className="text-lg text-muted-foreground line-through">
                       ${currentPricing.regularPrice}
                     </span>
                   )}
@@ -278,7 +278,7 @@ export function PricingCards({
                   <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
                     <highlight.icon className="size-5 text-primary" />
                   </div>
-                  <CardTitle className="text-base whitespace-nowrap">
+                  <CardTitle className="whitespace-nowrap text-base">
                     {highlight.title}
                   </CardTitle>
                   <CardDescription>{highlight.description}</CardDescription>

@@ -4,6 +4,7 @@ import {
   type WorkflowStep,
 } from "cloudflare:workers";
 import { userRepos } from "@release-watch/database";
+import type { NotificationPayload } from "@release-watch/types";
 import { eq } from "drizzle-orm";
 import { db } from "../db";
 import { logger } from "../lib/logger";
@@ -29,7 +30,6 @@ import {
   incrementReleasesNotified,
 } from "../services/stats.service";
 import { sendTelegramNotification } from "../services/telegram.service";
-import type { NotificationPayload } from "../types";
 import type { Env } from "../types/env";
 
 export type ReleaseCheckParams = {

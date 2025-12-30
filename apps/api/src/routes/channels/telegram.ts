@@ -1,4 +1,6 @@
+import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
+import * as z from "zod";
 import { logger } from "../../lib/logger";
 import type { AuthEnv } from "../../middleware/auth";
 import {
@@ -39,39 +41,37 @@ const app = new Hono<AuthEnv>()
       return c.json({ error: "Failed to fetch link status" }, 500);
     }
   })
-  .patch("/toggle", async (c) => {
-    const user = c.get("user");
+  .patch(
+    "/toggle",
+    zValidator(
+      "json",
+      z.object({
+        chatId: z.string().min(1),
+        enabled: z.boolean(),
+      }),
+    ),
+    async (c) => {
+      const user = c.get("user");
+      const { chatId, enabled } = c.req.valid("json");
 
-    let body: { chatId: string; enabled: boolean };
-    try {
-      body = await c.req.json();
-    } catch {
-      return c.json({ error: "Invalid JSON body" }, 400);
-    }
-
-    const { chatId, enabled } = body;
-
-    if (!chatId) {
-      return c.json({ error: "chatId and enabled are required" }, 400);
-    }
-
-    try {
-      await updateChannelEnabled(
-        c.env.CHANNELS,
-        user.sub,
-        "telegram",
-        chatId,
-        enabled,
-      );
-      await invalidateUserStatsCache(c.env.CACHE, user.sub);
-      return c.json({ success: true, enabled });
-    } catch (err) {
-      logger.api.error("Failed to toggle telegram channel", err, {
-        userId: user.sub,
-        chatId,
-      });
-      return c.json({ error: "Failed to toggle channel" }, 500);
-    }
-  });
+      try {
+        await updateChannelEnabled(
+          c.env.CHANNELS,
+          user.sub,
+          "telegram",
+          chatId,
+          enabled,
+        );
+        await invalidateUserStatsCache(c.env.CACHE, user.sub);
+        return c.json({ success: true, enabled });
+      } catch (err) {
+        logger.api.error("Failed to toggle telegram channel", err, {
+          userId: user.sub,
+          chatId,
+        });
+        return c.json({ error: "Failed to toggle channel" }, 500);
+      }
+    },
+  );
 
 export default app;
