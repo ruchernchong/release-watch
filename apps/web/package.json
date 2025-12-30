@@ -46,7 +46,6 @@
     "vaul": "^1.1.2"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "catalog:",
     "@release-watch/api": "workspace:*",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
