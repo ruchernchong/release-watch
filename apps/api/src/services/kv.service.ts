@@ -321,3 +321,78 @@ export async function unlinkTelegramChat(
     await kv.delete(`${TELEGRAM_PREFIX}${chatId}`);
   }
 }
+
+// API response cache
+const API_REPOS_PREFIX = "api:repos:";
+const API_STATS_PREFIX = "api:stats:";
+const API_RELEASES_PREFIX = "api:releases:";
+
+export const REPOS_CACHE_TTL = 5 * 60;
+export const STATS_CACHE_TTL = 5 * 60;
+export const RELEASES_CACHE_TTL = 10 * 60;
+
+export async function getCached<T>(
+  kv: KVNamespace,
+  key: string,
+): Promise<T | null> {
+  return kv.get<T>(key, "json");
+}
+
+export async function setCache<T>(
+  kv: KVNamespace,
+  key: string,
+  value: T,
+  ttl: number,
+): Promise<void> {
+  await kv.put(key, JSON.stringify(value), { expirationTtl: ttl });
+}
+
+export function reposCacheKey(userId: string): string {
+  return `${API_REPOS_PREFIX}${userId}`;
+}
+
+export function statsCacheKey(userId: string): string {
+  return `${API_STATS_PREFIX}${userId}`;
+}
+
+export function releasesCacheKey(userId: string, limit: number): string {
+  return `${API_RELEASES_PREFIX}${userId}:${limit}`;
+}
+
+export async function invalidateUserReposCache(
+  kv: KVNamespace,
+  userId: string,
+): Promise<void> {
+  await kv.delete(reposCacheKey(userId));
+}
+
+export async function invalidateUserStatsCache(
+  kv: KVNamespace,
+  userId: string,
+): Promise<void> {
+  await kv.delete(statsCacheKey(userId));
+}
+
+export async function invalidateUserReleasesCache(
+  kv: KVNamespace,
+  userId: string,
+): Promise<void> {
+  const prefix = `${API_RELEASES_PREFIX}${userId}:`;
+  let cursor: string | undefined;
+  do {
+    const result = await kv.list({ prefix, cursor });
+    await Promise.all(result.keys.map((k) => kv.delete(k.name)));
+    cursor = result.list_complete ? undefined : result.cursor;
+  } while (cursor);
+}
+
+export async function invalidateRepoRelatedCaches(
+  kv: KVNamespace,
+  userId: string,
+): Promise<void> {
+  await Promise.all([
+    invalidateUserReposCache(kv, userId),
+    invalidateUserStatsCache(kv, userId),
+    invalidateUserReleasesCache(kv, userId),
+  ]);
+}

@@ -54,7 +54,7 @@ function formatNumber(num: number): string {
 function parseRepoInput(input: string): string | null {
   const trimmed = input.trim();
   const match = trimmed.match(
-    /(?:https?:\/\/)?(?:github\.com\/)?([a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+)/
+    /(?:https?:\/\/)?(?:github\.com\/)?([a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+)/,
   );
   return match ? match[1] : null;
 }
@@ -79,7 +79,7 @@ export function RepoSearch() {
     try {
       const data = await api.get<{ repos: TrackedRepo[] }>("/repos");
       trackedReposRef.current = new Set(
-        data.repos.map((repo) => repo.repoName.toLowerCase())
+        data.repos.map((repo) => repo.repoName.toLowerCase()),
       );
     } catch {
       // Ignore errors
@@ -115,7 +115,7 @@ export function RepoSearch() {
         if (data.language) {
           try {
             const colorsRes = await fetch(
-              "https://raw.githubusercontent.com/ozh/github-colors/master/colors.json"
+              "https://raw.githubusercontent.com/ozh/github-colors/master/colors.json",
             );
             if (colorsRes.ok) {
               const colors = await colorsRes.json();
@@ -191,16 +191,20 @@ export function RepoSearch() {
       setError(null);
       setOpen(false);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to add repository"
-      );
+      setError(err instanceof Error ? err.message : "Failed to add repository");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && preview && !isPending && !isSubmitting && !isTracked) {
+    if (
+      e.key === "Enter" &&
+      preview &&
+      !isPending &&
+      !isSubmitting &&
+      !isTracked
+    ) {
       e.preventDefault();
       handleSubmit();
     }
@@ -223,7 +227,7 @@ export function RepoSearch() {
             disabled={isSubmitting}
             className={cn(
               "h-9 pl-9 pr-9 font-mono text-sm",
-              error && repoInput && "border-destructive/50"
+              error && repoInput && "border-destructive/50",
             )}
           />
           {isPending && (

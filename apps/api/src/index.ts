@@ -29,9 +29,20 @@ import {
 import {
   addChannel,
   createTelegramLinkCode,
+  getCached,
   getCachedAnalysis,
   getChannels,
+  invalidateRepoRelatedCaches,
+  invalidateUserReposCache,
+  invalidateUserStatsCache,
+  RELEASES_CACHE_TTL,
+  REPOS_CACHE_TTL,
+  releasesCacheKey,
   removeChannel,
+  reposCacheKey,
+  STATS_CACHE_TTL,
+  setCache,
+  statsCacheKey,
   updateChannelEnabled,
 } from "./services/kv.service";
 import { getSystemStats } from "./services/stats.service";
@@ -97,7 +108,9 @@ api.post("/integrations/telegram/generate", async (c) => {
     const code = await createTelegramLinkCode(c.env.CHANNELS, user.sub);
     return c.json({ code });
   } catch (err) {
-    logger.api.error("Failed to create Telegram link code", err, { userId: user.sub });
+    logger.api.error("Failed to create Telegram link code", err, {
+      userId: user.sub,
+    });
     return c.json({ error: "Failed to generate link code" }, 500);
   }
 });
@@ -112,15 +125,25 @@ api.get("/integrations/telegram/status", async (c) => {
     );
     return c.json({ linked: !!telegramChannel });
   } catch (err) {
-    logger.api.error("Failed to fetch telegram link status", err, { userId: user.sub });
+    logger.api.error("Failed to fetch telegram link status", err, {
+      userId: user.sub,
+    });
     return c.json({ error: "Failed to fetch link status" }, 500);
   }
 });
 
 api.get("/dashboard/stats", async (c) => {
   const user = c.get("user");
+  const cacheKey = statsCacheKey(user.sub);
 
   try {
+    const cached = await getCached<{
+      reposWatched: number;
+      activeChannels: number;
+      totalChannels: number;
+    }>(c.env.CACHE, cacheKey);
+    if (cached) return c.json(cached);
+
     const database = c.get("db");
 
     const repos = await database.query.userRepos.findMany({
@@ -131,13 +154,17 @@ api.get("/dashboard/stats", async (c) => {
     const channels = await getChannels(c.env.CHANNELS, user.sub);
     const activeChannels = channels.filter((ch) => ch.enabled).length;
 
-    return c.json({
+    const response = {
       reposWatched: repos.length,
       activeChannels,
       totalChannels: channels.length,
-    });
+    };
+    await setCache(c.env.CACHE, cacheKey, response, STATS_CACHE_TTL);
+    return c.json(response);
   } catch (err) {
-    logger.api.error("Failed to fetch dashboard stats", err, { userId: user.sub });
+    logger.api.error("Failed to fetch dashboard stats", err, {
+      userId: user.sub,
+    });
     return c.json({ error: "Failed to fetch stats" }, 500);
   }
 });
@@ -153,8 +180,15 @@ api.get(
   async (c) => {
     const user = c.get("user");
     const { limit } = c.req.valid("query");
+    const cacheKey = releasesCacheKey(user.sub, limit);
 
     try {
+      const cached = await getCached<{ releases: unknown[] }>(
+        c.env.CACHE,
+        cacheKey,
+      );
+      if (cached) return c.json(cached);
+
       const database = c.get("db");
       const octokit = createOctokit(c.env.GITHUB_TOKEN);
 
@@ -210,7 +244,9 @@ api.get(
         })
         .slice(0, limit);
 
-      return c.json({ releases: validReleases });
+      const response = { releases: validReleases };
+      await setCache(c.env.CACHE, cacheKey, response, RELEASES_CACHE_TTL);
+      return c.json(response);
     } catch (err) {
       logger.api.error("Failed to fetch releases", err, { userId: user.sub });
       return c.json({ error: "Failed to fetch releases" }, 500);
@@ -242,9 +278,13 @@ api.patch("/integrations/telegram/toggle", async (c) => {
       chatId,
       enabled,
     );
+    await invalidateUserStatsCache(c.env.CACHE, user.sub);
     return c.json({ success: true, enabled });
   } catch (err) {
-    logger.api.error("Failed to toggle telegram channel", err, { userId: user.sub, chatId });
+    logger.api.error("Failed to toggle telegram channel", err, {
+      userId: user.sub,
+      chatId,
+    });
     return c.json({ error: "Failed to toggle channel" }, 500);
   }
 });
@@ -388,9 +428,14 @@ api.post("/integrations/discord/channels", async (c) => {
       addedAt: new Date().toISOString(),
     });
 
+    await invalidateUserStatsCache(c.env.CACHE, user.sub);
     return c.json({ success: true }, 201);
   } catch (err) {
-    logger.discord.error("Failed to add channel", err, { userId: user.sub, guildId, channelId });
+    logger.discord.error("Failed to add channel", err, {
+      userId: user.sub,
+      guildId,
+      channelId,
+    });
     return c.json({ error: "Failed to add channel" }, 500);
   }
 });
@@ -401,9 +446,13 @@ api.delete("/integrations/discord/channels/:channelId", async (c) => {
 
   try {
     await removeChannel(c.env.CHANNELS, user.sub, "discord", channelId);
+    await invalidateUserStatsCache(c.env.CACHE, user.sub);
     return c.json({ success: true });
   } catch (err) {
-    logger.discord.error("Failed to remove channel", err, { userId: user.sub, channelId });
+    logger.discord.error("Failed to remove channel", err, {
+      userId: user.sub,
+      channelId,
+    });
     return c.json({ error: "Failed to remove channel" }, 500);
   }
 });
@@ -432,23 +481,33 @@ api.patch("/integrations/discord/toggle", async (c) => {
       channelId,
       enabled,
     );
+    await invalidateUserStatsCache(c.env.CACHE, user.sub);
     return c.json({ success: true, enabled });
   } catch (err) {
-    logger.discord.error("Failed to toggle channel", err, { userId: user.sub, channelId });
+    logger.discord.error("Failed to toggle channel", err, {
+      userId: user.sub,
+      channelId,
+    });
     return c.json({ error: "Failed to toggle channel" }, 500);
   }
 });
 
 api.get("/repos", async (c) => {
   const user = c.get("user");
+  const cacheKey = reposCacheKey(user.sub);
 
   try {
+    const cached = await getCached<{ repos: unknown[] }>(c.env.CACHE, cacheKey);
+    if (cached) return c.json(cached);
+
     const database = c.get("db");
     const repos = await database.query.userRepos.findMany({
       where: (userRepos, { eq }) => eq(userRepos.userId, user.sub),
     });
 
-    return c.json({ repos });
+    const response = { repos };
+    await setCache(c.env.CACHE, cacheKey, response, REPOS_CACHE_TTL);
+    return c.json(response);
   } catch (err) {
     logger.api.error("Failed to fetch repos", err, { userId: user.sub });
     return c.json({ error: "Failed to fetch repos" }, 500);
@@ -507,9 +566,13 @@ api.post("/repos", async (c) => {
       return c.json({ error: "Already tracking this repository" }, 409);
     }
 
+    await invalidateRepoRelatedCaches(c.env.CACHE, user.sub);
     return c.json({ repo: trackedRepo }, 201);
   } catch (err) {
-    logger.api.error("Failed to add repo", err, { userId: user.sub, repoName: normalizedRepo });
+    logger.api.error("Failed to add repo", err, {
+      userId: user.sub,
+      repoName: normalizedRepo,
+    });
     return c.json({ error: "Failed to add repo" }, 500);
   }
 });
@@ -530,9 +593,13 @@ api.delete("/repos/:id", async (c) => {
       return c.json({ error: "Repo not found" }, 404);
     }
 
+    await invalidateRepoRelatedCaches(c.env.CACHE, user.sub);
     return c.json({ success: true });
   } catch (err) {
-    logger.api.error("Failed to delete repo", err, { userId: user.sub, repoId: id });
+    logger.api.error("Failed to delete repo", err, {
+      userId: user.sub,
+      repoId: id,
+    });
     return c.json({ error: "Failed to delete repo" }, 500);
   }
 });
@@ -590,7 +657,9 @@ api.patch("/repos/:id/pause", async (c) => {
           }
         }
       } catch (err) {
-        logger.api.warn("Failed to fetch latest release when unpausing", err, { repoName: repo.repoName });
+        logger.api.warn("Failed to fetch latest release when unpausing", err, {
+          repoName: repo.repoName,
+        });
       }
     }
 
@@ -600,9 +669,13 @@ api.patch("/repos/:id/pause", async (c) => {
       .where(and(eq(userRepos.id, id), eq(userRepos.userId, user.sub)))
       .returning();
 
+    await invalidateUserReposCache(c.env.CACHE, user.sub);
     return c.json({ repo: updated });
   } catch (err) {
-    logger.api.error("Failed to update repo pause status", err, { userId: user.sub, repoId: id });
+    logger.api.error("Failed to update repo pause status", err, {
+      userId: user.sub,
+      repoId: id,
+    });
     return c.json({ error: "Failed to update repo pause status" }, 500);
   }
 });
@@ -811,7 +884,11 @@ admin.post("/users/:id/ban", async (c) => {
 
     return c.json({ success: true, action: "unbanned" });
   } catch (err) {
-    logger.api.error("Failed to update user ban status", err, { adminId: adminUser.sub, targetUserId: id, action });
+    logger.api.error("Failed to update user ban status", err, {
+      adminId: adminUser.sub,
+      targetUserId: id,
+      action,
+    });
     return c.json({ error: "Failed to update user ban status" }, 500);
   }
 });
