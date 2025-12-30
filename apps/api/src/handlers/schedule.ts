@@ -1,3 +1,4 @@
+import { logger } from "../lib/logger";
 import type { Env } from "../types/env";
 
 export async function handleSchedule(
@@ -14,9 +15,9 @@ export async function handleSchedule(
           id: instanceId,
           params: { triggeredAt: new Date().toISOString() },
         });
-        console.log(`[Scheduler] Workflow started: ${instance.id}`);
+        logger.scheduler.info("Workflow started", { instanceId: instance.id });
       } catch (error) {
-        console.error("[Scheduler] Failed to start workflow:", error);
+        logger.scheduler.error("Failed to start workflow", error);
       }
     })(),
   );

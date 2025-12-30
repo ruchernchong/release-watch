@@ -10,11 +10,11 @@ import { and, count, desc, eq, ilike, or } from "drizzle-orm";
 import { webhookCallback } from "grammy";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { logger } from "hono/logger";
 import * as z from "zod";
 import { createBot } from "./bot";
 import { db } from "./db";
 import { handleSchedule } from "./handlers/schedule";
+import { logger } from "./lib/logger";
 import { type AuthEnv, adminOnly, jwtAuth } from "./middleware/auth";
 import {
   fetchGuildChannels,
@@ -41,8 +41,6 @@ export { Stats } from "./durable-objects/stats";
 export { ReleaseCheckWorkflow } from "./workflows/release-check";
 
 const app = new Hono<{ Bindings: Env }>();
-
-// app.use(logger());
 
 const ALLOWED_ORIGINS = [
   "http://localhost:3000",
@@ -99,7 +97,7 @@ api.post("/integrations/telegram/generate", async (c) => {
     const code = await createTelegramLinkCode(c.env.CHANNELS, user.sub);
     return c.json({ code });
   } catch (err) {
-    console.error("Failed to create Telegram link code:", err);
+    logger.api.error("Failed to create Telegram link code", err, { userId: user.sub });
     return c.json({ error: "Failed to generate link code" }, 500);
   }
 });
@@ -114,7 +112,7 @@ api.get("/integrations/telegram/status", async (c) => {
     );
     return c.json({ linked: !!telegramChannel });
   } catch (err) {
-    console.error("Error fetching telegram link status:", err);
+    logger.api.error("Failed to fetch telegram link status", err, { userId: user.sub });
     return c.json({ error: "Failed to fetch link status" }, 500);
   }
 });
@@ -139,7 +137,7 @@ api.get("/dashboard/stats", async (c) => {
       totalChannels: channels.length,
     });
   } catch (err) {
-    console.error("Error fetching dashboard stats:", err);
+    logger.api.error("Failed to fetch dashboard stats", err, { userId: user.sub });
     return c.json({ error: "Failed to fetch stats" }, 500);
   }
 });
@@ -214,7 +212,7 @@ api.get(
 
       return c.json({ releases: validReleases });
     } catch (err) {
-      console.error("Error fetching releases:", err);
+      logger.api.error("Failed to fetch releases", err, { userId: user.sub });
       return c.json({ error: "Failed to fetch releases" }, 500);
     }
   },
@@ -246,7 +244,7 @@ api.patch("/integrations/telegram/toggle", async (c) => {
     );
     return c.json({ success: true, enabled });
   } catch (err) {
-    console.error("Error toggling telegram channel:", err);
+    logger.api.error("Failed to toggle telegram channel", err, { userId: user.sub, chatId });
     return c.json({ error: "Failed to toggle channel" }, 500);
   }
 });
@@ -278,7 +276,7 @@ api.get("/integrations/discord/status", async (c) => {
       })),
     });
   } catch (err) {
-    console.error("Error fetching Discord status:", err);
+    logger.discord.error("Failed to fetch status", err, { userId: user.sub });
     return c.json({ error: "Failed to fetch status" }, 500);
   }
 });
@@ -316,7 +314,7 @@ api.get("/integrations/discord/guilds", async (c) => {
 
     return c.json({ guilds: guildsWithBotStatus });
   } catch (err) {
-    console.error("Error fetching Discord guilds:", err);
+    logger.discord.error("Failed to fetch guilds", err, { userId: user.sub });
     return c.json({ error: "Failed to fetch guilds" }, 500);
   }
 });
@@ -347,7 +345,7 @@ api.get("/integrations/discord/guilds/:guildId/channels", async (c) => {
       })),
     });
   } catch (err) {
-    console.error("Error fetching Discord channels:", err);
+    logger.discord.error("Failed to fetch channels", err, { guildId });
     return c.json({ error: "Failed to fetch channels" }, 500);
   }
 });
@@ -392,7 +390,7 @@ api.post("/integrations/discord/channels", async (c) => {
 
     return c.json({ success: true }, 201);
   } catch (err) {
-    console.error("Error adding Discord channel:", err);
+    logger.discord.error("Failed to add channel", err, { userId: user.sub, guildId, channelId });
     return c.json({ error: "Failed to add channel" }, 500);
   }
 });
@@ -405,7 +403,7 @@ api.delete("/integrations/discord/channels/:channelId", async (c) => {
     await removeChannel(c.env.CHANNELS, user.sub, "discord", channelId);
     return c.json({ success: true });
   } catch (err) {
-    console.error("Error removing Discord channel:", err);
+    logger.discord.error("Failed to remove channel", err, { userId: user.sub, channelId });
     return c.json({ error: "Failed to remove channel" }, 500);
   }
 });
@@ -436,7 +434,7 @@ api.patch("/integrations/discord/toggle", async (c) => {
     );
     return c.json({ success: true, enabled });
   } catch (err) {
-    console.error("Error toggling Discord channel:", err);
+    logger.discord.error("Failed to toggle channel", err, { userId: user.sub, channelId });
     return c.json({ error: "Failed to toggle channel" }, 500);
   }
 });
@@ -452,7 +450,7 @@ api.get("/repos", async (c) => {
 
     return c.json({ repos });
   } catch (err) {
-    console.error("Failed to fetch repos:", err);
+    logger.api.error("Failed to fetch repos", err, { userId: user.sub });
     return c.json({ error: "Failed to fetch repos" }, 500);
   }
 });
@@ -511,7 +509,7 @@ api.post("/repos", async (c) => {
 
     return c.json({ repo: trackedRepo }, 201);
   } catch (err) {
-    console.error("Failed to add repo:", err);
+    logger.api.error("Failed to add repo", err, { userId: user.sub, repoName: normalizedRepo });
     return c.json({ error: "Failed to add repo" }, 500);
   }
 });
@@ -534,7 +532,7 @@ api.delete("/repos/:id", async (c) => {
 
     return c.json({ success: true });
   } catch (err) {
-    console.error("Failed to delete repo:", err);
+    logger.api.error("Failed to delete repo", err, { userId: user.sub, repoId: id });
     return c.json({ error: "Failed to delete repo" }, 500);
   }
 });
@@ -592,8 +590,7 @@ api.patch("/repos/:id/pause", async (c) => {
           }
         }
       } catch (err) {
-        console.error("Failed to fetch latest release when unpausing:", err);
-        // Continue anyway - we'll just not update lastNotifiedTag
+        logger.api.warn("Failed to fetch latest release when unpausing", err, { repoName: repo.repoName });
       }
     }
 
@@ -605,7 +602,7 @@ api.patch("/repos/:id/pause", async (c) => {
 
     return c.json({ repo: updated });
   } catch (err) {
-    console.error("Failed to update repo pause status:", err);
+    logger.api.error("Failed to update repo pause status", err, { userId: user.sub, repoId: id });
     return c.json({ error: "Failed to update repo pause status" }, 500);
   }
 });
@@ -677,7 +674,7 @@ admin.get(
 
       return c.json({ users: userList, total: totalCount, limit, offset });
     } catch (err) {
-      console.error("Failed to fetch users:", err);
+      logger.api.error("Failed to fetch users", err);
       return c.json({ error: "Failed to fetch users" }, 500);
     }
   },
@@ -743,7 +740,7 @@ admin.get("/users/:id", async (c) => {
 
     return c.json({ user, repos, channels, connectedAccounts });
   } catch (err) {
-    console.error("Failed to fetch user details:", err);
+    logger.api.error("Failed to fetch user details", err, { targetUserId: id });
     return c.json({ error: "Failed to fetch user details" }, 500);
   }
 });
@@ -814,7 +811,7 @@ admin.post("/users/:id/ban", async (c) => {
 
     return c.json({ success: true, action: "unbanned" });
   } catch (err) {
-    console.error("Failed to update user ban status:", err);
+    logger.api.error("Failed to update user ban status", err, { adminId: adminUser.sub, targetUserId: id, action });
     return c.json({ error: "Failed to update user ban status" }, 500);
   }
 });
@@ -855,7 +852,7 @@ admin.get(
 
       return c.json({ activity: activityLogs, limit, offset });
     } catch (err) {
-      console.error("Failed to fetch activity logs:", err);
+      logger.api.error("Failed to fetch activity logs", err);
       return c.json({ error: "Failed to fetch activity logs" }, 500);
     }
   },

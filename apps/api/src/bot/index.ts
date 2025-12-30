@@ -1,4 +1,5 @@
 import { Bot, InlineKeyboard } from "grammy";
+import { logger } from "../lib/logger";
 import {
   createOctokit,
   type GitHubRelease,
@@ -113,7 +114,7 @@ export async function createBot(env: Env): Promise<Bot> {
         `✅ Release check triggered for ${trackedRepos.length} tracked repo(s)`,
       );
     } catch (error) {
-      console.error("[Bot] Failed to trigger release check:", error);
+      logger.bot.error("Failed to trigger release check", error, { chatId });
       await ctx.reply("❌ Failed to trigger release check. Please try again.");
     }
   });

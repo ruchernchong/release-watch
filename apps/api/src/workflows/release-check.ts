@@ -6,6 +6,7 @@ import {
 import { userRepos } from "@release-watch/database";
 import { eq } from "drizzle-orm";
 import { db } from "../db";
+import { logger } from "../lib/logger";
 import { type AIAnalysisResult, analyzeRelease } from "../services/ai.service";
 import {
   type ChangelogEntry,
@@ -80,7 +81,7 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
   ReleaseCheckParams
 > {
   async run(event: WorkflowEvent<ReleaseCheckParams>, step: WorkflowStep) {
-    console.log(`[Workflow] Started at ${event.payload.triggeredAt}`);
+    logger.workflow.info("Started", { triggeredAt: event.payload.triggeredAt });
 
     const trackedRepos = await step.do(
       "fetch-tracked-repos",
@@ -115,7 +116,7 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
     );
 
     if (trackedRepos.length === 0) {
-      console.log("[Workflow] No tracked repos found");
+      logger.workflow.info("No tracked repos found");
       return { processed: 0, notificationsSent: 0 };
     }
 
@@ -168,7 +169,7 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
             },
           );
         } catch (error) {
-          console.error(`[Workflow] Failed to fetch ${repoFullName}:`, error);
+          logger.workflow.error("Failed to fetch repo", error, { repo: repoFullName });
           return repoNotificationsSent;
         }
 
@@ -203,9 +204,7 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
           );
 
           if (cachedAnalysis) {
-            console.log(
-              `[Workflow] AI cache hit for ${repoFullName}@${tagName}`,
-            );
+            logger.workflow.debug("AI cache hit", { repo: repoFullName, tag: tagName });
             aiAnalysis = cachedAnalysis;
           } else {
             // Run AI analysis
@@ -238,17 +237,11 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
                   );
                 },
               );
-              console.log(
-                `[Workflow] Cached AI analysis for ${repoFullName}@${tagName}`,
-              );
+              logger.workflow.info("Cached AI analysis", { repo: repoFullName, tag: tagName });
             }
           }
         } catch (error) {
-          console.error(
-            `[Workflow] AI analysis failed for ${repoFullName}:`,
-            error,
-          );
-          // Continue without AI analysis - graceful degradation
+          logger.workflow.warn("AI analysis failed, continuing without summary", error, { repo: repoFullName });
         }
 
         for (const chatId of chatIds) {
@@ -270,9 +263,7 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
           );
 
           if (isPaused) {
-            console.log(
-              `[Workflow] Skipping paused repo ${repoFullName} for chat ${chatId}`,
-            );
+            logger.workflow.debug("Skipping paused repo", { repo: repoFullName, chatId });
             continue;
           }
 
@@ -315,10 +306,7 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
             );
             notificationSent = true;
           } catch (error) {
-            console.error(
-              `[Workflow] Failed to send notification to ${chatId} for ${repoFullName}:`,
-              error,
-            );
+            logger.workflow.error("Failed to send notification", error, { repo: repoFullName, chatId });
             continue;
           }
 
@@ -358,13 +346,10 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
               releaseCountedForStats = true;
             }
           } catch (error) {
-            // Notification was sent but save failed - log warning about potential duplicate
-            console.error(
-              `[Workflow] Failed to save tag for ${chatId}:${repoFullName} after successful notification. ` +
-                `Duplicate notification may occur on next run.`,
-              error,
-            );
-            // Still count as sent since user received the notification
+            logger.workflow.warn("Failed to save tag after notification sent, duplicate may occur", error, {
+              repo: repoFullName,
+              chatId,
+            });
             if (notificationSent) {
               repoNotificationsSent++;
             }
@@ -376,6 +361,12 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
     );
 
     const notificationsSent = results.reduce((sum, count) => sum + count, 0);
+
+    logger.workflow.info("Completed", {
+      reposProcessed: repos.length,
+      notificationsSent,
+    });
+
     return { processed: repos.length, notificationsSent };
   }
 }

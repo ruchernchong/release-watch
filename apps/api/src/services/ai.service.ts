@@ -1,3 +1,5 @@
+import { logger } from "../lib/logger";
+
 export type ReleaseCategory =
   | "major"
   | "minor"
@@ -100,7 +102,7 @@ ${truncatedBody}`;
     });
 
     if (!response || typeof response !== "object") {
-      console.error("[AI] Invalid response format");
+      logger.ai.error("Invalid response format", undefined, { repo: repoName, tag: tagName });
       return null;
     }
 
@@ -112,7 +114,7 @@ ${truncatedBody}`;
 
     return result as AIAnalysisResult;
   } catch (error) {
-    console.error("[AI] Failed to analyze release:", error);
+    logger.ai.error("Failed to analyze release", error, { repo: repoName, tag: tagName });
     return null;
   }
 }

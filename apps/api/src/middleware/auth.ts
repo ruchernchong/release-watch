@@ -1,6 +1,7 @@
 import { createMiddleware } from "hono/factory";
 import { type JWK, importJWK, jwtVerify } from "jose";
 import type { Database } from "../db";
+import { logger } from "../lib/logger";
 import type { Env } from "../types/env";
 
 export interface JWTPayload {
@@ -109,7 +110,7 @@ export const jwtAuth = createMiddleware<AuthEnv>(async (c, next) => {
   const jwksUrl = c.env.JWKS_URL;
 
   if (!jwksUrl) {
-    console.error("JWKS_URL environment variable is not set");
+    logger.auth.error("JWKS_URL environment variable is not set");
     return c.json({ error: "Server configuration error" }, 500);
   }
 
@@ -124,7 +125,7 @@ export const jwtAuth = createMiddleware<AuthEnv>(async (c, next) => {
       if (error.message.includes("expired")) {
         return c.json({ error: "Token expired" }, 401);
       }
-      console.error("JWT verification failed:", error.message);
+      logger.auth.warn("JWT verification failed", error);
     }
     return c.json({ error: "Invalid token" }, 401);
   }
