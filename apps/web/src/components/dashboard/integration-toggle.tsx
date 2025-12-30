@@ -31,7 +31,7 @@ export function IntegrationToggle({
     setLocalEnabled(checked);
     startTransition(async () => {
       try {
-        await api.patch("/integrations/telegram/toggle", {
+        await api.patch("/channels/telegram/toggle", {
           chatId,
           enabled: checked,
         });

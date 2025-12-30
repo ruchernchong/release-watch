@@ -65,7 +65,7 @@ export function IntegrationsSection() {
       try {
         setTelegramError(null);
         const data = await api.get<TelegramStatusResponse>(
-          "/integrations/telegram/status",
+          "/channels/telegram/status",
         );
         setTelegramLinked(data.linked);
       } catch (err) {
@@ -81,7 +81,7 @@ export function IntegrationsSection() {
       try {
         setDiscordError(null);
         const data = await api.get<DiscordStatusResponse>(
-          "/integrations/discord/status",
+          "/channels/discord/status",
         );
         setDiscordConnected(data.connected);
         setDiscordChannels(data.channels);
@@ -110,7 +110,7 @@ export function IntegrationsSection() {
     enabled: boolean,
   ) => {
     try {
-      await api.patch("/integrations/discord/toggle", { channelId, enabled });
+      await api.patch("/channels/discord/toggle", { channelId, enabled });
       setDiscordChannels((previousChannels) =>
         previousChannels.map((channel) =>
           channel.channelId === channelId ? { ...channel, enabled } : channel,
@@ -123,7 +123,7 @@ export function IntegrationsSection() {
 
   const handleRemoveDiscordChannel = async (channelId: string) => {
     try {
-      await api.delete(`/integrations/discord/channels/${channelId}`);
+      await api.delete(`/channels/discord/channels/${channelId}`);
       setDiscordChannels((previousChannels) =>
         previousChannels.filter((channel) => channel.channelId !== channelId),
       );

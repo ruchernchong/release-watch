@@ -8,7 +8,7 @@ function formatLog(
   level: LogLevel,
   component: string,
   message: string,
-  data?: LogData
+  data?: LogData,
 ): string {
   const entry = {
     level,

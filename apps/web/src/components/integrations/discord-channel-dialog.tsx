@@ -76,7 +76,7 @@ export function DiscordChannelDialog({
       try {
         setError(null);
         const data = await api.get<GuildsResponse>(
-          "/integrations/discord/guilds",
+          "/channels/discord/guilds",
         );
         setGuilds(data.guilds);
       } catch (err) {
@@ -93,7 +93,7 @@ export function DiscordChannelDialog({
         setError(null);
         setInviteUrl(null);
         const data = await api.get<ChannelsResponse | ChannelsErrorResponse>(
-          `/integrations/discord/guilds/${guildId}/channels`,
+          `/channels/discord/guilds/${guildId}/channels`,
         );
 
         if ("channels" in data) {
@@ -141,7 +141,7 @@ export function DiscordChannelDialog({
 
     startSaving(async () => {
       try {
-        await api.post("/integrations/discord/channels", {
+        await api.post("/channels/discord/channels", {
           guildId: selectedGuild.id,
           guildName: selectedGuild.name,
           channelId: selectedChannel.id,

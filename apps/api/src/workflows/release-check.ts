@@ -169,7 +169,9 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
             },
           );
         } catch (error) {
-          logger.workflow.error("Failed to fetch repo", error, { repo: repoFullName });
+          logger.workflow.error("Failed to fetch repo", error, {
+            repo: repoFullName,
+          });
           return repoNotificationsSent;
         }
 
@@ -204,7 +206,10 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
           );
 
           if (cachedAnalysis) {
-            logger.workflow.debug("AI cache hit", { repo: repoFullName, tag: tagName });
+            logger.workflow.debug("AI cache hit", {
+              repo: repoFullName,
+              tag: tagName,
+            });
             aiAnalysis = cachedAnalysis;
           } else {
             // Run AI analysis
@@ -237,11 +242,18 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
                   );
                 },
               );
-              logger.workflow.info("Cached AI analysis", { repo: repoFullName, tag: tagName });
+              logger.workflow.info("Cached AI analysis", {
+                repo: repoFullName,
+                tag: tagName,
+              });
             }
           }
         } catch (error) {
-          logger.workflow.warn("AI analysis failed, continuing without summary", error, { repo: repoFullName });
+          logger.workflow.warn(
+            "AI analysis failed, continuing without summary",
+            error,
+            { repo: repoFullName },
+          );
         }
 
         for (const chatId of chatIds) {
@@ -263,7 +275,10 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
           );
 
           if (isPaused) {
-            logger.workflow.debug("Skipping paused repo", { repo: repoFullName, chatId });
+            logger.workflow.debug("Skipping paused repo", {
+              repo: repoFullName,
+              chatId,
+            });
             continue;
           }
 
@@ -306,7 +321,10 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
             );
             notificationSent = true;
           } catch (error) {
-            logger.workflow.error("Failed to send notification", error, { repo: repoFullName, chatId });
+            logger.workflow.error("Failed to send notification", error, {
+              repo: repoFullName,
+              chatId,
+            });
             continue;
           }
 
@@ -346,10 +364,14 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
               releaseCountedForStats = true;
             }
           } catch (error) {
-            logger.workflow.warn("Failed to save tag after notification sent, duplicate may occur", error, {
-              repo: repoFullName,
-              chatId,
-            });
+            logger.workflow.warn(
+              "Failed to save tag after notification sent, duplicate may occur",
+              error,
+              {
+                repo: repoFullName,
+                chatId,
+              },
+            );
             if (notificationSent) {
               repoNotificationsSent++;
             }

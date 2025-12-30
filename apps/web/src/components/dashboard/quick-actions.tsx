@@ -34,7 +34,7 @@ export function QuickActions() {
     startTransition(async () => {
       try {
         const data = await api.get<TelegramStatusResponse>(
-          "/integrations/telegram/status",
+          "/channels/telegram/status",
         );
         setTelegramLinked(data.linked);
         if (data.linked && data.channel) {

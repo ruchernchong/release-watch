@@ -38,7 +38,7 @@ export function TelegramLinkDialog({
     startTransition(async () => {
       try {
         const data = await api.post<GenerateCodeResponse>(
-          "/integrations/telegram/generate",
+          "/channels/telegram/generate",
         );
         setCode(data.code);
       } catch (err) {

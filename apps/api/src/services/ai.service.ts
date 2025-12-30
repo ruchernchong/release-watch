@@ -102,7 +102,10 @@ ${truncatedBody}`;
     });
 
     if (!response || typeof response !== "object") {
-      logger.ai.error("Invalid response format", undefined, { repo: repoName, tag: tagName });
+      logger.ai.error("Invalid response format", undefined, {
+        repo: repoName,
+        tag: tagName,
+      });
       return null;
     }
 
@@ -114,7 +117,10 @@ ${truncatedBody}`;
 
     return result as AIAnalysisResult;
   } catch (error) {
-    logger.ai.error("Failed to analyze release", error, { repo: repoName, tag: tagName });
+    logger.ai.error("Failed to analyze release", error, {
+      repo: repoName,
+      tag: tagName,
+    });
     return null;
   }
 }

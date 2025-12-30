@@ -1,5 +1,5 @@
 import { createMiddleware } from "hono/factory";
-import { type JWK, importJWK, jwtVerify } from "jose";
+import { importJWK, type JWK, jwtVerify } from "jose";
 import type { Database } from "../db";
 import { logger } from "../lib/logger";
 import type { Env } from "../types/env";
@@ -38,7 +38,7 @@ let fetchPromise: Promise<Map<string, CryptoKey>> | null = null;
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 async function fetchAndCacheJWKS(
-  jwksUrl: string
+  jwksUrl: string,
 ): Promise<Map<string, CryptoKey>> {
   const response = await fetch(jwksUrl, {
     headers: { Accept: "application/json" },
