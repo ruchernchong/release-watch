@@ -15,16 +15,14 @@
     "jsx": "react-jsx",
     "incremental": true,
     "plugins": [{ "name": "next" }],
-    "types": ["@cloudflare/workers-types"]
+    "types": ["node"]
   },
   "include": [
     "next-env.d.ts",
+    "cloudflare.d.ts",
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts",
-    // TODO: Hono RPC types traverse into API source. Include API's generated
-    // Cloudflare.Env types. Better solution: build API to emit .d.ts files.
-    "../api/worker-configuration.d.ts"
+    ".next/dev/types/**/*.ts"
   ]
 }
