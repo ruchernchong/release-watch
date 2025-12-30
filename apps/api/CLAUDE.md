@@ -14,12 +14,32 @@ wrangler types            # Generate CloudflareBindings types
 
 ## Architecture
 
-- `index.ts` - Hono app + scheduled export + DO/Workflow exports
-- `middleware/auth.ts` - JWT authentication (verifies via JWKS)
-- `bot/` - Grammy Telegram bot
-- `workflows/release-check.ts` - Main workflow: fetch releases → AI analysis → notify
-- `durable-objects/stats.ts` - SQLite-backed stats
-- `services/` - GitHub, Telegram, KV, AI, Stats services
+```
+src/
+  index.ts                 # App composition + AppType export
+  routes/
+    health.ts              # GET /
+    stats.ts               # GET /stats
+    webhook.ts             # POST /webhook (Telegram incoming)
+    dashboard.ts           # /dashboard/*
+    repos.ts               # /repos/*
+    integrations/
+      telegram.ts          # /integrations/telegram/*
+      discord.ts           # /integrations/discord/*
+    admin/
+      users.ts             # /admin/users/*
+      activity.ts          # /admin/activity
+      stats.ts             # /admin/stats
+  middleware/
+    auth.ts                # JWT authentication (verifies via JWKS)
+    db.ts                  # Database context middleware
+  bot/                     # Grammy Telegram bot
+  workflows/               # Cloudflare Workflows
+  durable-objects/         # SQLite-backed stats
+  services/                # GitHub, Telegram, KV, AI, Stats
+```
+
+**Route Pattern:** Each route file uses `.basePath()` and method chaining for Hono RPC type inference.
 
 ## API Routes
 
@@ -36,9 +56,16 @@ No versioning - internal API only.
 - `GET /repos` - List user's tracked repos
 - `POST /repos` - Add tracked repo
 - `DELETE /repos/:id` - Remove tracked repo
+- `PATCH /repos/:id/pause` - Pause/unpause tracking
 - `GET /integrations/telegram/status` - Telegram link status
 - `POST /integrations/telegram/generate` - Generate link code
 - `PATCH /integrations/telegram/toggle` - Toggle notifications
+- `GET /integrations/discord/status` - Discord connection status
+- `GET /integrations/discord/guilds` - List user's Discord guilds
+- `GET /integrations/discord/guilds/:guildId/channels` - List guild channels
+- `POST /integrations/discord/channels` - Add notification channel
+- `DELETE /integrations/discord/channels/:channelId` - Remove channel
+- `PATCH /integrations/discord/toggle` - Toggle channel notifications
 
 **Admin (JWT + admin role):**
 - `GET /admin/users` - List users
