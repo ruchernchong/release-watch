@@ -9,7 +9,7 @@ import {
 } from "../../services/kv.service";
 
 const app = new Hono<AuthEnv>()
-  .basePath("/integrations/telegram")
+  .basePath("/channels/telegram")
   .post("/generate", async (c) => {
     const user = c.get("user");
 

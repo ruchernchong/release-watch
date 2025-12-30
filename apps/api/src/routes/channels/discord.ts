@@ -15,7 +15,7 @@ import {
 } from "../../services/kv.service";
 
 const app = new Hono<AuthEnv>()
-  .basePath("/integrations/discord")
+  .basePath("/channels/discord")
   .get("/status", async (c) => {
     const user = c.get("user");
 

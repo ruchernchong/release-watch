@@ -23,9 +23,9 @@ src/
     webhook.ts             # POST /webhook (Telegram incoming)
     dashboard.ts           # /dashboard/*
     repos.ts               # /repos/*
-    integrations/
-      telegram.ts          # /integrations/telegram/*
-      discord.ts           # /integrations/discord/*
+    channels/
+      telegram.ts          # /channels/telegram/*
+      discord.ts           # /channels/discord/*
     admin/
       users.ts             # /admin/users/*
       activity.ts          # /admin/activity
@@ -57,15 +57,15 @@ No versioning - internal API only.
 - `POST /repos` - Add tracked repo
 - `DELETE /repos/:id` - Remove tracked repo
 - `PATCH /repos/:id/pause` - Pause/unpause tracking
-- `GET /integrations/telegram/status` - Telegram link status
-- `POST /integrations/telegram/generate` - Generate link code
-- `PATCH /integrations/telegram/toggle` - Toggle notifications
-- `GET /integrations/discord/status` - Discord connection status
-- `GET /integrations/discord/guilds` - List user's Discord guilds
-- `GET /integrations/discord/guilds/:guildId/channels` - List guild channels
-- `POST /integrations/discord/channels` - Add notification channel
-- `DELETE /integrations/discord/channels/:channelId` - Remove channel
-- `PATCH /integrations/discord/toggle` - Toggle channel notifications
+- `GET /channels/telegram/status` - Telegram link status
+- `POST /channels/telegram/generate` - Generate link code
+- `PATCH /channels/telegram/toggle` - Toggle notifications
+- `GET /channels/discord/status` - Discord connection status
+- `GET /channels/discord/guilds` - List user's Discord guilds
+- `GET /channels/discord/guilds/:guildId/channels` - List guild channels
+- `POST /channels/discord/channels` - Add notification channel
+- `DELETE /channels/discord/channels/:channelId` - Remove channel
+- `PATCH /channels/discord/toggle` - Toggle channel notifications
 
 **Admin (JWT + admin role):**
 - `GET /admin/users` - List users

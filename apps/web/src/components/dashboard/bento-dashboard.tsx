@@ -78,7 +78,7 @@ export function BentoDashboard() {
     startTelegramTransition(async () => {
       try {
         const data = await api.get<TelegramStatusResponse>(
-          "/integrations/telegram/status",
+          "/channels/telegram/status",
         );
         setTelegramLinked(data.linked);
         if (data.linked && data.channel) {
@@ -100,7 +100,7 @@ export function BentoDashboard() {
 
     startToggleTransition(async () => {
       try {
-        await api.patch("/integrations/telegram/toggle", {
+        await api.patch("/channels/telegram/toggle", {
           chatId: telegramChannel.chatId,
           enabled: checked,
         });
