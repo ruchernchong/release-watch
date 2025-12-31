@@ -35,6 +35,7 @@ export const auth = betterAuth({
     schema,
     usePlural: true,
   }),
+  trustedOrigins: ["https://*.vercel.app"],
   account: {
     accountLinking: {
       enabled: true,

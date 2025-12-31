@@ -28,7 +28,9 @@ app.use(
   cors({
     origin: (origin) => {
       if (!origin) return origin;
-      return ALLOWED_ORIGINS.includes(origin) ? origin : null;
+      if (ALLOWED_ORIGINS.includes(origin)) return origin;
+      if (origin.endsWith(".vercel.app")) return origin;
+      return null;
     },
     credentials: true,
     allowHeaders: ["Authorization", "Content-Type"],
