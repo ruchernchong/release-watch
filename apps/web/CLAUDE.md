@@ -102,6 +102,10 @@ import { createRepo } from "./actions";
 - Gap values: even numbers (`gap-2`, `gap-4`, `gap-6`)
 - Use `size-*` for square dimensions instead of `h-*` + `w-*`
 
+## RepoSearch Component
+
+Uses GitHub's **search API** to find repositories by keyword. Users type a query, see matching results with star counts, select one to preview details, then add to watchlist. Already-tracked repos show a checkmark.
+
 ## Code Style Guidelines
 
 **Server Components by Default:**

@@ -2,6 +2,7 @@
 
 import {
   AlertCircle,
+  ArrowLeft,
   Check,
   ExternalLink,
   GitFork,
@@ -28,7 +29,6 @@ import {
 } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api-client";
-import type { GitHubLanguageColors, GitHubRepoResponse } from "@/lib/github";
 import { cn } from "@/lib/utils";
 
 interface RepoPreview {
@@ -52,25 +52,17 @@ function formatNumber(num: number): string {
   return num.toString();
 }
 
-function parseRepoInput(input: string): string | null {
-  const trimmed = input.trim();
-  const match = trimmed.match(
-    /(?:https?:\/\/)?(?:github\.com\/)?([a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+)/,
-  );
-  return match ? match[1] : null;
-}
-
 interface TrackedRepo {
   repoName: string;
 }
 
 export function RepoSearch() {
-  const [repoInput, setRepoInput] = useState("");
+  const [query, setQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [preview, setPreview] = useState<RepoPreview | null>(null);
+  const [results, setResults] = useState<RepoPreview[]>([]);
+  const [selectedRepo, setSelectedRepo] = useState<RepoPreview | null>(null);
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isTracked, setIsTracked] = useState(false);
   const [isPending, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -91,59 +83,59 @@ export function RepoSearch() {
     fetchTrackedRepos();
   }, []);
 
-  const fetchRepoPreview = useCallback((repoName: string) => {
+  const searchRepos = useCallback((searchQuery: string) => {
     startTransition(async () => {
       try {
-        const res = await fetch(`https://api.github.com/repos/${repoName}`, {
-          headers: { Accept: "application/vnd.github.v3+json" },
-        });
+        const res = await fetch(
+          `https://api.github.com/search/repositories?q=${encodeURIComponent(searchQuery)}&per_page=7`,
+          { headers: { Accept: "application/vnd.github.v3+json" } },
+        );
 
         if (!res.ok) {
-          if (res.status === 404) {
-            setError("Repository not found");
-          } else if (res.status === 403) {
+          if (res.status === 403) {
             setError("Rate limited. Try again shortly.");
           } else {
-            setError("Failed to fetch repository");
+            setError("Search failed");
           }
-          setPreview(null);
+          setResults([]);
           return;
         }
 
-        const data: GitHubRepoResponse = await res.json();
-
-        let languageColor: string | null = null;
-        if (data.language) {
-          try {
-            const colorsRes = await fetch(
-              "https://raw.githubusercontent.com/ozh/github-colors/master/colors.json",
-            );
-            if (colorsRes.ok) {
-              const colors: GitHubLanguageColors = await colorsRes.json();
-              languageColor = colors[data.language]?.color || null;
-            }
-          } catch {
-            // Ignore color fetch errors
-          }
+        interface GitHubSearchItem {
+          name: string;
+          owner: { login: string };
+          description: string | null;
+          stargazers_count: number;
+          forks_count: number;
+          language: string | null;
+          html_url: string;
         }
 
-        const repoFullName = `${data.owner.login}/${data.name}`.toLowerCase();
-        setIsTracked(trackedReposRef.current.has(repoFullName));
-        setPreview({
-          name: data.name,
-          owner: data.owner.login,
-          description: data.description,
-          stars: data.stargazers_count,
-          forks: data.forks_count,
-          language: data.language,
-          languageColor,
-          url: data.html_url,
-        });
+        const data: { items: GitHubSearchItem[] } = await res.json();
+
+        if (data.items.length === 0) {
+          setError("No repositories found");
+          setResults([]);
+          return;
+        }
+
+        const repos: RepoPreview[] = data.items.map((item) => ({
+          name: item.name,
+          owner: item.owner.login,
+          description: item.description,
+          stars: item.stargazers_count,
+          forks: item.forks_count,
+          language: item.language,
+          languageColor: null,
+          url: item.html_url,
+        }));
+
+        setResults(repos);
         setError(null);
         setOpen(true);
       } catch {
         setError("Network error");
-        setPreview(null);
+        setResults([]);
       }
     });
   }, []);
@@ -153,42 +145,38 @@ export function RepoSearch() {
       clearTimeout(debounceRef.current);
     }
 
-    const repoName = parseRepoInput(repoInput);
-    if (!repoName) {
-      setPreview(null);
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery || trimmedQuery.length < 2) {
+      setResults([]);
+      setSelectedRepo(null);
       setOpen(false);
-      setIsTracked(false);
-      if (repoInput.trim() && !repoInput.includes("/")) {
-        setError("Use owner/repo format");
-      } else {
-        setError(null);
-      }
+      setError(null);
       return;
     }
 
     debounceRef.current = setTimeout(() => {
-      fetchRepoPreview(repoName);
-    }, 400);
+      searchRepos(trimmedQuery);
+    }, 500);
 
     return () => {
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
       }
     };
-  }, [repoInput, fetchRepoPreview]);
+  }, [query, searchRepos]);
 
-  const handleSubmit = async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!preview || isSubmitting) return;
+  const handleSubmit = async () => {
+    if (!selectedRepo || isSubmitting) return;
 
-    const repoName = `${preview.owner}/${preview.name}`;
+    const repoName = `${selectedRepo.owner}/${selectedRepo.name}`;
     setIsSubmitting(true);
 
     try {
       await api.post("/repos", { repoName });
       trackedReposRef.current.add(repoName.toLowerCase());
-      setRepoInput("");
-      setPreview(null);
+      setQuery("");
+      setResults([]);
+      setSelectedRepo(null);
       setError(null);
       setOpen(false);
     } catch (err) {
@@ -199,20 +187,17 @@ export function RepoSearch() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (
-      e.key === "Enter" &&
-      preview &&
-      !isPending &&
-      !isSubmitting &&
-      !isTracked
-    ) {
-      e.preventDefault();
-      handleSubmit();
-    }
     if (e.key === "Escape") {
-      setOpen(false);
+      if (selectedRepo) {
+        setSelectedRepo(null);
+      } else {
+        setOpen(false);
+      }
     }
   };
+
+  const isRepoTracked = (repo: RepoPreview) =>
+    trackedReposRef.current.has(`${repo.owner}/${repo.name}`.toLowerCase());
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -221,14 +206,17 @@ export function RepoSearch() {
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             ref={inputRef}
-            placeholder="Search repos (owner/repo)"
-            value={repoInput}
-            onChange={(e) => setRepoInput(e.target.value)}
+            placeholder="Search repositories..."
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setSelectedRepo(null);
+            }}
             onKeyDown={handleKeyDown}
             disabled={isSubmitting}
             className={cn(
               "h-9 pr-9 pl-9 font-mono text-sm",
-              error && repoInput && "border-destructive/50",
+              error && query && "border-destructive/50",
             )}
           />
           {isPending && (
@@ -242,25 +230,68 @@ export function RepoSearch() {
         sideOffset={8}
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
-        {error && (
+        {error && !selectedRepo && (
           <div className="flex items-center gap-2 border-b p-3 text-destructive text-sm">
             <AlertCircle className="size-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
-        {isPending && !preview && (
-          <div className="flex items-center gap-3 p-3">
-            <Skeleton className="size-10 rounded-lg" />
-            <div className="flex flex-col gap-1.5">
-              <Skeleton className="h-4 w-28" />
-              <Skeleton className="h-3 w-44" />
-            </div>
+        {/* Loading skeleton */}
+        {isPending && !selectedRepo && results.length === 0 && (
+          <div className="flex flex-col gap-1 p-2">
+            {["skeleton-1", "skeleton-2", "skeleton-3"].map((key) => (
+              <div key={key} className="flex items-center gap-3 px-2 py-1.5">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="ml-auto h-4 w-12" />
+              </div>
+            ))}
           </div>
         )}
 
-        {preview && !isPending && (
+        {/* Results list */}
+        {!selectedRepo && results.length > 0 && (
+          <div className="max-h-80 overflow-y-auto p-1">
+            {results.map((repo) => {
+              const tracked = isRepoTracked(repo);
+              return (
+                <button
+                  key={`${repo.owner}/${repo.name}`}
+                  type="button"
+                  onClick={() => setSelectedRepo(repo)}
+                  className={cn(
+                    "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm transition-colors",
+                    "hover:bg-accent hover:text-accent-foreground",
+                    tracked && "opacity-60",
+                  )}
+                >
+                  <span className="min-w-0 flex-1 truncate font-mono">
+                    {repo.owner}/{repo.name}
+                  </span>
+                  <div className="flex shrink-0 items-center gap-2 text-muted-foreground text-xs">
+                    <div className="flex items-center gap-1">
+                      <Star className="size-3 text-amber-500" />
+                      <span>{formatNumber(repo.stars)}</span>
+                    </div>
+                    {tracked && <Check className="size-3 text-green-500" />}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Selected repo preview */}
+        {selectedRepo && (
           <div className="flex flex-col gap-3 p-3">
+            <button
+              type="button"
+              onClick={() => setSelectedRepo(null)}
+              className="flex items-center gap-1 text-muted-foreground text-xs transition-colors hover:text-foreground"
+            >
+              <ArrowLeft className="size-3" />
+              Back to results
+            </button>
             <div className="flex items-start gap-3">
               <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-neutral-100 to-neutral-200 dark:from-neutral-700 dark:to-neutral-800">
                 <Github className="size-4" />
@@ -268,10 +299,10 @@ export function RepoSearch() {
               <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <div className="flex items-center gap-2">
                   <span className="truncate font-medium font-mono text-sm">
-                    {preview.owner}/{preview.name}
+                    {selectedRepo.owner}/{selectedRepo.name}
                   </span>
                   <a
-                    href={preview.url}
+                    href={selectedRepo.url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
@@ -280,29 +311,24 @@ export function RepoSearch() {
                     <ExternalLink className="size-3.5" />
                   </a>
                 </div>
-                {preview.description && (
-                  <p className="line-clamp-1 text-muted-foreground text-xs">
-                    {preview.description}
+                {selectedRepo.description && (
+                  <p className="line-clamp-2 text-muted-foreground text-xs">
+                    {selectedRepo.description}
                   </p>
                 )}
                 <div className="flex items-center gap-3 pt-1 text-muted-foreground text-xs">
                   <div className="flex items-center gap-1">
                     <Star className="size-3 text-amber-500" />
-                    <span>{formatNumber(preview.stars)}</span>
+                    <span>{formatNumber(selectedRepo.stars)}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <GitFork className="size-3" />
-                    <span>{formatNumber(preview.forks)}</span>
+                    <span>{formatNumber(selectedRepo.forks)}</span>
                   </div>
-                  {preview.language && (
+                  {selectedRepo.language && (
                     <div className="flex items-center gap-1">
-                      <span
-                        className="size-2 rounded-full"
-                        style={{
-                          backgroundColor: preview.languageColor || "#6b7280",
-                        }}
-                      />
-                      <span>{preview.language}</span>
+                      <span className="size-2 rounded-full bg-muted-foreground" />
+                      <span>{selectedRepo.language}</span>
                     </div>
                   )}
                 </div>
@@ -311,11 +337,11 @@ export function RepoSearch() {
             <Button
               size="sm"
               onClick={handleSubmit}
-              disabled={isSubmitting || isTracked}
-              variant={isTracked ? "secondary" : "default"}
+              disabled={isSubmitting || isRepoTracked(selectedRepo)}
+              variant={isRepoTracked(selectedRepo) ? "secondary" : "default"}
               className="w-full"
             >
-              {isTracked ? (
+              {isRepoTracked(selectedRepo) ? (
                 <>
                   <Check className="size-4" />
                   Tracked
