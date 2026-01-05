@@ -3,14 +3,19 @@
   "ui": "tui",
   "envMode": "loose",
   "tasks": {
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", "!README.md"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
     },
-    "dev": {
-      "cache": false,
-      "persistent": true
+    "start": {
+      "dependsOn": ["build"],
+      "persistent": true,
+      "with": ["@release-watch/api#dev"]
     },
     "lint": {
       "cache": false,
