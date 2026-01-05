@@ -208,7 +208,6 @@ export function IntegrationsSection() {
                 <TelegramLinkDialog
                   open={telegramDialogOpen}
                   onOpenChange={setTelegramDialogOpen}
-                  onSuccess={fetchTelegramStatus}
                 />
               </>
             )}

@@ -2,6 +2,7 @@
 
 import { Check, Copy, ExternalLink, Loader2 } from "lucide-react";
 import { useState, useTransition } from "react";
+import { generateTelegramCode } from "@/app/(dashboard)/dashboard/integrations/actions";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,36 +11,27 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { api } from "@/lib/api-client";
 
 interface TelegramLinkDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: () => void;
-}
-
-interface GenerateCodeResponse {
-  code: string;
 }
 
 export function TelegramLinkDialog({
   open,
   onOpenChange,
-  onSuccess,
 }: TelegramLinkDialogProps) {
   const [code, setCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  const generateCode = () => {
+  const handleGenerateCode = () => {
     setError(null);
 
     startTransition(async () => {
       try {
-        const data = await api.post<GenerateCodeResponse>(
-          "/channels/telegram/generate",
-        );
+        const data = await generateTelegramCode();
         setCode(data.code);
       } catch (err) {
         setError(
@@ -60,14 +52,9 @@ export function TelegramLinkDialog({
   const handleOpenChange = (newOpen: boolean) => {
     onOpenChange(newOpen);
     if (!newOpen) {
-      // Only trigger refresh if a code was generated (user may have completed linking)
-      const shouldRefresh = !!code;
       setCode(null);
       setError(null);
       setCopied(false);
-      if (shouldRefresh) {
-        onSuccess?.();
-      }
     }
   };
 
@@ -89,7 +76,7 @@ export function TelegramLinkDialog({
                 your account.
               </p>
               {error && <p className="text-destructive text-sm">{error}</p>}
-              <Button onClick={generateCode} disabled={isPending}>
+              <Button onClick={handleGenerateCode} disabled={isPending}>
                 {isPending ? (
                   <>
                     <Loader2 className="size-4 animate-spin" />

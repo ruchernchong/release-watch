@@ -9,6 +9,7 @@ import {
   Star,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { createRepo } from "@/app/(dashboard)/dashboard/repos/actions";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,13 +20,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { api } from "@/lib/api-client";
 import type { GitHubLanguageColors, GitHubRepoResponse } from "@/lib/github";
 
 interface AddRepoDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: () => void;
 }
 
 interface RepoPreview {
@@ -60,7 +59,6 @@ function parseRepoInput(input: string): string | null {
 export function AddRepoDialog({
   open,
   onOpenChange,
-  onSuccess,
 }: AddRepoDialogProps) {
   const [repoInput, setRepoInput] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -175,9 +173,8 @@ export function AddRepoDialog({
 
     startSubmitTransition(async () => {
       try {
-        await api.post("/repos", { repoName });
+        await createRepo(repoName);
         onOpenChange(false);
-        onSuccess?.();
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to add repository",

@@ -14,6 +14,7 @@ export async function createRepo(repoName: string) {
     throw new Error(error || "Failed to add repository");
   }
 
+  revalidatePath("/dashboard");
   revalidatePath("/dashboard/repos");
   return res.json();
 }
@@ -28,6 +29,7 @@ export async function deleteRepo(id: string) {
     throw new Error("Failed to delete repository");
   }
 
+  revalidatePath("/dashboard");
   revalidatePath("/dashboard/repos");
   return res.json();
 }

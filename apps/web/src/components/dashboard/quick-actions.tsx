@@ -84,11 +84,7 @@ export function QuickActions() {
         </Card>
       </div>
 
-      <TelegramLinkDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onSuccess={fetchTelegramStatus}
-      />
+      <TelegramLinkDialog open={dialogOpen} onOpenChange={setDialogOpen} />
     </div>
   );
 }

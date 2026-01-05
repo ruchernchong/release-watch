@@ -26,6 +26,7 @@ export async function toggleTelegramChannel(chatId: string, enabled: boolean) {
     throw new Error("Failed to toggle Telegram channel");
   }
 
+  revalidatePath("/dashboard");
   revalidatePath("/dashboard/integrations");
   return res.json();
 }
@@ -47,6 +48,7 @@ export async function addDiscordChannel(data: {
     throw new Error("Failed to add Discord channel");
   }
 
+  revalidatePath("/dashboard");
   revalidatePath("/dashboard/integrations");
   return res.json();
 }
@@ -61,6 +63,7 @@ export async function removeDiscordChannel(channelId: string) {
     throw new Error("Failed to remove Discord channel");
   }
 
+  revalidatePath("/dashboard");
   revalidatePath("/dashboard/integrations");
   return res.json();
 }
@@ -78,6 +81,7 @@ export async function toggleDiscordChannel(
     throw new Error("Failed to toggle Discord channel");
   }
 
+  revalidatePath("/dashboard");
   revalidatePath("/dashboard/integrations");
   return res.json();
 }

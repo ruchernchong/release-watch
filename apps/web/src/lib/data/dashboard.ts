@@ -1,3 +1,4 @@
+import type { Release } from "@/components/dashboard/release-card";
 import { getApi } from "@/lib/api";
 
 export interface DashboardStats {
@@ -6,17 +7,7 @@ export interface DashboardStats {
   totalChannels: number;
 }
 
-export interface Release {
-  repoName: string;
-  tagName: string;
-  releaseName: string | null;
-  url: string;
-  publishedAt: string | null;
-  author: string | null;
-  aiAnalysis: string | null;
-}
-
-export async function getDashboardStats() {
+export async function getDashboardStats(): Promise<DashboardStats> {
   const api = await getApi();
   const res = await api.dashboard.stats.$get();
 
@@ -24,10 +15,10 @@ export async function getDashboardStats() {
     throw new Error("Failed to fetch dashboard stats");
   }
 
-  return res.json();
+  return res.json() as Promise<DashboardStats>;
 }
 
-export async function getReleases(limit = 5) {
+export async function getReleases(limit = 5): Promise<{ releases: Release[] }> {
   const api = await getApi();
   const res = await api.dashboard.releases.$get({
     query: { limit: limit.toString() },
@@ -37,5 +28,6 @@ export async function getReleases(limit = 5) {
     throw new Error("Failed to fetch releases");
   }
 
-  return res.json();
+  const data = await res.json();
+  return { releases: data.releases as Release[] };
 }

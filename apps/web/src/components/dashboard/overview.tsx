@@ -8,13 +8,12 @@ import {
   Plus,
   Send,
 } from "lucide-react";
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useOptimistic, useState, useTransition } from "react";
+import { toggleTelegramChannel } from "@/app/(dashboard)/dashboard/integrations/actions";
 import { TelegramLinkDialog } from "@/components/integrations/telegram-link-dialog";
 import { AddRepoDialog } from "@/components/repos/add-repo-dialog";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { api } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import { CategoryBadge } from "./category-badge";
 import type { Release } from "./release-card";
@@ -25,96 +24,45 @@ interface DashboardStats {
   totalChannels: number;
 }
 
-interface ReleasesResponse {
-  releases: Release[];
-}
-
 interface TelegramChannel {
   chatId: string;
   enabled: boolean;
 }
 
-interface TelegramStatusResponse {
+interface TelegramStatus {
   linked: boolean;
   channel?: TelegramChannel;
 }
 
-export function BentoDashboard() {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [releases, setReleases] = useState<Release[]>([]);
-  const [telegramLinked, setTelegramLinked] = useState(false);
-  const [telegramChannel, setTelegramChannel] =
-    useState<TelegramChannel | null>(null);
+interface OverviewProps {
+  stats: DashboardStats;
+  releases: Release[];
+  telegramStatus: TelegramStatus;
+}
+
+export function Overview({ stats, releases, telegramStatus }: OverviewProps) {
   const [telegramDialogOpen, setTelegramDialogOpen] = useState(false);
   const [addRepoDialogOpen, setAddRepoDialogOpen] = useState(false);
-  const [isStatsPending, startStatsTransition] = useTransition();
-  const [isReleasesPending, startReleasesTransition] = useTransition();
-  const [isTelegramPending, startTelegramTransition] = useTransition();
-  const [isTogglePending, startToggleTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
 
-  const fetchStats = useCallback(() => {
-    startStatsTransition(async () => {
-      try {
-        const data = await api.get<DashboardStats>("/dashboard/stats");
-        setStats(data);
-      } catch {
-        // Ignore errors
-      }
-    });
-  }, []);
-
-  const fetchReleases = useCallback(() => {
-    startReleasesTransition(async () => {
-      try {
-        const data = await api.get<ReleasesResponse>("/dashboard/releases");
-        setReleases(data.releases || []);
-      } catch {
-        // Ignore errors
-      }
-    });
-  }, []);
-
-  const fetchTelegramStatus = useCallback(() => {
-    startTelegramTransition(async () => {
-      try {
-        const data = await api.get<TelegramStatusResponse>(
-          "/channels/telegram/status",
-        );
-        setTelegramLinked(data.linked);
-        if (data.linked && data.channel) {
-          setTelegramChannel({
-            chatId: data.channel.chatId,
-            enabled: data.channel.enabled,
-          });
-        }
-      } catch {
-        // Ignore errors
-      }
-    });
-  }, []);
+  const [optimisticTelegram, setOptimisticTelegram] = useOptimistic(
+    telegramStatus,
+    (state, newEnabled: boolean) => ({
+      ...state,
+      channel: state.channel
+        ? { ...state.channel, enabled: newEnabled }
+        : undefined,
+    }),
+  );
 
   const handleTelegramToggle = (checked: boolean) => {
-    if (!telegramChannel) return;
-    const previousState = telegramChannel.enabled;
-    setTelegramChannel({ ...telegramChannel, enabled: checked });
+    if (!optimisticTelegram.channel) return;
 
-    startToggleTransition(async () => {
-      try {
-        await api.patch("/channels/telegram/toggle", {
-          chatId: telegramChannel.chatId,
-          enabled: checked,
-        });
-      } catch {
-        setTelegramChannel({ ...telegramChannel, enabled: previousState });
-      }
+    startTransition(async () => {
+      setOptimisticTelegram(checked);
+      await toggleTelegramChannel(optimisticTelegram.channel!.chatId, checked);
     });
   };
-
-  useEffect(() => {
-    fetchStats();
-    fetchReleases();
-    fetchTelegramStatus();
-  }, [fetchStats, fetchReleases, fetchTelegramStatus]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -128,34 +76,30 @@ export function BentoDashboard() {
 
       {/* Bento Grid */}
       <div className="grid auto-rows-[minmax(140px,auto)] grid-cols-1 gap-4 md:grid-cols-6 lg:grid-cols-12">
-        {/* Repos Watched - Feature Card */}
+        {/* Repos Watched */}
         <BentoCard
           className="md:col-span-3 lg:col-span-4"
           delay={0}
           variant="feature"
         >
-          {isStatsPending || !stats ? (
-            <BentoCardSkeleton />
-          ) : (
-            <div className="flex h-full flex-col justify-between">
-              <div className="flex items-start justify-between">
-                <div className="flex size-11 items-center justify-center rounded-xl bg-blue-500/10 ring-1 ring-blue-500/20">
-                  <FolderGit2 className="size-5 text-blue-500" />
-                </div>
-                <span className="font-mono text-muted-foreground text-xs uppercase tracking-wider">
-                  Watching
-                </span>
+          <div className="flex h-full flex-col justify-between">
+            <div className="flex items-start justify-between">
+              <div className="flex size-11 items-center justify-center rounded-xl bg-blue-500/10 ring-1 ring-blue-500/20">
+                <FolderGit2 className="size-5 text-blue-500" />
               </div>
-              <div className="flex flex-col gap-1">
-                <span className="font-bold font-mono text-5xl tracking-tighter">
-                  {stats.reposWatched}
-                </span>
-                <span className="text-muted-foreground text-sm">
-                  repositories tracked
-                </span>
-              </div>
+              <span className="font-mono text-muted-foreground text-xs uppercase tracking-wider">
+                Watching
+              </span>
             </div>
-          )}
+            <div className="flex flex-col gap-1">
+              <span className="font-mono text-5xl font-bold tracking-tighter">
+                {stats.reposWatched}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                repositories tracked
+              </span>
+            </div>
+          </div>
         </BentoCard>
 
         {/* Active Channels */}
@@ -164,35 +108,31 @@ export function BentoDashboard() {
           delay={1}
           variant="feature"
         >
-          {isStatsPending || !stats ? (
-            <BentoCardSkeleton />
-          ) : (
-            <div className="flex h-full flex-col justify-between">
-              <div className="flex items-start justify-between">
-                <div className="flex size-11 items-center justify-center rounded-xl bg-emerald-500/10 ring-1 ring-emerald-500/20">
-                  <Bell className="size-5 text-emerald-500" />
-                </div>
-                <span className="font-mono text-muted-foreground text-xs uppercase tracking-wider">
-                  Active
-                </span>
+          <div className="flex h-full flex-col justify-between">
+            <div className="flex items-start justify-between">
+              <div className="flex size-11 items-center justify-center rounded-xl bg-emerald-500/10 ring-1 ring-emerald-500/20">
+                <Bell className="size-5 text-emerald-500" />
               </div>
-              <div className="flex flex-col gap-1">
-                <div className="flex items-baseline gap-2">
-                  <span className="font-bold font-mono text-5xl tracking-tighter">
-                    {stats.activeChannels}
-                  </span>
-                  {stats.totalChannels > 0 && (
-                    <span className="font-mono text-2xl text-muted-foreground">
-                      /{stats.totalChannels}
-                    </span>
-                  )}
-                </div>
-                <span className="text-muted-foreground text-sm">
-                  notification channels
-                </span>
-              </div>
+              <span className="font-mono text-muted-foreground text-xs uppercase tracking-wider">
+                Active
+              </span>
             </div>
-          )}
+            <div className="flex flex-col gap-1">
+              <div className="flex items-baseline gap-2">
+                <span className="font-mono text-5xl font-bold tracking-tighter">
+                  {stats.activeChannels}
+                </span>
+                {stats.totalChannels > 0 && (
+                  <span className="font-mono text-2xl text-muted-foreground">
+                    /{stats.totalChannels}
+                  </span>
+                )}
+              </div>
+              <span className="text-sm text-muted-foreground">
+                notification channels
+              </span>
+            </div>
+          </div>
         </BentoCard>
 
         {/* Quick Add Repo */}
@@ -220,59 +160,53 @@ export function BentoDashboard() {
 
         {/* Telegram Integration */}
         <BentoCard className="md:col-span-3 lg:col-span-4" delay={3}>
-          {isTelegramPending ? (
-            <BentoCardSkeleton />
-          ) : (
-            <div className="flex h-full flex-col justify-between">
-              <div className="flex items-start justify-between">
-                <div className="flex size-11 items-center justify-center rounded-xl bg-[#0088cc]/10 ring-1 ring-[#0088cc]/20">
-                  <Send className="size-5 text-[#0088cc]" />
-                </div>
-                {telegramLinked && (
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={telegramChannel?.enabled ?? false}
-                      onCheckedChange={handleTelegramToggle}
-                      disabled={isTogglePending}
-                    />
-                  </div>
-                )}
+          <div className="flex h-full flex-col justify-between">
+            <div className="flex items-start justify-between">
+              <div className="flex size-11 items-center justify-center rounded-xl bg-[#0088cc]/10 ring-1 ring-[#0088cc]/20">
+                <Send className="size-5 text-[#0088cc]" />
               </div>
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold">Telegram</span>
-                  {telegramLinked && (
-                    <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 font-medium text-emerald-600 text-xs dark:text-emerald-400">
-                      Connected
-                    </span>
-                  )}
-                </div>
-                {telegramLinked ? (
-                  <a
-                    href="https://t.me/ReleaseWatch_Bot"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-muted-foreground text-sm transition-colors hover:text-foreground"
-                  >
-                    <span>Open bot</span>
-                    <ExternalLink className="size-3" />
-                  </a>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setTelegramDialogOpen(true)}
-                    className="w-fit"
-                  >
-                    Connect
-                  </Button>
-                )}
-              </div>
+              {optimisticTelegram.linked && (
+                <Switch
+                  checked={optimisticTelegram.channel?.enabled ?? false}
+                  onCheckedChange={handleTelegramToggle}
+                  disabled={isPending}
+                />
+              )}
             </div>
-          )}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold">Telegram</span>
+                {optimisticTelegram.linked && (
+                  <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                    Connected
+                  </span>
+                )}
+              </div>
+              {optimisticTelegram.linked ? (
+                <a
+                  href="https://t.me/ReleaseWatch_Bot"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <span>Open bot</span>
+                  <ExternalLink className="size-3" />
+                </a>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setTelegramDialogOpen(true)}
+                  className="w-fit"
+                >
+                  Connect
+                </Button>
+              )}
+            </div>
+          </div>
         </BentoCard>
 
-        {/* Recent Releases - Large spanning card */}
+        {/* Recent Releases */}
         <BentoCard
           className="row-span-2 md:col-span-6 lg:col-span-8"
           delay={4}
@@ -281,24 +215,18 @@ export function BentoDashboard() {
           <div className="flex h-full flex-col gap-4">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold">Recent Releases</h2>
-              <span className="font-mono text-muted-foreground text-xs uppercase tracking-wider">
+              <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
                 Latest
               </span>
             </div>
 
-            {isReleasesPending ? (
-              <div className="flex flex-1 flex-col gap-3">
-                <ReleaseItemSkeleton />
-                <ReleaseItemSkeleton />
-                <ReleaseItemSkeleton />
-              </div>
-            ) : releases.length === 0 ? (
+            {releases.length === 0 ? (
               <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
                 <div className="flex size-12 items-center justify-center rounded-full bg-muted">
                   <FolderGit2 className="size-5 text-muted-foreground" />
                 </div>
-                <p className="text-muted-foreground text-sm">No releases yet</p>
-                <p className="max-w-[200px] text-muted-foreground/70 text-xs">
+                <p className="text-sm text-muted-foreground">No releases yet</p>
+                <p className="max-w-[200px] text-xs text-muted-foreground/70">
                   Subscribe to repositories to see their latest releases here
                 </p>
               </div>
@@ -317,20 +245,14 @@ export function BentoDashboard() {
         </BentoCard>
       </div>
 
-      {/* Dialogs */}
       <TelegramLinkDialog
         open={telegramDialogOpen}
         onOpenChange={setTelegramDialogOpen}
-        onSuccess={fetchTelegramStatus}
       />
 
       <AddRepoDialog
         open={addRepoDialogOpen}
         onOpenChange={setAddRepoDialogOpen}
-        onSuccess={() => {
-          fetchStats();
-          fetchReleases();
-        }}
       />
     </div>
   );
@@ -409,21 +331,6 @@ function BentoCard({
   );
 }
 
-function BentoCardSkeleton() {
-  return (
-    <div className="flex h-full flex-col justify-between">
-      <div className="flex items-start justify-between">
-        <Skeleton className="size-11 rounded-xl" />
-        <Skeleton className="h-4 w-16" />
-      </div>
-      <div className="flex flex-col gap-2">
-        <Skeleton className="h-12 w-20" />
-        <Skeleton className="h-4 w-32" />
-      </div>
-    </div>
-  );
-}
-
 interface ReleaseItemProps {
   release: Release;
   index: number;
@@ -474,22 +381,6 @@ function ReleaseItem({ release, index }: ReleaseItemProps) {
         )}
       </div>
     </a>
-  );
-}
-
-function ReleaseItemSkeleton() {
-  return (
-    <div className="flex items-start gap-4 rounded-xl bg-muted/30 p-3">
-      <Skeleton className="size-10 rounded-lg" />
-      <div className="flex flex-1 flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-4 w-28" />
-          <Skeleton className="h-5 w-14 rounded" />
-        </div>
-        <Skeleton className="h-3 w-full" />
-        <Skeleton className="h-3 w-16" />
-      </div>
-    </div>
   );
 }
 
