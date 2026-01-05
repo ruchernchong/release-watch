@@ -1,6 +1,3 @@
-import { zValidator } from "@hono/zod-validator";
-import { Hono } from "hono";
-import * as z from "zod";
 import { logger } from "@api/lib/logger";
 import type { AuthEnv } from "@api/middleware/auth";
 import {
@@ -10,6 +7,9 @@ import {
   updateChannelEnabled,
 } from "@api/services/kv.service";
 import { captureEvent, flushPostHog, getPostHog } from "@api/services/posthog";
+import { zValidator } from "@hono/zod-validator";
+import { Hono } from "hono";
+import * as z from "zod";
 
 const app = new Hono<AuthEnv>()
   .basePath("/channels/telegram")

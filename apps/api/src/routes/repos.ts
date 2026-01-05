@@ -1,3 +1,4 @@
+import { captureEvent, flushPostHog, getPostHog } from "@api/services/posthog";
 import { zValidator } from "@hono/zod-validator";
 import { userRepos } from "@release-watch/database";
 import { and, eq } from "drizzle-orm";
@@ -18,7 +19,6 @@ import {
   reposCacheKey,
   setCache,
 } from "../services/kv.service";
-import { captureEvent, flushPostHog, getPostHog } from "@api/services/posthog";
 
 const app = new Hono<AuthEnv>()
   .basePath("/repos")
