@@ -10,22 +10,8 @@ export async function createRepo(repoName: string) {
   });
 
   if (!res.ok) {
-    const data = await res.json();
-
-    // Handle Zod validation errors (from @hono/zod-validator)
-    if (data?.success === false && data?.error?.issues) {
-      const issue = data.error.issues[0];
-      throw new Error(issue?.message ?? "Validation failed");
-    }
-
-    // Handle API error responses
-    const message =
-      typeof data?.error === "string"
-        ? data.error
-        : typeof data?.message === "string"
-          ? data.message
-          : "Failed to add repository";
-    throw new Error(message);
+    const { error } = await res.json();
+    throw new Error(error || "Failed to add repository");
   }
 
   revalidatePath("/dashboard/repos");
