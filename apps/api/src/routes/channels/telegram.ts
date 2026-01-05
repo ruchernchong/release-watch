@@ -22,7 +22,7 @@ const app = new Hono<AuthEnv>()
       const posthog = getPostHog(c.env.POSTHOG_API_KEY);
       captureEvent(posthog, {
         distinctId: user.sub,
-        event: "telegram_link_generated",
+        event: "Telegram Link Generated",
       });
       c.executionCtx.waitUntil(flushPostHog(posthog));
 
@@ -75,7 +75,7 @@ const app = new Hono<AuthEnv>()
         const posthog = getPostHog(c.env.POSTHOG_API_KEY);
         captureEvent(posthog, {
           distinctId: user.sub,
-          event: "telegram_toggled",
+          event: "Telegram Toggled",
           properties: { enabled },
         });
         c.executionCtx.waitUntil(flushPostHog(posthog));

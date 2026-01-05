@@ -100,7 +100,7 @@ const app = new Hono<AuthEnv>()
         const posthog = getPostHog(c.env.POSTHOG_API_KEY);
         captureEvent(posthog, {
           distinctId: user.sub,
-          event: "repo_added",
+          event: "Repo Added",
           properties: { repo: normalizedRepo },
         });
         c.executionCtx.waitUntil(flushPostHog(posthog));
@@ -135,7 +135,7 @@ const app = new Hono<AuthEnv>()
       const posthog = getPostHog(c.env.POSTHOG_API_KEY);
       captureEvent(posthog, {
         distinctId: user.sub,
-        event: "repo_removed",
+        event: "Repo Removed",
         properties: { repo: deleted.repoName },
       });
       c.executionCtx.waitUntil(flushPostHog(posthog));

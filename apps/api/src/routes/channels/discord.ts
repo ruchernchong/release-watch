@@ -165,7 +165,7 @@ const app = new Hono<AuthEnv>()
         const posthog = getPostHog(c.env.POSTHOG_API_KEY);
         captureEvent(posthog, {
           distinctId: user.sub,
-          event: "discord_channel_added",
+          event: "Discord Channel Added",
           properties: { guildName, channelName },
         });
         c.executionCtx.waitUntil(flushPostHog(posthog));
@@ -192,7 +192,7 @@ const app = new Hono<AuthEnv>()
       const posthog = getPostHog(c.env.POSTHOG_API_KEY);
       captureEvent(posthog, {
         distinctId: user.sub,
-        event: "discord_channel_removed",
+        event: "Discord Channel Removed",
       });
       c.executionCtx.waitUntil(flushPostHog(posthog));
 
@@ -231,7 +231,7 @@ const app = new Hono<AuthEnv>()
         const posthog = getPostHog(c.env.POSTHOG_API_KEY);
         captureEvent(posthog, {
           distinctId: user.sub,
-          event: "discord_channel_toggled",
+          event: "Discord Channel Toggled",
           properties: { enabled },
         });
         c.executionCtx.waitUntil(flushPostHog(posthog));
