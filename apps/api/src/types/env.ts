@@ -1,2 +1,4 @@
-// Re-export the generated Env from worker-configuration.d.ts
-export type Env = Cloudflare.Env;
+// Extend the generated Env with secrets (not in wrangler.jsonc)
+export type Env = Cloudflare.Env & {
+  SENTRY_DSN?: string;
+};

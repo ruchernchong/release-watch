@@ -29,6 +29,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@release-watch/database": "workspace:*",
     "@release-watch/types": "workspace:*",
+    "@sentry/nextjs": "^10.32.1",
     "@tanstack/react-table": "^8.21.3",
     "@vercel/analytics": "^1.6.1",
     "better-auth": "catalog:",

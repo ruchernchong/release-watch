@@ -2,7 +2,7 @@ import { logger } from "../lib/logger";
 import type { Env } from "../types/env";
 
 export async function handleSchedule(
-  _event: ScheduledEvent,
+  _controller: ScheduledController,
   env: Env,
   ctx: ExecutionContext,
 ): Promise<void> {
