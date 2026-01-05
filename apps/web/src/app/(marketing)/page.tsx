@@ -91,9 +91,25 @@ export default function Home() {
       </main>
 
       <footer className="border-t">
-        <div className="container mx-auto flex flex-col items-center justify-center gap-4 px-4 py-8 text-muted-foreground text-sm">
-          <GitHubStars />
-          <p>Built with Cloudflare Workers, Next.js, and Neon PostgreSQL.</p>
+        <div className="container mx-auto flex flex-col items-center justify-between gap-4 px-4 py-8 text-muted-foreground text-sm sm:flex-row">
+          <div className="flex flex-col items-center gap-4 sm:flex-row">
+            <GitHubStars />
+            <p>Built with Cloudflare Workers, Next.js, and Neon PostgreSQL.</p>
+          </div>
+          <nav className="flex gap-6">
+            <Link
+              href="/terms"
+              className="transition-colors hover:text-foreground"
+            >
+              Terms
+            </Link>
+            <Link
+              href="/privacy"
+              className="transition-colors hover:text-foreground"
+            >
+              Privacy
+            </Link>
+          </nav>
         </div>
       </footer>
     </div>

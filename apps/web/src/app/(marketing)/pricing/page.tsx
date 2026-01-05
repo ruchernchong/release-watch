@@ -81,8 +81,22 @@ export default function PricingPage() {
 
       {/* Footer */}
       <footer className="border-t">
-        <div className="container mx-auto flex items-center justify-center px-4 py-8 text-muted-foreground text-sm">
+        <div className="container mx-auto flex flex-col items-center justify-between gap-4 px-4 py-8 text-muted-foreground text-sm sm:flex-row">
           <p>Built with Cloudflare Workers, Next.js, and Neon PostgreSQL.</p>
+          <nav className="flex gap-6">
+            <Link
+              href="/terms"
+              className="transition-colors hover:text-foreground"
+            >
+              Terms
+            </Link>
+            <Link
+              href="/privacy"
+              className="transition-colors hover:text-foreground"
+            >
+              Privacy
+            </Link>
+          </nav>
         </div>
       </footer>
     </div>
