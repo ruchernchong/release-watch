@@ -18,6 +18,7 @@ import {
   reposCacheKey,
   setCache,
 } from "../services/kv.service";
+import { captureEvent, flushPostHog, getPostHog } from "@api/services/posthog";
 
 const app = new Hono<AuthEnv>()
   .basePath("/repos")
@@ -96,6 +97,14 @@ const app = new Hono<AuthEnv>()
           return c.json({ error: "Already tracking this repository" }, 409);
         }
 
+        const posthog = getPostHog(c.env.POSTHOG_API_KEY);
+        captureEvent(posthog, {
+          distinctId: user.sub,
+          event: "repo_added",
+          properties: { repo: normalizedRepo },
+        });
+        c.executionCtx.waitUntil(flushPostHog(posthog));
+
         await invalidateRepoRelatedCaches(c.env.CACHE, user.sub);
         return c.json({ repo: trackedRepo }, 201);
       } catch (err) {
@@ -122,6 +131,14 @@ const app = new Hono<AuthEnv>()
       if (!deleted) {
         return c.json({ error: "Repo not found" }, 404);
       }
+
+      const posthog = getPostHog(c.env.POSTHOG_API_KEY);
+      captureEvent(posthog, {
+        distinctId: user.sub,
+        event: "repo_removed",
+        properties: { repo: deleted.repoName },
+      });
+      c.executionCtx.waitUntil(flushPostHog(posthog));
 
       await invalidateRepoRelatedCaches(c.env.CACHE, user.sub);
       return c.json({ success: true });

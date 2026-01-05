@@ -215,12 +215,20 @@ await api.post("/repos", { repoName });
 await api.delete(`/repos/${id}`);
 ```
 
+## Analytics
+
+PostHog is configured for product analytics with a reverse proxy to bypass ad blockers:
+- Proxy endpoint: `/ingest` (rewrites in `next.config.ts`)
+- Provider: `app/providers.tsx` (wraps ThemeProvider + PostHogProvider)
+- Events: Pageviews, autocapture, heatmaps, web vitals
+
 ## Environment
 
 - `DATABASE_URL` - Neon Postgres connection
 - `BETTER_AUTH_SECRET` - Auth secret
 - `BETTER_AUTH_URL` - Auth callback URL (e.g., `http://localhost:3000`)
 - `NEXT_PUBLIC_API_URL` - Hono API URL (e.g., `https://api.releasewatch.dev`)
+- `NEXT_PUBLIC_POSTHOG_KEY` - PostHog project API key (optional)
 - `GITHUB_CLIENT_ID` - GitHub OAuth client ID
 - `GITHUB_CLIENT_SECRET` - GitHub OAuth client secret
 - `GOOGLE_CLIENT_ID` - Google OAuth client ID

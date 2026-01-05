@@ -55,6 +55,7 @@ pnpm auth:generate        # Regenerate BetterAuth schema
 - `DASHBOARD_API_KEY` - Admin API key
 - `JWKS_URL` - BetterAuth JWKS endpoint (e.g., `https://releasewatch.dev/api/auth/jwks`)
 - `DISCORD_WEBHOOK_URL` - Optional Discord notifications
+- `POSTHOG_API_KEY` - PostHog project API key (optional, for analytics)
 - `DEBUG` - Optional debug mode
 
 **apps/web** (.env):
@@ -66,6 +67,7 @@ pnpm auth:generate        # Regenerate BetterAuth schema
 - `GOOGLE_CLIENT_ID` - Google OAuth client ID
 - `GOOGLE_CLIENT_SECRET` - Google OAuth client secret
 - `NEXT_PUBLIC_API_URL` - Hono API URL (e.g., `https://api.releasewatch.dev`)
+- `NEXT_PUBLIC_POSTHOG_KEY` - PostHog project API key (optional, for analytics)
 - `POLAR_ACCESS_TOKEN` - Polar.sh access token (optional)
 - `POLAR_WEBHOOK_SECRET` - Polar.sh webhook secret (optional)
 - `POLAR_SERVER` - Polar.sh server (`"sandbox"` or `"production"`)

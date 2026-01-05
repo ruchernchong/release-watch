@@ -96,9 +96,22 @@ JWT tokens are issued by BetterAuth (Next.js) and verified here via JWKS.
   - `telegram:{chatId}` - Maps chatId → userId
   - `link:{code}` - Temporary link codes (10min TTL)
 
+## Analytics
+
+PostHog tracks key API events:
+- `repo_added` - User adds a repository
+- `repo_removed` - User removes a repository
+- `telegram_link_generated` - User generates Telegram link code
+- `telegram_toggled` - User enables/disables Telegram notifications
+- `discord_channel_added` - User connects Discord channel
+- `discord_channel_removed` - User removes Discord channel
+- `discord_channel_toggled` - User enables/disables Discord channel
+
+Service: `src/services/posthog.ts` (uses `posthog-node` with Workers-compatible settings)
+
 ## Secrets (wrangler secret put)
 
-`GITHUB_TOKEN`, `TELEGRAM_BOT_TOKEN`, `DISCORD_WEBHOOK_URL`, `JWKS_URL`
+`GITHUB_TOKEN`, `TELEGRAM_BOT_TOKEN`, `DISCORD_WEBHOOK_URL`, `JWKS_URL`, `POSTHOG_API_KEY`
 
 ## Bindings (wrangler.jsonc)
 

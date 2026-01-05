@@ -1,20 +1,21 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import * as z from "zod";
-import { logger } from "../../lib/logger";
-import type { AuthEnv } from "../../middleware/auth";
+import { logger } from "@api/lib/logger";
+import type { AuthEnv } from "@api/middleware/auth";
 import {
   fetchGuildChannels,
   fetchUserGuilds,
   isBotInGuild,
-} from "../../services/discord.service";
+} from "@api/services/discord.service";
 import {
   addChannel,
   getChannels,
   invalidateUserStatsCache,
   removeChannel,
   updateChannelEnabled,
-} from "../../services/kv.service";
+} from "@api/services/kv.service";
+import { captureEvent, flushPostHog, getPostHog } from "@api/services/posthog";
 
 const app = new Hono<AuthEnv>()
   .basePath("/channels/discord")
@@ -161,6 +162,14 @@ const app = new Hono<AuthEnv>()
           addedAt: new Date().toISOString(),
         });
 
+        const posthog = getPostHog(c.env.POSTHOG_API_KEY);
+        captureEvent(posthog, {
+          distinctId: user.sub,
+          event: "discord_channel_added",
+          properties: { guildName, channelName },
+        });
+        c.executionCtx.waitUntil(flushPostHog(posthog));
+
         await invalidateUserStatsCache(c.env.CACHE, user.sub);
         return c.json({ success: true }, 201);
       } catch (err) {
@@ -179,6 +188,14 @@ const app = new Hono<AuthEnv>()
 
     try {
       await removeChannel(c.env.CHANNELS, user.sub, "discord", channelId);
+
+      const posthog = getPostHog(c.env.POSTHOG_API_KEY);
+      captureEvent(posthog, {
+        distinctId: user.sub,
+        event: "discord_channel_removed",
+      });
+      c.executionCtx.waitUntil(flushPostHog(posthog));
+
       await invalidateUserStatsCache(c.env.CACHE, user.sub);
       return c.json({ success: true });
     } catch (err) {
@@ -210,6 +227,15 @@ const app = new Hono<AuthEnv>()
           channelId,
           enabled,
         );
+
+        const posthog = getPostHog(c.env.POSTHOG_API_KEY);
+        captureEvent(posthog, {
+          distinctId: user.sub,
+          event: "discord_channel_toggled",
+          properties: { enabled },
+        });
+        c.executionCtx.waitUntil(flushPostHog(posthog));
+
         await invalidateUserStatsCache(c.env.CACHE, user.sub);
         return c.json({ success: true, enabled });
       } catch (err) {

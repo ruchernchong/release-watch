@@ -10,6 +10,7 @@ Monitor GitHub releases and receive Telegram notifications with AI-powered summa
 - **AI Summaries**: Automatic release analysis using Cloudflare AI (Llama 3.1 8B)
 - **Multi-Channel Support**: Telegram notifications with extensible channel system
 - **Pause/Resume**: Temporarily pause repository tracking without unsubscribing
+- **Analytics**: PostHog integration for product analytics and user behavior tracking
 
 ## Tech Stack
 
@@ -18,6 +19,7 @@ Monitor GitHub releases and receive Telegram notifications with AI-powered summa
 - BetterAuth (OAuth + JWT)
 - shadcn/ui components
 - TanStack Table
+- PostHog (analytics, reverse proxy via `/ingest`)
 - Deployed on Vercel
 
 **Backend** (apps/api):
@@ -28,6 +30,7 @@ Monitor GitHub releases and receive Telegram notifications with AI-powered summa
 - Durable Objects (SQLite stats)
 - Cloudflare AI (release summaries)
 - Hyperdrive (database connection pooling)
+- PostHog (event tracking for API actions)
 
 **Database** (packages/database):
 - Neon Postgres
@@ -97,6 +100,7 @@ pnpm install
    wrangler secret put TELEGRAM_BOT_TOKEN
    wrangler secret put DASHBOARD_API_KEY
    wrangler secret put JWKS_URL  # https://releasewatch.dev/api/auth/jwks
+   wrangler secret put POSTHOG_API_KEY  # Optional, for analytics
    ```
 
 5. **Environment Files** - Copy and fill `.env.example` files:

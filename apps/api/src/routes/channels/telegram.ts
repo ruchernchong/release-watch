@@ -1,14 +1,15 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import * as z from "zod";
-import { logger } from "../../lib/logger";
-import type { AuthEnv } from "../../middleware/auth";
+import { logger } from "@api/lib/logger";
+import type { AuthEnv } from "@api/middleware/auth";
 import {
   createTelegramLinkCode,
   getChannels,
   invalidateUserStatsCache,
   updateChannelEnabled,
-} from "../../services/kv.service";
+} from "@api/services/kv.service";
+import { captureEvent, flushPostHog, getPostHog } from "@api/services/posthog";
 
 const app = new Hono<AuthEnv>()
   .basePath("/channels/telegram")
@@ -17,6 +18,14 @@ const app = new Hono<AuthEnv>()
 
     try {
       const code = await createTelegramLinkCode(c.env.CHANNELS, user.sub);
+
+      const posthog = getPostHog(c.env.POSTHOG_API_KEY);
+      captureEvent(posthog, {
+        distinctId: user.sub,
+        event: "telegram_link_generated",
+      });
+      c.executionCtx.waitUntil(flushPostHog(posthog));
+
       return c.json({ code });
     } catch (err) {
       logger.api.error("Failed to create Telegram link code", err, {
@@ -62,6 +71,15 @@ const app = new Hono<AuthEnv>()
           chatId,
           enabled,
         );
+
+        const posthog = getPostHog(c.env.POSTHOG_API_KEY);
+        captureEvent(posthog, {
+          distinctId: user.sub,
+          event: "telegram_toggled",
+          properties: { enabled },
+        });
+        c.executionCtx.waitUntil(flushPostHog(posthog));
+
         await invalidateUserStatsCache(c.env.CACHE, user.sub);
         return c.json({ success: true, enabled });
       } catch (err) {

@@ -24,6 +24,7 @@
     "hono": "^4.11.2",
     "jose": "^6.1.3",
     "postgres": "^3.4.7",
+    "posthog-node": "^5.18.1",
     "zod": "catalog:"
   },
   "devDependencies": {
