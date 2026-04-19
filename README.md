@@ -29,7 +29,6 @@ Monitor GitHub releases and receive Telegram notifications with AI-powered summa
 - KV (repo tracking, cache)
 - Durable Objects (SQLite stats)
 - Cloudflare AI (release summaries)
-- Hyperdrive (database connection pooling)
 - PostHog (event tracking for API actions)
 
 **Database** (packages/database):
@@ -57,7 +56,7 @@ release-watch/
 
 - Node.js 20+ (see `.node-version`)
 - pnpm 10.22.0+
-- Cloudflare account (Workers, KV, AI, Hyperdrive)
+- Cloudflare account (Workers, KV, AI)
 - Neon Postgres database
 - GitHub OAuth app
 - Google OAuth app (optional)
@@ -83,19 +82,19 @@ pnpm install
    pnpm auth:generate
    ```
 
-3. **Cloudflare** - Create KV namespaces and Hyperdrive:
+3. **Cloudflare** - Create KV namespaces:
    ```bash
    cd apps/api
    wrangler kv:namespace create REPOS
    wrangler kv:namespace create NOTIFICATIONS
    wrangler kv:namespace create CACHE
    wrangler kv:namespace create CHANNELS
-   wrangler hyperdrive create release-watch --connection-string="postgres://..."
    ```
 
 4. **Secrets** - Set Cloudflare secrets:
    ```bash
    cd apps/api
+   wrangler secret put DATABASE_URL  # Neon Postgres connection string
    wrangler secret put GITHUB_TOKEN
    wrangler secret put TELEGRAM_BOT_TOKEN
    wrangler secret put DASHBOARD_API_KEY

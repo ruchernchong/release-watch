@@ -14,6 +14,7 @@ import {
 } from "@api/services/kv.service";
 import { captureEvent, flushPostHog, getPostHog } from "@api/services/posthog";
 import { zValidator } from "@hono/zod-validator";
+import { db } from "@release-watch/database";
 import { Hono } from "hono";
 import * as z from "zod";
 
@@ -23,9 +24,7 @@ const app = new Hono<AuthEnv>()
     const user = c.get("user");
 
     try {
-      const database = c.get("db");
-
-      const discordAccount = await database.query.accounts.findFirst({
+      const discordAccount = await db.query.accounts.findFirst({
         where: (accounts, { and, eq }) =>
           and(
             eq(accounts.userId, user.sub),
@@ -57,10 +56,9 @@ const app = new Hono<AuthEnv>()
   })
   .get("/guilds", async (c) => {
     const user = c.get("user");
-    const database = c.get("db");
 
     try {
-      const discordAccount = await database.query.accounts.findFirst({
+      const discordAccount = await db.query.accounts.findFirst({
         where: (accounts, { and, eq }) =>
           and(
             eq(accounts.userId, user.sub),

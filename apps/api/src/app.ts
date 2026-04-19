@@ -1,7 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { type AuthEnv, adminOnly, jwtAuth } from "./middleware/auth";
-import { dbMiddleware } from "./middleware/db";
 import { rateLimit } from "./middleware/rate-limit";
 import adminActivity from "./routes/admin/activity";
 import adminStats from "./routes/admin/stats";
@@ -48,7 +47,6 @@ app.route("/", webhook);
 // Authenticated API routes
 const api = new Hono<AuthEnv>()
   .use("*", jwtAuth)
-  .use("*", dbMiddleware)
   // Rate limit write operations (POST, DELETE, PATCH)
   .use("*", async (c, next) => {
     const method = c.req.method;
@@ -67,7 +65,6 @@ const admin = new Hono<AuthEnv>()
   .basePath("/admin")
   .use("*", jwtAuth)
   .use("*", adminOnly)
-  .use("*", dbMiddleware)
   .route("/", adminUsers)
   .route("/", adminActivity)
   .route("/", adminStats);

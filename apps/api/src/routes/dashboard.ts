@@ -1,4 +1,5 @@
 import { zValidator } from "@hono/zod-validator";
+import { db } from "@release-watch/database";
 import { Hono } from "hono";
 import * as z from "zod";
 import { logger } from "../lib/logger";
@@ -33,9 +34,7 @@ const app = new Hono<AuthEnv>()
       }>(c.env.CACHE, cacheKey);
       if (cached) return c.json(cached);
 
-      const database = c.get("db");
-
-      const repos = await database.query.userRepos.findMany({
+      const repos = await db.query.userRepos.findMany({
         where: (userRepos, { eq }) => eq(userRepos.userId, user.sub),
         columns: { id: true },
       });
@@ -77,10 +76,9 @@ const app = new Hono<AuthEnv>()
         );
         if (cached) return c.json(cached);
 
-        const database = c.get("db");
         const octokit = createOctokit(c.env.GITHUB_TOKEN);
 
-        const repos = await database.query.userRepos.findMany({
+        const repos = await db.query.userRepos.findMany({
           where: (userRepos, { eq }) => eq(userRepos.userId, user.sub),
           columns: { repoName: true },
           limit: 10,

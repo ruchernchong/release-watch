@@ -1,5 +1,5 @@
 import { zValidator } from "@hono/zod-validator";
-import { sessions, users } from "@release-watch/database";
+import { db, sessions, users } from "@release-watch/database";
 import { desc, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import * as z from "zod";
@@ -19,9 +19,7 @@ const app = new Hono<AuthEnv>().basePath("/activity").get(
     const { limit, offset } = c.req.valid("query");
 
     try {
-      const database = c.get("db");
-
-      const activityLogs = await database
+      const activityLogs = await db
         .select({
           id: sessions.id,
           userId: sessions.userId,

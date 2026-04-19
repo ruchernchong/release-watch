@@ -1,6 +1,5 @@
 import { createMiddleware } from "hono/factory";
 import { importJWK, type JWK, jwtVerify } from "jose";
-import type { Database } from "../db";
 import { logger } from "../lib/logger";
 import type { Env } from "../types/env";
 
@@ -17,7 +16,6 @@ export interface JWTPayload {
 
 export type AuthVariables = {
   user: JWTPayload;
-  db: Database;
 };
 
 export type AuthEnv = {

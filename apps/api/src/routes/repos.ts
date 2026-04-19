@@ -1,6 +1,6 @@
 import { captureEvent, flushPostHog, getPostHog } from "@api/services/posthog";
 import { zValidator } from "@hono/zod-validator";
-import { userRepos } from "@release-watch/database";
+import { db, userRepos } from "@release-watch/database";
 import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import * as z from "zod";
@@ -33,8 +33,7 @@ const app = new Hono<AuthEnv>()
       );
       if (cached) return c.json(cached);
 
-      const database = c.get("db");
-      const repos = await database.query.userRepos.findMany({
+      const repos = await db.query.userRepos.findMany({
         where: (userRepos, { eq }) => eq(userRepos.userId, user.sub),
       });
 
@@ -82,9 +81,7 @@ const app = new Hono<AuthEnv>()
           return c.json({ error: "Repository not found on GitHub" }, 404);
         }
 
-        const database = c.get("db");
-
-        const [trackedRepo] = await database
+        const [trackedRepo] = await db
           .insert(userRepos)
           .values({
             userId: user.sub,
@@ -121,9 +118,7 @@ const app = new Hono<AuthEnv>()
     const id = c.req.param("id");
 
     try {
-      const database = c.get("db");
-
-      const [deleted] = await database
+      const [deleted] = await db
         .delete(userRepos)
         .where(and(eq(userRepos.id, id), eq(userRepos.userId, user.sub)))
         .returning();
@@ -164,9 +159,7 @@ const app = new Hono<AuthEnv>()
       const { paused } = c.req.valid("json");
 
       try {
-        const database = c.get("db");
-
-        const [repo] = await database
+        const [repo] = await db
           .select()
           .from(userRepos)
           .where(and(eq(userRepos.id, id), eq(userRepos.userId, user.sub)))
@@ -207,7 +200,7 @@ const app = new Hono<AuthEnv>()
           }
         }
 
-        const [updated] = await database
+        const [updated] = await db
           .update(userRepos)
           .set(updateData)
           .where(and(eq(userRepos.id, id), eq(userRepos.userId, user.sub)))

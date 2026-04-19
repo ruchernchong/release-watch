@@ -1,6 +1,7 @@
 import { zValidator } from "@hono/zod-validator";
 import {
   accounts,
+  db,
   userChannels,
   userRepos,
   users,
@@ -28,8 +29,6 @@ const app = new Hono<AuthEnv>()
       const { search, limit, offset, sortOrder } = c.req.valid("query");
 
       try {
-        const database = c.get("db");
-
         const whereClause = search
           ? or(
               ilike(users.name, `%${search}%`),
@@ -38,7 +37,7 @@ const app = new Hono<AuthEnv>()
           : undefined;
 
         const [userList, totalCount] = await Promise.all([
-          database
+          db
             .select({
               id: users.id,
               name: users.name,
@@ -49,10 +48,7 @@ const app = new Hono<AuthEnv>()
               banReason: users.banReason,
               banExpires: users.banExpires,
               createdAt: users.createdAt,
-              repoCount: database.$count(
-                userRepos,
-                eq(userRepos.userId, users.id),
-              ),
+              repoCount: db.$count(userRepos, eq(userRepos.userId, users.id)),
             })
             .from(users)
             .where(whereClause)
@@ -61,7 +57,7 @@ const app = new Hono<AuthEnv>()
             )
             .limit(limit)
             .offset(offset),
-          database
+          db
             .select({ count: count() })
             .from(users)
             .where(whereClause)
@@ -79,9 +75,7 @@ const app = new Hono<AuthEnv>()
     const id = c.req.param("id");
 
     try {
-      const database = c.get("db");
-
-      const [user] = await database
+      const [user] = await db
         .select({
           id: users.id,
           name: users.name,
@@ -105,7 +99,7 @@ const app = new Hono<AuthEnv>()
       }
 
       const [repos, channels, connectedAccounts] = await Promise.all([
-        database
+        db
           .select({
             id: userRepos.id,
             repoName: userRepos.repoName,
@@ -114,7 +108,7 @@ const app = new Hono<AuthEnv>()
           })
           .from(userRepos)
           .where(eq(userRepos.userId, id)),
-        database
+        db
           .select({
             id: userChannels.id,
             type: userChannels.type,
@@ -123,7 +117,7 @@ const app = new Hono<AuthEnv>()
           })
           .from(userChannels)
           .where(eq(userChannels.userId, id)),
-        database
+        db
           .select({
             id: accounts.id,
             providerId: accounts.providerId,
@@ -163,9 +157,7 @@ const app = new Hono<AuthEnv>()
     }
 
     try {
-      const database = c.get("db");
-
-      const [targetUser] = await database
+      const [targetUser] = await db
         .select({ role: users.role })
         .from(users)
         .where(eq(users.id, id))
@@ -184,7 +176,7 @@ const app = new Hono<AuthEnv>()
           ? new Date(Date.now() + banExpiresIn * 1000)
           : null;
 
-        await database
+        await db
           .update(users)
           .set({
             banned: true,
@@ -196,7 +188,7 @@ const app = new Hono<AuthEnv>()
         return c.json({ success: true, action: "banned" });
       }
 
-      await database
+      await db
         .update(users)
         .set({
           banned: false,

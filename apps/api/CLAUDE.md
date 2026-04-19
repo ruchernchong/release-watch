@@ -115,4 +115,8 @@ Service: `src/services/posthog.ts` (uses `posthog-node` with Workers-compatible 
 
 ## Bindings (wrangler.jsonc)
 
-`REPOS` (KV), `NOTIFICATIONS` (KV), `CACHE` (KV), `CHANNELS` (KV), `STATS` (DO), `RELEASE_CHECK_WORKFLOW`, `AI`, `HYPERDRIVE`
+`REPOS` (KV), `NOTIFICATIONS` (KV), `CACHE` (KV), `CHANNELS` (KV), `STATS` (DO), `RELEASE_CHECK_WORKFLOW`, `AI`
+
+## Database
+
+Neon Postgres via `@neondatabase/serverless` HTTP driver. The singleton `db` from `@release-watch/database` is imported directly in routes/workflows — no factory, no middleware. `DATABASE_URL` must be set as a Worker secret.

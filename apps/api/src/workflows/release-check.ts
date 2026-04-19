@@ -3,10 +3,9 @@ import {
   type WorkflowEvent,
   type WorkflowStep,
 } from "cloudflare:workers";
-import { userRepos } from "@release-watch/database";
+import { db, userRepos } from "@release-watch/database";
 import type { NotificationPayload } from "@release-watch/types";
 import { eq } from "drizzle-orm";
-import { db } from "../db";
 import { logger } from "../lib/logger";
 import { type AIAnalysisResult, analyzeRelease } from "../services/ai.service";
 import {
@@ -97,8 +96,7 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
       "fetch-paused-repos",
       KV_RETRY_CONFIG,
       async () => {
-        const database = db(this.env.HYPERDRIVE);
-        const pausedRepos = await database
+        const pausedRepos = await db
           .select({ repoName: userRepos.repoName, userId: userRepos.userId })
           .from(userRepos)
           .where(eq(userRepos.paused, true));
