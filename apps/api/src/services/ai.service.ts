@@ -15,7 +15,7 @@ export interface AIAnalysisResult {
   highlights: string[];
 }
 
-const MODEL = "@cf/meta/llama-3-8b-instruct";
+const MODEL = "@cf/google/gemma-4-26b-a4b-it";
 
 const ANALYSIS_SCHEMA = {
   type: "object",
