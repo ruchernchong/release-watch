@@ -72,6 +72,31 @@ export function createBot(env: Env): Bot {
   const bot = new Bot(env.TELEGRAM_BOT_TOKEN);
   const channelsKv = env.CHANNELS;
 
+  bot.use(async (ctx, next) => {
+    const chatId = ctx.chat?.id.toString();
+    if (!chatId || !env.RATE_LIMITER) {
+      return next();
+    }
+
+    const { success } = await env.RATE_LIMITER.limit({ key: `bot:${chatId}` });
+    if (success) {
+      return next();
+    }
+
+    logger.bot.warn("Rate limit exceeded", undefined, { chatId });
+    try {
+      if (ctx.callbackQuery) {
+        await ctx.answerCallbackQuery({
+          text: "Too many requests. Please try again in a minute.",
+        });
+      } else {
+        await ctx.reply("⏱ Too many requests. Please try again in a minute.");
+      }
+    } catch (error) {
+      logger.bot.error("Failed to send rate-limit reply", error, { chatId });
+    }
+  });
+
   bot.command("start", async (ctx) => {
     await ctx.reply(
       "👋 Welcome to ReleaseWatch!\n\n" +
