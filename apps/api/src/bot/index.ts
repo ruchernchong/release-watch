@@ -73,6 +73,25 @@ export function createBot(env: Env): Bot {
   const channelsKv = env.CHANNELS;
 
   bot.use(async (ctx, next) => {
+    if (ctx.chat && ctx.chat.type !== "private") {
+      try {
+        if (ctx.callbackQuery) {
+          await ctx.answerCallbackQuery({
+            text: "This bot only works in private chats.",
+          });
+        } else {
+          await ctx.reply(
+            "👋 This bot only works in private chats. Message me directly to track repositories.",
+          );
+        }
+      } catch (error) {
+        logger.bot.error("Failed to reject non-private chat", error, {
+          chatType: ctx.chat.type,
+        });
+      }
+      return;
+    }
+
     const chatId = ctx.chat?.id.toString();
     if (!chatId || !env.RATE_LIMITER) {
       return next();
