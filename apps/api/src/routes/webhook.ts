@@ -6,7 +6,7 @@ import type { Env } from "../types/env";
 const app = new Hono<{ Bindings: Env }>()
   .basePath("/webhook")
   .post("/", async (c) => {
-    const bot = await createBot(c.env);
+    const bot = createBot(c.env);
     return webhookCallback(bot, "hono")(c);
   });
 

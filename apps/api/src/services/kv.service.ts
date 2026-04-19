@@ -30,11 +30,12 @@ export async function addTrackedRepo(
   chatId: string,
   repo: string,
 ): Promise<{ added: boolean }> {
+  const normalized = repo.toLowerCase();
   const trackedRepos = await getTrackedRepos(kv, chatId);
-  if (trackedRepos.includes(repo)) {
+  if (trackedRepos.some((existing) => existing.toLowerCase() === normalized)) {
     return { added: false };
   }
-  trackedRepos.push(repo);
+  trackedRepos.push(normalized);
   await kv.put(`${CHAT_PREFIX}${chatId}`, JSON.stringify(trackedRepos));
   return { added: true };
 }

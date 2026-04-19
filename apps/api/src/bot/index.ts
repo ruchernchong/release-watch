@@ -10,7 +10,9 @@ import {
   addTrackedRepo,
   completeTelegramLink,
   getTrackedRepos,
+  getUserIdByTelegramChat,
   removeTrackedRepo,
+  unlinkTelegramChat,
 } from "../services/kv.service";
 import type { Env } from "../types/env";
 
@@ -61,21 +63,10 @@ async function fetchAndFormatLatestRelease(
   }
 }
 
-export async function createBot(env: Env): Promise<Bot> {
+export function createBot(env: Env): Bot {
   const bot = new Bot(env.TELEGRAM_BOT_TOKEN);
   const reposKv = env.REPOS;
   const channelsKv = env.CHANNELS;
-
-  await bot.api.setMyCommands([
-    {
-      command: "start",
-      description: "Start the bot and see available commands",
-    },
-    { command: "check", description: "Manually check for new releases" },
-    { command: "untrack", description: "Stop tracking a repository" },
-    { command: "list", description: "List your tracked repos" },
-    { command: "link", description: "Link to your web dashboard account" },
-  ]);
 
   bot.command("start", async (ctx) => {
     await ctx.reply(
@@ -87,7 +78,8 @@ export async function createBot(env: Env): Promise<Bot> {
         "/check - Manually check for new releases\n" +
         "/untrack - Stop tracking a repository\n" +
         "/list - List your tracked repos\n" +
-        "/link - Link to your web dashboard account",
+        "/link - Link to your web dashboard account\n" +
+        "/unlink - Unlink your Telegram from the dashboard",
     );
   });
 
@@ -108,7 +100,7 @@ export async function createBot(env: Env): Promise<Bot> {
       const instanceId = `manual-check-${chatId}-${Date.now()}`;
       await env.RELEASE_CHECK_WORKFLOW.create({
         id: instanceId,
-        params: { triggeredAt: new Date().toISOString() },
+        params: { triggeredAt: new Date().toISOString(), chatId },
       });
       await ctx.reply(
         `✅ Release check triggered for ${trackedRepos.length} tracked repo(s)`,
@@ -215,6 +207,23 @@ export async function createBot(env: Env): Promise<Bot> {
     await ctx.reply("✅ Successfully linked to your ReleaseWatch account!");
   });
 
+  bot.command("unlink", async (ctx) => {
+    const chatId = ctx.chat.id.toString();
+    const userId = await getUserIdByTelegramChat(channelsKv, chatId);
+
+    if (!userId) {
+      await ctx.reply(
+        "This Telegram account isn't linked to a dashboard user. Nothing to unlink.",
+      );
+      return;
+    }
+
+    await unlinkTelegramChat(channelsKv, chatId);
+    await ctx.reply(
+      "✅ Unlinked from the dashboard. You can re-link anytime with /link.",
+    );
+  });
+
   // Handle inline keyboard button clicks for untrack
   bot.callbackQuery(/^untrack:(.+)$/, async (ctx) => {
     const repo = ctx.match[1];
@@ -241,10 +250,31 @@ export async function createBot(env: Env): Promise<Bot> {
     const text = ctx.message.text;
     const match = text.match(GITHUB_URL_PATTERN);
 
-    if (!match) return;
+    if (!match) {
+      if (/github\.com/i.test(text)) {
+        await ctx.reply(
+          "That doesn't look like a GitHub repo URL. Try https://github.com/owner/repo",
+        );
+      }
+      return;
+    }
 
-    const repo = match[1].replace(/\/$/, "");
+    const repo = match[1].replace(/\/$/, "").toLowerCase();
     const chatId = ctx.chat.id.toString();
+
+    const parsed = parseFullName(repo);
+    if (!parsed) {
+      await ctx.reply("Invalid repository format. Use owner/repo");
+      return;
+    }
+
+    try {
+      const octokit = createOctokit(env.GITHUB_TOKEN);
+      await octokit.repos.get({ owner: parsed.owner, repo: parsed.repo });
+    } catch {
+      await ctx.reply(`Repository not found on GitHub: ${repo}`);
+      return;
+    }
 
     const { added } = await addTrackedRepo(reposKv, chatId, repo);
     if (!added) {

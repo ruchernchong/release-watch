@@ -20,6 +20,7 @@ import {
   getAllTrackedRepos,
   getCachedAnalysis,
   getLastNotifiedTag,
+  getTrackedRepos,
   getUserIdByTelegramChat,
   setCachedAnalysis,
   setLastNotifiedTag,
@@ -33,6 +34,7 @@ import type { Env } from "../types/env";
 
 export type ReleaseCheckParams = {
   triggeredAt: string;
+  chatId?: string;
 };
 
 type ReleaseInfo =
@@ -80,12 +82,22 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
   ReleaseCheckParams
 > {
   async run(event: WorkflowEvent<ReleaseCheckParams>, step: WorkflowStep) {
-    logger.workflow.info("Started", { triggeredAt: event.payload.triggeredAt });
+    const { chatId: scopedChatId } = event.payload;
+    logger.workflow.info("Started", {
+      triggeredAt: event.payload.triggeredAt,
+      chatId: scopedChatId,
+    });
 
     const trackedRepos = await step.do(
       "fetch-tracked-repos",
       KV_RETRY_CONFIG,
       async () => {
+        if (scopedChatId) {
+          const repos = await getTrackedRepos(this.env.REPOS, scopedChatId);
+          const entries: [string, string[]][] =
+            repos.length > 0 ? [[scopedChatId, repos]] : [];
+          return entries;
+        }
         const reposMap = await getAllTrackedRepos(this.env.REPOS);
         return Array.from(reposMap.entries());
       },
