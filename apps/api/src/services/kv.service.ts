@@ -54,6 +54,13 @@ export async function removeTrackedRepo(
   }
 }
 
+export async function clearTrackedRepos(
+  kv: KVNamespace,
+  chatId: string,
+): Promise<void> {
+  await kv.delete(`${CHAT_PREFIX}${chatId}`);
+}
+
 export async function getAllChatIds(kv: KVNamespace): Promise<string[]> {
   const chatIds: string[] = [];
   let cursor: string | undefined;
