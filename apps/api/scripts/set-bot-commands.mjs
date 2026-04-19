@@ -10,6 +10,8 @@ const commands = [
   { command: "check", description: "Manually check for new releases" },
   { command: "untrack", description: "Stop tracking a repository" },
   { command: "list", description: "List your tracked repos" },
+  { command: "pause", description: "Pause notifications for a repo" },
+  { command: "resume", description: "Resume notifications for a repo" },
   { command: "link", description: "Link to your web dashboard account" },
   { command: "unlink", description: "Unlink your Telegram from the dashboard" },
 ];

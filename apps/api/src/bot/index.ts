@@ -1,4 +1,4 @@
-import { Bot, InlineKeyboard } from "grammy";
+import { Bot, type CommandContext, type Context, InlineKeyboard } from "grammy";
 import { logger } from "../lib/logger";
 import {
   createOctokit,
@@ -14,8 +14,10 @@ import {
 import {
   addTrackedRepoForChat,
   getTrackedReposForChat,
+  getTrackedReposWithStateForChat,
   migrateChatReposToDb,
   removeTrackedRepoForChat,
+  setRepoPausedForChat,
 } from "../services/tracking.service";
 import type { Env } from "../types/env";
 
@@ -80,6 +82,8 @@ export function createBot(env: Env): Bot {
         "/check - Manually check for new releases\n" +
         "/untrack - Stop tracking a repository\n" +
         "/list - List your tracked repos\n" +
+        "/pause - Pause notifications for a repo\n" +
+        "/resume - Resume notifications for a repo\n" +
         "/link - Link to your web dashboard account\n" +
         "/unlink - Unlink your Telegram from the dashboard",
     );
@@ -164,6 +168,81 @@ export function createBot(env: Env): Bot {
     const list = trackedRepos.map((repo) => `• ${repo}`).join("\n");
     await ctx.reply(`📋 Your tracked repos:\n\n${list}`);
   });
+
+  async function handlePauseCommand(
+    ctx: CommandContext<Context>,
+    paused: boolean,
+  ) {
+    const repo = ctx.match?.trim();
+    const chatId = ctx.chat.id.toString();
+    const action = paused ? "pause" : "resume";
+
+    const { linked, repos } = await getTrackedReposWithStateForChat(
+      env,
+      chatId,
+    );
+
+    if (!linked) {
+      await ctx.reply(
+        `Pausing repos requires a linked dashboard account. Use /link to connect, then try again.`,
+      );
+      return;
+    }
+
+    const candidates = repos.filter((r) => r.paused !== paused);
+    if (candidates.length === 0) {
+      await ctx.reply(
+        paused ? "No active repos to pause." : "No paused repos to resume.",
+      );
+      return;
+    }
+
+    if (!repo) {
+      const keyboard = new InlineKeyboard();
+      for (const { repoName } of candidates) {
+        const icon = paused ? "⏸" : "▶️";
+        keyboard.text(`${icon} ${repoName}`, `${action}:${repoName}`).row();
+      }
+      await ctx.reply(
+        paused
+          ? "Select a repository to pause:"
+          : "Select a repository to resume:",
+        { reply_markup: keyboard },
+      );
+      return;
+    }
+
+    const matched = candidates.find(
+      (r) => r.repoName.toLowerCase() === repo.toLowerCase(),
+    );
+    if (!matched) {
+      await ctx.reply(
+        paused
+          ? `Not tracking ${repo}, or it's already paused.`
+          : `Not tracking ${repo}, or it's already active.`,
+      );
+      return;
+    }
+
+    const result = await setRepoPausedForChat(
+      env,
+      chatId,
+      matched.repoName,
+      paused,
+    );
+    if (result.status === "updated") {
+      await ctx.reply(
+        paused
+          ? `⏸ Paused ${matched.repoName}`
+          : `▶️ Resumed ${matched.repoName}`,
+      );
+    } else {
+      await ctx.reply(`No change for ${matched.repoName}`);
+    }
+  }
+
+  bot.command("pause", (ctx) => handlePauseCommand(ctx, true));
+  bot.command("resume", (ctx) => handlePauseCommand(ctx, false));
 
   bot.command("link", async (ctx) => {
     const code = ctx.match?.trim().toUpperCase();
@@ -265,6 +344,47 @@ export function createBot(env: Env): Bot {
     await removeTrackedRepoForChat(env, chatId, repo);
     await ctx.answerCallbackQuery({ text: "Removed!" });
     await ctx.editMessageText(`✅ Stopped tracking ${repo}`);
+  });
+
+  bot.callbackQuery(/^(pause|resume):(.+)$/, async (ctx) => {
+    const action = ctx.match[1] as "pause" | "resume";
+    const repo = ctx.match[2];
+    const chatId = ctx.chat?.id.toString();
+
+    if (!chatId) {
+      await ctx.answerCallbackQuery({ text: "Error: Could not identify chat" });
+      return;
+    }
+
+    const paused = action === "pause";
+    const result = await setRepoPausedForChat(env, chatId, repo, paused);
+
+    if (result.status === "not-linked") {
+      await ctx.answerCallbackQuery({ text: "Link your dashboard first" });
+      await ctx.editMessageText(
+        "Pausing repos requires a linked dashboard account. Use /link to connect.",
+      );
+      return;
+    }
+    if (result.status === "not-found") {
+      await ctx.answerCallbackQuery({ text: "Repo not tracked" });
+      await ctx.editMessageText(`No longer tracking ${repo}.`);
+      return;
+    }
+    if (result.status === "unchanged") {
+      await ctx.answerCallbackQuery({ text: "Already set" });
+      await ctx.editMessageText(
+        paused ? `Already paused: ${repo}` : `Already active: ${repo}`,
+      );
+      return;
+    }
+
+    await ctx.answerCallbackQuery({
+      text: paused ? "Paused!" : "Resumed!",
+    });
+    await ctx.editMessageText(
+      paused ? `⏸ Paused ${repo}` : `▶️ Resumed ${repo}`,
+    );
   });
 
   bot.on("message:text", async (ctx) => {

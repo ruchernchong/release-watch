@@ -10,6 +10,14 @@ import {
   removeTrackedRepo,
 } from "./kv.service";
 
+export type TrackedRepoState = { repoName: string; paused: boolean };
+
+export type SetPausedResult =
+  | { status: "updated"; paused: boolean }
+  | { status: "unchanged"; paused: boolean }
+  | { status: "not-linked" }
+  | { status: "not-found" };
+
 export async function addTrackedRepoForChat(
   env: Env,
   chatId: string,
@@ -70,6 +78,57 @@ export async function getTrackedReposForChat(
   }
 
   return getTrackedRepos(env.REPOS, chatId);
+}
+
+export async function getTrackedReposWithStateForChat(
+  env: Env,
+  chatId: string,
+): Promise<{ linked: boolean; repos: TrackedRepoState[] }> {
+  const userId = await getUserIdByTelegramChat(env.CHANNELS, chatId);
+
+  if (userId) {
+    const rows = await db
+      .select({ repoName: userRepos.repoName, paused: userRepos.paused })
+      .from(userRepos)
+      .where(eq(userRepos.userId, userId));
+    return { linked: true, repos: rows };
+  }
+
+  const repos = await getTrackedRepos(env.REPOS, chatId);
+  return {
+    linked: false,
+    repos: repos.map((repoName) => ({ repoName, paused: false })),
+  };
+}
+
+export async function setRepoPausedForChat(
+  env: Env,
+  chatId: string,
+  repo: string,
+  paused: boolean,
+): Promise<SetPausedResult> {
+  const userId = await getUserIdByTelegramChat(env.CHANNELS, chatId);
+  if (!userId) return { status: "not-linked" };
+
+  const normalized = repo.toLowerCase();
+  const [row] = await db
+    .select({ paused: userRepos.paused })
+    .from(userRepos)
+    .where(
+      and(eq(userRepos.userId, userId), eq(userRepos.repoName, normalized)),
+    );
+
+  if (!row) return { status: "not-found" };
+  if (row.paused === paused) return { status: "unchanged", paused };
+
+  await db
+    .update(userRepos)
+    .set({ paused })
+    .where(
+      and(eq(userRepos.userId, userId), eq(userRepos.repoName, normalized)),
+    );
+  await invalidateRepoRelatedCaches(env.CACHE, userId);
+  return { status: "updated", paused };
 }
 
 export async function migrateChatReposToDb(
