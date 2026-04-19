@@ -35,6 +35,12 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# agent skills
+.agents/
+.crush/
+.goose/
+.kiro/
+
 # misc
 .DS_Store
 .vercel
