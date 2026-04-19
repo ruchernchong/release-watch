@@ -2,6 +2,7 @@ import type {
   NotificationPayload,
   ReleaseCategory,
 } from "@release-watch/types";
+import * as Sentry from "@sentry/cloudflare";
 
 const CATEGORY_EMOJI: Record<ReleaseCategory, string> = {
   major: "🚀",
@@ -41,8 +42,18 @@ export async function sendTelegramNotification(
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Telegram API error: ${error}`);
+    const body = await response.text();
+    const error = new Error(`Telegram API error ${response.status}: ${body}`);
+    Sentry.captureException(error, {
+      tags: { service: "telegram", op: "sendMessage" },
+      extra: {
+        chatId,
+        repo: payload.repoName,
+        tag: payload.tagName,
+        status: response.status,
+      },
+    });
+    throw error;
   }
 
   return true;

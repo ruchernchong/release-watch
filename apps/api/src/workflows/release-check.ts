@@ -26,6 +26,7 @@ import {
   setCachedAnalysis,
   setLastNotifiedTag,
 } from "../services/kv.service";
+import { captureEvent, flushPostHog, getPostHog } from "../services/posthog";
 import {
   incrementNotificationsSent,
   incrementReleasesNotified,
@@ -399,11 +400,29 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
               },
             );
             notificationSent = true;
+            const posthog = getPostHog(this.env.POSTHOG_API_KEY);
+            captureEvent(posthog, {
+              distinctId: `telegram:${chatId}`,
+              event: "Telegram Notification Sent",
+              properties: { repo: repoFullName, tag: tagName },
+            });
+            await flushPostHog(posthog);
           } catch (error) {
             logger.workflow.error("Failed to send notification", error, {
               repo: repoFullName,
               chatId,
             });
+            const posthog = getPostHog(this.env.POSTHOG_API_KEY);
+            captureEvent(posthog, {
+              distinctId: `telegram:${chatId}`,
+              event: "Telegram Notification Failed",
+              properties: {
+                repo: repoFullName,
+                tag: tagName,
+                error: error instanceof Error ? error.message : String(error),
+              },
+            });
+            await flushPostHog(posthog);
             continue;
           }
 

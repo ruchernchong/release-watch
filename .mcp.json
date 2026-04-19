@@ -10,6 +10,14 @@
       "headers": {
         "Authorization": "Bearer ${POSTHOG_PERSONAL_API_KEY}"
       }
+    },
+    "sentry": {
+      "command": "bunx",
+      "args": [
+        "@sentry/mcp-server@latest",
+        "--access-token=${SENTRY_ACCESS_TOKEN}",
+        "--disable-skills=seer"
+      ]
     }
   }
 }
