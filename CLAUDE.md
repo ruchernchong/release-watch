@@ -13,6 +13,8 @@ ReleaseWatch monitors GitHub releases and sends Telegram notifications with AI s
 - `packages/database` - Drizzle + BetterAuth + Neon
 - `packages/types` - Shared types
 
+Each app/package has its own `CLAUDE.md` with deeper detail (routes, KV namespaces, data-fetching patterns, schemas). Read it before working in that subtree.
+
 ## API Architecture
 
 All REST APIs are served by Hono (Cloudflare Worker). Next.js only handles authentication via BetterAuth.
@@ -38,6 +40,7 @@ Browser → Hono API (with JWT) → Database
 
 ```bash
 pnpm install              # Install dependencies
+pnpm exec husky           # Required after fresh clone — see Supply Chain note below
 pnpm dev                  # Start all apps
 pnpm build                # Build all
 pnpm lint                 # Lint all
@@ -46,6 +49,13 @@ pnpm db:generate          # Generate Drizzle migrations
 pnpm db:migrate           # Run migrations
 pnpm auth:generate        # Regenerate BetterAuth schema
 ```
+
+## Supply Chain & Dependencies
+
+- `.npmrc` sets `ignore-scripts=true`, so `pnpm install` will **not** run Husky's `prepare` script. Run `pnpm exec husky` manually after a fresh clone or git hooks won't fire.
+- `.npmrc` also sets `save-exact=true` and `minimum-release-age=4320` (3-day quarantine on new releases).
+- All dependency versions are pinned exactly (no `^`/`~`). **Do not** revert this — Renovate is configured to manage version bumps via PRs (`renovate.json`).
+- CI enforces this via `.github/workflows/`: `audit.yml`, `dependency-review.yml`, `lockfile-integrity.yml`. Third-party actions are pinned to commit SHA with a version comment.
 
 ## Environment Variables
 

@@ -1,0 +1,26 @@
+name: Lockfile Integrity
+
+on:
+  pull_request:
+    paths:
+      - pnpm-lock.yaml
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lockfile-integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: tartinerlabs/lockfile-integrity@5d26b1399867d155ff27133421d2a771ee921a12 # v1.1.0
+        with:
+          base-ref: ${{ github.base_ref }}
+          lockfile: pnpm-lock.yaml

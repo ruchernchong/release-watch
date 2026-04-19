@@ -1,0 +1,43 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "rangeStrategy": "pin",
+  "schedule": ["before 9am on Monday"],
+  "packageRules": [
+    {
+      "description": "Auto-merge patch updates for devDependencies",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true
+    },
+    {
+      "description": "Group @commitlint packages",
+      "matchPackageNames": ["@commitlint/*"],
+      "groupName": "commitlint"
+    },
+    {
+      "description": "Group @sentry packages",
+      "matchPackageNames": ["@sentry/*"],
+      "groupName": "sentry"
+    },
+    {
+      "description": "Group @radix-ui packages",
+      "matchPackageNames": ["@radix-ui/*"],
+      "groupName": "radix-ui"
+    },
+    {
+      "description": "Group @polar-sh packages",
+      "matchPackageNames": ["@polar-sh/*"],
+      "groupName": "polar-sh"
+    },
+    {
+      "description": "Group @types packages",
+      "matchPackageNames": ["@types/*"],
+      "groupName": "types"
+    }
+  ],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 9am on the first day of the month"]
+  }
+}
