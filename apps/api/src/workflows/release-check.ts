@@ -19,6 +19,7 @@ import {
 import {
   getAllTrackedRepos,
   getCachedAnalysis,
+  getChannels,
   getLastNotifiedTag,
   getTrackedRepos,
   getUserIdByTelegramChat,
@@ -88,8 +89,8 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
       chatId: scopedChatId,
     });
 
-    const trackedRepos = await step.do(
-      "fetch-tracked-repos",
+    const kvTrackedRepos = await step.do(
+      "fetch-kv-repos",
       KV_RETRY_CONFIG,
       async () => {
         if (scopedChatId) {
@@ -103,27 +104,88 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
       },
     );
 
-    // Fetch paused repos from database to filter them out
-    const pausedReposSet = await step.do(
-      "fetch-paused-repos",
+    // Fetch DB-tracked repos and resolve userId → telegram chatIds.
+    // This captures repos added via the web dashboard (userRepos) that do not
+    // live in KV. Paused rows are returned alongside so the pause filter below
+    // uses the same snapshot.
+    const dbSource = await step.do(
+      "fetch-db-repos",
       KV_RETRY_CONFIG,
       async () => {
-        const pausedRepos = await db
-          .select({ repoName: userRepos.repoName, userId: userRepos.userId })
-          .from(userRepos)
-          .where(eq(userRepos.paused, true));
-
-        // Build a map of userId -> Set<repoName> for efficient lookup
-        const pausedMap = new Map<string, Set<string>>();
-        for (const { userId, repoName } of pausedRepos) {
-          if (!pausedMap.has(userId)) {
-            pausedMap.set(userId, new Set());
+        let scopedUserId: string | null = null;
+        if (scopedChatId) {
+          scopedUserId = await getUserIdByTelegramChat(
+            this.env.CHANNELS,
+            scopedChatId,
+          );
+          if (!scopedUserId) {
+            return {
+              chatEntries: [] as [string, string[]][],
+              paused: [] as { userId: string; repoName: string }[],
+            };
           }
-          pausedMap.get(userId)?.add(repoName);
         }
-        return pausedMap;
+
+        const rows = scopedUserId
+          ? await db
+              .select({
+                userId: userRepos.userId,
+                repoName: userRepos.repoName,
+                paused: userRepos.paused,
+              })
+              .from(userRepos)
+              .where(eq(userRepos.userId, scopedUserId))
+          : await db
+              .select({
+                userId: userRepos.userId,
+                repoName: userRepos.repoName,
+                paused: userRepos.paused,
+              })
+              .from(userRepos);
+
+        const byUser = new Map<string, string[]>();
+        const paused: { userId: string; repoName: string }[] = [];
+        for (const row of rows) {
+          if (row.paused) {
+            paused.push({ userId: row.userId, repoName: row.repoName });
+            continue;
+          }
+          const repos = byUser.get(row.userId);
+          if (repos) {
+            repos.push(row.repoName);
+          } else {
+            byUser.set(row.userId, [row.repoName]);
+          }
+        }
+
+        const chatEntries: [string, string[]][] = [];
+        for (const [userId, repos] of byUser) {
+          const channels = await getChannels(this.env.CHANNELS, userId);
+          for (const channel of channels) {
+            if (channel.type === "telegram" && channel.enabled) {
+              chatEntries.push([channel.chatId, repos]);
+            }
+          }
+        }
+
+        return { chatEntries, paused };
       },
     );
+
+    const pausedReposSet = new Map<string, Set<string>>();
+    for (const { userId, repoName } of dbSource.paused) {
+      let set = pausedReposSet.get(userId);
+      if (!set) {
+        set = new Set();
+        pausedReposSet.set(userId, set);
+      }
+      set.add(repoName);
+    }
+
+    const trackedRepos: [string, string[]][] = [
+      ...kvTrackedRepos,
+      ...dbSource.chatEntries,
+    ];
 
     if (trackedRepos.length === 0) {
       logger.workflow.info("No tracked repos found");
@@ -132,12 +194,19 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
 
     const repoToChats = await step.do("build-repo-map", async () => {
       const map: Record<string, string[]> = {};
+      const seen = new Map<string, Set<string>>();
       for (const [chatId, repos] of trackedRepos) {
         for (const repo of repos) {
-          if (!map[repo]) {
+          let chats = seen.get(repo);
+          if (!chats) {
+            chats = new Set();
+            seen.set(repo, chats);
             map[repo] = [];
           }
-          map[repo].push(chatId);
+          if (!chats.has(chatId)) {
+            chats.add(chatId);
+            map[repo].push(chatId);
+          }
         }
       }
       return map;
