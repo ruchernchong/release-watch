@@ -8,15 +8,15 @@
     "./auth-client": "./src/auth-client.ts"
   },
   "scripts": {
-    "auth:generate": "pnpm dlx @better-auth/cli@latest generate --output src/schema/auth.ts --yes",
+    "auth:generate": "pnpm dlx auth@1.6.8 generate --output src/schema/auth.ts --yes",
     "db:drop": "pnpm drizzle-kit drop",
     "db:generate": "pnpm drizzle-kit generate",
     "db:migrate": "pnpm drizzle-kit migrate"
   },
   "dependencies": {
-    "@better-auth/passkey": "1.4.9",
+    "@better-auth/passkey": "1.6.8",
     "@neondatabase/serverless": "1.0.2",
-    "@polar-sh/better-auth": "1.6.3",
+    "@polar-sh/better-auth": "1.8.1",
     "@polar-sh/sdk": "0.42.1",
     "better-auth": "catalog:",
     "dotenv": "17.2.3",

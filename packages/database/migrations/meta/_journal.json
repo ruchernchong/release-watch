@@ -36,6 +36,13 @@
       "when": 1766911279956,
       "tag": "0004_curious_red_hulk",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1777232976528,
+      "tag": "0005_tidy_omega_sentinel",
+      "breakpoints": true
     }
   ]
 }
