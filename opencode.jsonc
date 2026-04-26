@@ -1,0 +1,36 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "heroui-react": {
+      "type": "local",
+      "command": ["bunx", "-y", "@heroui/react-mcp@latest"]
+    },
+    "heroui-pro": {
+      "type": "remote",
+      "url": "https://mcp.heroui.pro/mcp",
+      "headers": {
+        "x-heroui-personal-token": "{env:HEROUI_PERSONAL_TOKEN}"
+      }
+    },
+    "polar-sandbox": {
+      "type": "remote",
+      "url": "https://mcp.polar.sh/mcp/polar-sandbox"
+    },
+    "posthog": {
+      "type": "remote",
+      "url": "https://mcp.posthog.com/mcp",
+      "headers": {
+        "Authorization": "Bearer {env:POSTHOG_PERSONAL_API_KEY}"
+      }
+    },
+    "sentry": {
+      "type": "local",
+      "command": [
+        "bunx",
+        "@sentry/mcp-server@latest",
+        "--access-token={env:SENTRY_ACCESS_TOKEN}",
+        "--disable-skills=seer"
+      ]
+    }
+  }
+}
