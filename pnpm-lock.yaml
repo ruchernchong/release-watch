@@ -96,6 +96,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@gravity-ui/icons':
+        specifier: ^2.18.0
+        version: 2.18.0(react@19.2.3)
       '@heroui-pro/react':
         specifier: 1.0.0-beta.2
         version: 1.0.0-beta.2
@@ -1168,6 +1171,14 @@ packages:
 
   '@grammyjs/types@3.22.2':
     resolution: {integrity: sha512-uu7DX2ezhnBPozL3bXHmwhLvaFsh59E4QyviNH4Cij7EdVekYrs6mCzeXsa2pDk30l3uXo7DBahlZLzTPtpYZg==}
+
+  '@gravity-ui/icons@2.18.0':
+    resolution: {integrity: sha512-JoRc/4Ch9GLaufZfpGd2ePRRisMXEjMI+r3y8kPKyYIAdQZz07jpIXEgsft1gvBxjSht2MS2uu5+vfhe1WP0ow==}
+    peerDependencies:
+      react: '*'
+    peerDependenciesMeta:
+      react:
+        optional: true
 
   '@heroui-pro/react@1.0.0-beta.2':
     resolution: {integrity: sha512-kB/9uFP30MN4F2hU4ONmGlqIVEptPkRSotd2w3bxoRzuZR4Z/9rqTguMFaIABxQJ8NWOXuIGOZLo2OCJU8llTA==}
@@ -5690,6 +5701,12 @@ snapshots:
       tslib: 2.8.1
 
   '@grammyjs/types@3.22.2': {}
+
+  '@gravity-ui/icons@2.18.0(react@19.2.3)':
+    dependencies:
+      tslib: 2.8.1
+    optionalDependencies:
+      react: 19.2.3
 
   '@heroui-pro/react@1.0.0-beta.2':
     dependencies:
