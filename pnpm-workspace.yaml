@@ -3,9 +3,14 @@ packages:
   - packages/**
 
 allowBuilds:
+  '@sentry/cli': false
+  '@zowe/secrets-for-zowe-sdk': false
   heroui-pro: true
   '@heroui-pro/react': true
-  heroui-native-pro: true
+  core-js: false
+  esbuild: false
+  sharp: false
+  workerd: false
 
 catalog:
   '@cloudflare/workers-types': 4.20251225.0
@@ -13,4 +18,3 @@ catalog:
   drizzle-kit: 0.31.8
   drizzle-orm: 0.45.2
   zod: 4.2.1
-
