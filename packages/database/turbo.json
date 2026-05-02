@@ -1,0 +1,45 @@
+{
+  "$schema": "../../node_modules/turbo/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "!README.md"],
+      "outputs": []
+    },
+    "auth:generate": {
+      "cache": false,
+      "env": [
+        "DATABASE_URL",
+        "DISCORD_CLIENT_ID",
+        "DISCORD_CLIENT_SECRET",
+        "GITHUB_CLIENT_ID",
+        "GITHUB_CLIENT_SECRET",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "POLAR_ACCESS_TOKEN",
+        "POLAR_PRODUCT_ID_PRO_ANNUAL",
+        "POLAR_PRODUCT_ID_PRO_MONTHLY",
+        "POLAR_SERVER",
+        "POLAR_WEBHOOK_SECRET"
+      ],
+      "interactive": true,
+      "outputs": ["src/schema/auth.ts"]
+    },
+    "db:drop": {
+      "cache": false,
+      "env": ["DATABASE_URL"],
+      "interactive": true
+    },
+    "db:generate": {
+      "cache": false,
+      "env": ["DATABASE_URL"],
+      "outputs": ["migrations/**"]
+    },
+    "db:migrate": {
+      "cache": false,
+      "env": ["DATABASE_URL"],
+      "interactive": true
+    }
+  }
+}

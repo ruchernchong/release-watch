@@ -1,0 +1,45 @@
+{
+  "$schema": "../../node_modules/turbo/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "!README.md"],
+      "outputs": []
+    },
+    "dev": {
+      "cache": false,
+      "env": [
+        "DEBUG",
+        "DISCORD_BOT_TOKEN",
+        "DISCORD_CLIENT_ID",
+        "GITHUB_TOKEN",
+        "JWKS_URL",
+        "POSTHOG_API_KEY",
+        "SENTRY_DSN",
+        "TELEGRAM_BOT_TOKEN"
+      ],
+      "inputs": ["$TURBO_DEFAULT$", ".dev.vars", ".env", ".env.*"],
+      "persistent": true
+    },
+    "deploy": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "env": [
+        "DEBUG",
+        "DISCORD_BOT_TOKEN",
+        "DISCORD_CLIENT_ID",
+        "GITHUB_TOKEN",
+        "JWKS_URL",
+        "POSTHOG_API_KEY",
+        "SENTRY_DSN",
+        "TELEGRAM_BOT_TOKEN"
+      ],
+      "passThroughEnv": ["CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_API_TOKEN"]
+    },
+    "bot:set-commands": {
+      "cache": false,
+      "env": ["TELEGRAM_BOT_TOKEN"]
+    }
+  }
+}

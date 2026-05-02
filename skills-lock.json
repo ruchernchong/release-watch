@@ -72,6 +72,12 @@
       "sourceType": "github",
       "computedHash": "873c67922d80775a9fdf596db7964b579f0408c30ec6e3d11989f6055bbec89f"
     },
+    "turborepo": {
+      "source": "vercel/turborepo",
+      "sourceType": "github",
+      "skillPath": "skills/turborepo/SKILL.md",
+      "computedHash": "1fda1c68c1ac129cf96362752e5eac157085389b68d2fabcf3ebe7da9078b21d"
+    },
     "workers-best-practices": {
       "source": "cloudflare/skills",
       "sourceType": "github",
