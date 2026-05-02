@@ -22,12 +22,5 @@
     "husky": "9.1.7",
     "turbo": "2.7.2"
   },
-  "packageManager": "pnpm@10.22.0",
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "heroui-pro",
-      "@heroui-pro/react",
-      "heroui-native-pro"
-    ]
-  }
+  "packageManager": "pnpm@11.0.3"
 }
