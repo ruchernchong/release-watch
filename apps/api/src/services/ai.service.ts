@@ -15,7 +15,7 @@ export interface AIAnalysisResult {
   highlights: string[];
 }
 
-const MODEL = "@cf/google/gemma-4-26b-a4b-it";
+const MODEL = "@cf/google/gemma-4-26b-a4b-it" as keyof AiModels;
 
 const ANALYSIS_SCHEMA = {
   type: "object",

@@ -60,6 +60,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "catalog:",
     "@release-watch/api": "workspace:*",
     "@tailwindcss/postcss": "4.1.18",
     "@types/node": "20.19.27",

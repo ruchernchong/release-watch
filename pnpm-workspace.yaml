@@ -13,7 +13,7 @@ allowBuilds:
   workerd: false
 
 catalog:
-  '@cloudflare/workers-types': 4.20251225.0
+  '@cloudflare/workers-types': 4.20260504.1
   better-auth: 1.6.8
   drizzle-kit: 0.31.8
   drizzle-orm: 0.45.2
