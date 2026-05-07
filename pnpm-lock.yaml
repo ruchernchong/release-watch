@@ -9,6 +9,21 @@ catalogs:
     '@cloudflare/workers-types':
       specifier: 4.20260504.1
       version: 4.20260504.1
+    '@hono/zod-validator':
+      specifier: 0.7.6
+      version: 0.7.6
+    '@neondatabase/serverless':
+      specifier: 1.0.2
+      version: 1.0.2
+    '@sentry/cloudflare':
+      specifier: 10.32.1
+      version: 10.32.1
+    '@sentry/nextjs':
+      specifier: 10.32.1
+      version: 10.32.1
+    '@tailwindcss/postcss':
+      specifier: 4.1.18
+      version: 4.1.18
     better-auth:
       specifier: 1.6.8
       version: 1.6.8
@@ -18,6 +33,15 @@ catalogs:
     drizzle-orm:
       specifier: 0.45.2
       version: 0.45.2
+    hono:
+      specifier: 4.12.14
+      version: 4.12.14
+    tailwindcss:
+      specifier: 4.1.18
+      version: 4.1.18
+    typescript:
+      specifier: 5.9.3
+      version: 5.9.3
     zod:
       specifier: 4.2.1
       version: 4.2.1
@@ -48,10 +72,10 @@ importers:
   apps/api:
     dependencies:
       '@hono/zod-validator':
-        specifier: 0.7.6
+        specifier: 'catalog:'
         version: 0.7.6(hono@4.12.14)(zod@4.2.1)
       '@neondatabase/serverless':
-        specifier: 1.0.2
+        specifier: 'catalog:'
         version: 1.0.2
       '@octokit/rest':
         specifier: 22.0.1
@@ -63,7 +87,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/types
       '@sentry/cloudflare':
-        specifier: 10.32.1
+        specifier: 'catalog:'
         version: 10.32.1(@cloudflare/workers-types@4.20260504.1)
       drizzle-orm:
         specifier: 'catalog:'
@@ -72,7 +96,7 @@ importers:
         specifier: 1.38.4
         version: 1.38.4
       hono:
-        specifier: 4.12.14
+        specifier: 'catalog:'
         version: 4.12.14
       jose:
         specifier: 6.1.3
@@ -91,7 +115,7 @@ importers:
         specifier: 24.10.4
         version: 24.10.4
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
       wrangler:
         specifier: ^4.87.0
@@ -163,7 +187,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/types
       '@sentry/nextjs':
-        specifier: 10.32.1
+        specifier: 'catalog:'
         version: 10.32.1(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(next@16.2.3(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)(webpack@5.104.1)
       '@tanstack/react-table':
         specifier: 8.21.3
@@ -190,7 +214,7 @@ importers:
         specifier: 8.6.0
         version: 8.6.0(react@19.2.3)
       hono:
-        specifier: 4.12.14
+        specifier: 'catalog:'
         version: 4.12.14
       lucide-react:
         specifier: 0.562.0
@@ -245,7 +269,7 @@ importers:
         specifier: workspace:*
         version: link:../api
       '@tailwindcss/postcss':
-        specifier: 4.1.18
+        specifier: 'catalog:'
         version: 4.1.18
       '@types/node':
         specifier: 20.19.27
@@ -260,13 +284,13 @@ importers:
         specifier: 1.0.0
         version: 1.0.0
       tailwindcss:
-        specifier: 4.1.18
+        specifier: 'catalog:'
         version: 4.1.18
       tw-animate-css:
         specifier: 1.4.0
         version: 1.4.0
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/database:
@@ -275,7 +299,7 @@ importers:
         specifier: 1.6.8
         version: 1.6.8(@better-auth/core@1.6.8(@better-auth/utils@0.4.0)(@better-fetch/fetch@1.1.21)(@cloudflare/workers-types@4.20260504.1)(@opentelemetry/api@1.9.0)(better-call@1.3.5(zod@4.3.6))(jose@6.1.3)(kysely@0.28.16)(nanostores@1.3.0))(@better-auth/utils@0.4.0)(@better-fetch/fetch@1.1.21)(better-auth@1.6.8(@cloudflare/workers-types@4.20260504.1)(@opentelemetry/api@1.9.0)(drizzle-kit@0.31.8)(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260504.1)(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@types/pg@8.16.0)(kysely@0.28.16))(next@16.2.3(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(better-call@1.3.5(zod@4.2.1))(nanostores@1.3.0)
       '@neondatabase/serverless':
-        specifier: 1.0.2
+        specifier: 'catalog:'
         version: 1.0.2
       '@polar-sh/better-auth':
         specifier: 1.8.1
@@ -306,7 +330,7 @@ importers:
   packages/types:
     devDependencies:
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
 packages:
@@ -3258,11 +3282,6 @@ packages:
     resolution: {integrity: sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA==}
     engines: {node: '>=8'}
 
-  browserslist@4.28.1:
-    resolution: {integrity: sha512-ZC5Bd0LgJXgwGqUknZY/vkUQ04r8NXnJZ3yYi4vDmSiZmC/pdSN0NbNRPxZpbtO4uAfDUAFffO8IZoM3Gj8IkA==}
-    engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
-    hasBin: true
-
   browserslist@4.28.2:
     resolution: {integrity: sha512-48xSriZYYg+8qXna9kwqjIVzuQxi+KYWp2+5nCYnYKPTr0LvD89Jqk2Or5ogxz0NUMfIjhh2lIUX/LyX9B4oIg==}
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
@@ -3604,9 +3623,6 @@ packages:
   eastasianwidth@0.2.0:
     resolution: {integrity: sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA==}
 
-  electron-to-chromium@1.5.267:
-    resolution: {integrity: sha512-0Drusm6MVRXSOJpGbaSVgcQsuB4hEkMpHXaVstcPmhu5LIedxs1xNK/nIxmQIU/RPC0+1/o0AVZfBTkTNJOdUw==}
-
   electron-to-chromium@1.5.339:
     resolution: {integrity: sha512-Is+0BBHJ4NrdpAYiperrmp53pLywG/yV/6lIMTAnhxvzj/Cmn5Q/ogSHC6AKe7X+8kPLxxFk0cs5oc/3j/fxIg==}
 
@@ -3628,10 +3644,6 @@ packages:
 
   emoji-regex@9.2.2:
     resolution: {integrity: sha512-L18DaJsXSUk2+42pv8mLs5jJT2hqFkFE4j21wOmgbUqsZ2hL72NsUU785g9RXgo3s0ZNgVl42TiHp3ZtOv/Vyg==}
-
-  enhanced-resolve@5.19.0:
-    resolution: {integrity: sha512-phv3E1Xl4tQOShqSte26C7Fl84EwUdZsyOuSSk9qtAGyyQs2s3jJzComh+Abf4g187lUUAvH+H26omrqia2aGg==}
-    engines: {node: '>=10.13.0'}
 
   enhanced-resolve@5.20.1:
     resolution: {integrity: sha512-Qohcme7V1inbAfvjItgw0EaxVX5q2rdVEZHRBrEQdRZTssLDGsL8Lwrznl8oQ/6kuTJONLaDcGjkNP247XEhcA==}
@@ -4276,9 +4288,6 @@ packages:
       encoding:
         optional: true
 
-  node-releases@2.0.27:
-    resolution: {integrity: sha512-nmh3lCkYZ3grZvqcCH+fjmQ7X+H0OeZgP40OierEaAptX4XofMh5kwNbWh7lBduUzCcV/8kZ+NDLCwm2iorIlA==}
-
   node-releases@2.0.37:
     resolution: {integrity: sha512-1h5gKZCF+pO/o3Iqt5Jp7wc9rH3eJJ0+nh/CIoiRwjRxde/hAHyLPXYN4V3CqKAbiZPSeJFSWHmJsbkicta0Eg==}
 
@@ -4740,10 +4749,6 @@ packages:
   tailwindcss@4.1.18:
     resolution: {integrity: sha512-4+Z+0yiYyEtUVCScyfHCxOYP06L5Ne+JiHhY2IjR2KWMIWhJOYZKLSGZaP5HkZ8+bY0cxfzwDE5uOmzFXyIwxw==}
 
-  tapable@2.3.0:
-    resolution: {integrity: sha512-g9ljZiwki/LfxmQADO3dEY1CbpmXT5Hm2fJ+QaGKwSXUylMybePR7/67YW7jOrrvjEgL1Fmz5kzyAjWVWLlucg==}
-    engines: {node: '>=6'}
-
   tapable@2.3.2:
     resolution: {integrity: sha512-1MOpMXuhGzGL5TTCZFItxCc0AARf1EZFQkGqMm7ERKj8+Hgr5oLvJOVFcC+lRmR8hCe2S3jC4T5D7Vg/d7/fhA==}
     engines: {node: '>=6'}
@@ -5088,7 +5093,7 @@ snapshots:
     dependencies:
       '@babel/compat-data': 7.28.5
       '@babel/helper-validator-option': 7.27.1
-      browserslist: 4.28.1
+      browserslist: 4.28.2
       lru-cache: 5.1.1
       semver: 6.3.1
 
@@ -7458,7 +7463,7 @@ snapshots:
   '@tailwindcss/node@4.1.18':
     dependencies:
       '@jridgewell/remapping': 2.3.5
-      enhanced-resolve: 5.19.0
+      enhanced-resolve: 5.20.1
       jiti: 2.6.1
       lightningcss: 1.30.2
       magic-string: 0.30.21
@@ -7898,14 +7903,6 @@ snapshots:
     dependencies:
       fill-range: 7.1.1
 
-  browserslist@4.28.1:
-    dependencies:
-      baseline-browser-mapping: 2.10.19
-      caniuse-lite: 1.0.30001788
-      electron-to-chromium: 1.5.267
-      node-releases: 2.0.27
-      update-browserslist-db: 1.2.3(browserslist@4.28.1)
-
   browserslist@4.28.2:
     dependencies:
       baseline-browser-mapping: 2.10.19
@@ -8140,8 +8137,6 @@ snapshots:
 
   eastasianwidth@0.2.0: {}
 
-  electron-to-chromium@1.5.267: {}
-
   electron-to-chromium@1.5.339: {}
 
   embla-carousel-react@8.6.0(react@19.2.3):
@@ -8159,11 +8154,6 @@ snapshots:
   emoji-regex@8.0.0: {}
 
   emoji-regex@9.2.2: {}
-
-  enhanced-resolve@5.19.0:
-    dependencies:
-      graceful-fs: 4.2.11
-      tapable: 2.3.0
 
   enhanced-resolve@5.20.1:
     dependencies:
@@ -8766,8 +8756,6 @@ snapshots:
     dependencies:
       whatwg-url: 5.0.0
 
-  node-releases@2.0.27: {}
-
   node-releases@2.0.37: {}
 
   normalize-path@3.0.0: {}
@@ -9244,8 +9232,6 @@ snapshots:
 
   tailwindcss@4.1.18: {}
 
-  tapable@2.3.0: {}
-
   tapable@2.3.2: {}
 
   tar@7.5.13:
@@ -9330,12 +9316,6 @@ snapshots:
       chokidar: 3.6.0
       webpack-sources: 3.3.4
       webpack-virtual-modules: 0.5.0
-
-  update-browserslist-db@1.2.3(browserslist@4.28.1):
-    dependencies:
-      browserslist: 4.28.1
-      escalade: 3.2.0
-      picocolors: 1.1.1
 
   update-browserslist-db@1.2.3(browserslist@4.28.2):
     dependencies:
