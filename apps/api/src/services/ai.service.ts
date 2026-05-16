@@ -1,21 +1,19 @@
+import type { AIAnalysisResult, ReleaseCategory } from "@release-watch/types";
 import { logger } from "../lib/logger";
 
-export type ReleaseCategory =
-  | "major"
-  | "minor"
-  | "patch"
-  | "security"
-  | "breaking"
-  | "unknown";
-
-export interface AIAnalysisResult {
-  summary: string;
-  category: ReleaseCategory;
-  hasBreakingChanges: boolean;
-  highlights: string[];
-}
-
 const MODEL = "@cf/google/gemma-4-26b-a4b-it" as keyof AiModels;
+const MAX_RELEASE_NOTES_CHARS = 6000;
+
+const RELEASE_CATEGORIES = [
+  "major",
+  "minor",
+  "patch",
+  "security",
+  "breaking",
+  "unknown",
+] as const satisfies readonly ReleaseCategory[];
+
+const VALID_CATEGORIES = new Set<ReleaseCategory>(RELEASE_CATEGORIES);
 
 const ANALYSIS_SCHEMA = {
   type: "object",
@@ -23,11 +21,11 @@ const ANALYSIS_SCHEMA = {
     summary: {
       type: "string",
       description:
-        "A concise 2-3 sentence summary of the most important changes",
+        "One or two natural-language sentences for a mobile notification. No Markdown, raw URLs, headings, or changelog boilerplate.",
     },
     category: {
       type: "string",
-      enum: ["major", "minor", "patch", "security", "breaking", "unknown"],
+      enum: RELEASE_CATEGORIES,
       description: "The release category based on semver and content",
     },
     hasBreakingChanges: {
@@ -37,7 +35,8 @@ const ANALYSIS_SCHEMA = {
     highlights: {
       type: "array",
       items: { type: "string" },
-      description: "2-3 key highlights as brief bullet points",
+      description:
+        "Two or three short, plain-language user-impact highlights. No Markdown, headings, links, or trailing punctuation unless needed.",
       minItems: 0,
       maxItems: 3,
     },
@@ -45,7 +44,15 @@ const ANALYSIS_SCHEMA = {
   required: ["summary", "category", "hasBreakingChanges", "highlights"],
 } as const;
 
-const SYSTEM_PROMPT = `You are a release notes analyzer. Given a GitHub release, you must analyze and categorize it.
+const SYSTEM_PROMPT = `You rewrite GitHub release notes into concise Telegram notifications.
+
+Convert technical Markdown release notes into plain natural language. Focus on what changed and why it matters to users. Ignore credits, sponsor notes, raw URLs, Markdown headings, code fences, and repeated changelog boilerplate unless they are essential to understanding the release.
+
+Write for a small mobile screen:
+- summary: one or two short sentences, ideally under 240 characters
+- highlights: 2-3 brief user-impact bullets, each under 90 characters
+- no Markdown syntax, raw links, headings, emoji, or copied boilerplate
+- mention breaking changes only when they materially affect users
 
 Category rules:
 - "major": Version X.0.0 or significant new features
@@ -56,10 +63,10 @@ Category rules:
 - "unknown": Cannot determine
 
 Provide:
-1. A concise 2-3 sentence summary of the most important changes
+1. A concise natural-language summary of the most important changes
 2. The release category
 3. Whether there are breaking changes
-4. 2-3 key highlights (brief bullet points)`;
+4. 2-3 short highlights`;
 
 export async function analyzeRelease(
   ai: Ai,
@@ -72,16 +79,12 @@ export async function analyzeRelease(
     return null;
   }
 
-  const truncatedBody = body.slice(0, 6000);
-
-  const userPrompt = `Analyze this GitHub release:
-
-Repository: ${repoName}
-Tag: ${tagName}
-Release Name: ${releaseName || tagName}
-
-Release Notes:
-${truncatedBody}`;
+  const userPrompt = buildReleaseAnalysisPrompt(
+    repoName,
+    tagName,
+    releaseName,
+    body,
+  );
 
   try {
     const response = await ai.run(MODEL, {
@@ -109,13 +112,16 @@ ${truncatedBody}`;
       return null;
     }
 
-    const result = "response" in response ? response.response : response;
+    const analysis = parseAnalysisResponse(response);
 
-    if (typeof result === "string") {
-      return JSON.parse(result) as AIAnalysisResult;
+    if (!analysis) {
+      logger.ai.error("Invalid AI analysis result", undefined, {
+        repo: repoName,
+        tag: tagName,
+      });
     }
 
-    return result as AIAnalysisResult;
+    return analysis;
   } catch (error) {
     logger.ai.error("Failed to analyze release", error, {
       repo: repoName,
@@ -123,6 +129,112 @@ ${truncatedBody}`;
     });
     return null;
   }
+}
+
+function buildReleaseAnalysisPrompt(
+  repoName: string,
+  tagName: string,
+  releaseName: string | null,
+  body: string,
+): string {
+  return `Rewrite this GitHub release into a concise Telegram notification digest.
+
+Repository: ${repoName}
+Tag: ${tagName}
+Release Name: ${releaseName || tagName}
+
+Release Notes:
+${body.slice(0, MAX_RELEASE_NOTES_CHARS)}`;
+}
+
+function parseAnalysisResponse(response: unknown): AIAnalysisResult | null {
+  const result = extractResponsePayload(response);
+
+  if (typeof result === "string") {
+    try {
+      return normalizeAnalysis(JSON.parse(result));
+    } catch {
+      return null;
+    }
+  }
+
+  return normalizeAnalysis(result);
+}
+
+function extractResponsePayload(response: unknown): unknown {
+  if (!response || typeof response !== "object") {
+    return response;
+  }
+
+  if ("response" in response) {
+    return extractResponsePayload(response.response);
+  }
+
+  if ("content" in response) {
+    return response.content;
+  }
+
+  return response;
+}
+
+function normalizeAnalysis(value: unknown): AIAnalysisResult | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const candidate = value as Record<string, unknown>;
+  const summary = truncateText(cleanModelText(candidate.summary), 280);
+  const category = candidate.category;
+
+  if (!summary || !isReleaseCategory(category)) {
+    return null;
+  }
+
+  const highlights = Array.isArray(candidate.highlights)
+    ? candidate.highlights
+        .map(cleanModelText)
+        .map((highlight) => truncateText(highlight, 110))
+        .filter((highlight) => highlight.length > 0)
+        .slice(0, 3)
+    : [];
+
+  return {
+    summary,
+    category,
+    hasBreakingChanges:
+      candidate.hasBreakingChanges === true || category === "breaking",
+    highlights,
+  };
+}
+
+function isReleaseCategory(value: unknown): value is ReleaseCategory {
+  return (
+    typeof value === "string" && VALID_CATEGORIES.has(value as ReleaseCategory)
+  );
+}
+
+function cleanModelText(value: unknown): string {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  return value
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/\[(.*?)\]\(https?:\/\/[^\s)]+\)/g, "$1")
+    .replace(/https?:\/\/\S+/g, "")
+    .replace(/^#{1,6}\s*/gm, "")
+    .replace(/[\t\n\r]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function truncateText(text: string, maxLength: number): string {
+  if (text.length <= maxLength) {
+    return text;
+  }
+
+  return `${text.slice(0, maxLength - 3).trimEnd()}...`;
 }
 
 export function categorizeByVersion(tagName: string): ReleaseCategory {

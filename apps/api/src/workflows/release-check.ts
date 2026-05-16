@@ -4,10 +4,13 @@ import {
   type WorkflowStep,
 } from "cloudflare:workers";
 import { db, userRepos } from "@release-watch/database";
-import type { NotificationPayload } from "@release-watch/types";
+import type {
+  AIAnalysisResult,
+  NotificationPayload,
+} from "@release-watch/types";
 import { eq } from "drizzle-orm";
 import { logger } from "../lib/logger";
-import { type AIAnalysisResult, analyzeRelease } from "../services/ai.service";
+import { analyzeRelease } from "../services/ai.service";
 import {
   type ChangelogEntry,
   createOctokit,

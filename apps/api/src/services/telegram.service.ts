@@ -13,15 +13,6 @@ const CATEGORY_EMOJI: Record<ReleaseCategory, string> = {
   unknown: "📦",
 };
 
-const CATEGORY_LABEL: Record<ReleaseCategory, string> = {
-  major: "Major Release",
-  minor: "Minor Release",
-  patch: "Patch",
-  security: "Security Fix",
-  breaking: "Breaking Changes",
-  unknown: "New Release",
-};
-
 export async function sendTelegramNotification(
   botToken: string,
   chatId: string,
@@ -60,43 +51,33 @@ export async function sendTelegramNotification(
 }
 
 function formatTelegramMessage(payload: NotificationPayload): string {
-  const title = payload.releaseName || payload.tagName;
   const analysis = payload.aiAnalysis;
 
   const category = analysis?.category ?? "unknown";
   const emoji = CATEGORY_EMOJI[category];
-  const categoryLabel = CATEGORY_LABEL[category];
 
   const parts: string[] = [];
 
-  // Header with category
   parts.push(
-    `${emoji} <b>${categoryLabel}: ${escapeHtml(payload.repoName)}</b>`,
+    `${emoji} <b>${escapeHtml(payload.repoName)} ${escapeHtml(payload.tagName)}</b>`,
   );
-  parts.push("");
 
-  // Version/title
-  parts.push(`<b>${escapeHtml(title)}</b>`);
+  if (payload.releaseName && payload.releaseName !== payload.tagName) {
+    parts.push(escapeHtml(payload.releaseName));
+  }
 
-  // Breaking changes warning
   if (analysis?.hasBreakingChanges) {
     parts.push("");
-    parts.push("⚠️ <b>Contains Breaking Changes</b>");
+    parts.push("⚠️ <b>Breaking changes included</b>");
   }
 
-  // AI Summary or truncated body
   parts.push("");
   if (analysis?.summary) {
-    parts.push(`<b>Summary:</b> ${escapeHtml(analysis.summary)}`);
+    parts.push(escapeHtml(analysis.summary));
   } else {
-    const truncatedBody = payload.body
-      ? payload.body.substring(0, 500) +
-        (payload.body.length > 500 ? "..." : "")
-      : "No release notes";
-    parts.push(escapeHtml(truncatedBody));
+    parts.push(escapeHtml(formatFallbackReleaseNotes(payload.body)));
   }
 
-  // Highlights
   if (analysis?.highlights && analysis.highlights.length > 0) {
     parts.push("");
     parts.push("<b>Highlights:</b>");
@@ -105,11 +86,39 @@ function formatTelegramMessage(payload: NotificationPayload): string {
     }
   }
 
-  // Link
   parts.push("");
-  parts.push(`<a href="${payload.url}">View Release</a>`);
+  parts.push(`<a href="${escapeHtmlAttribute(payload.url)}">View Release</a>`);
 
   return parts.join("\n");
+}
+
+function formatFallbackReleaseNotes(body: string | null): string {
+  if (!body?.trim()) {
+    return "No release notes";
+  }
+
+  const cleaned = body
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+    .replace(/\[(.*?)\]\(https?:\/\/[^\s)]+\)/g, "$1")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/^#{1,6}\s*/gm, "")
+    .replace(/^[-*+]\s+/gm, "• ")
+    .replace(/https?:\/\/\S+/g, "")
+    .replace(/[>*_~]/g, "")
+    .replace(/[\t\r\n]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return truncate(cleaned || "No release notes", 360);
+}
+
+function truncate(text: string, maxLength: number): string {
+  if (text.length <= maxLength) {
+    return text;
+  }
+
+  return `${text.slice(0, maxLength - 3).trimEnd()}...`;
 }
 
 function escapeHtml(text: string): string {
@@ -117,4 +126,8 @@ function escapeHtml(text: string): string {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
+}
+
+function escapeHtmlAttribute(text: string): string {
+  return escapeHtml(text).replace(/"/g, "&quot;");
 }

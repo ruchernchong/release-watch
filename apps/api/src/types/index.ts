@@ -1,4 +1,4 @@
-import type { AIAnalysisResult } from "../services/ai.service";
+import type { AIAnalysisResult } from "@release-watch/types";
 
 // Re-export channel types from shared package
 export type {
@@ -20,7 +20,7 @@ export interface NotificationPayload {
   aiAnalysis?: AIAnalysisResult | null;
 }
 
-export type { AIAnalysisResult, ReleaseCategory } from "../services/ai.service";
+export type { AIAnalysisResult, ReleaseCategory } from "@release-watch/types";
 
 // System-wide statistics
 export interface SystemStats {
