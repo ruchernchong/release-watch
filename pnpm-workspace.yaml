@@ -22,7 +22,7 @@ catalog:
   better-auth: 1.6.8
   drizzle-kit: 0.31.8
   drizzle-orm: 0.45.2
-  hono: 4.12.18
+  hono: 4.12.19
   tailwindcss: 4.1.18
   typescript: 5.9.3
   zod: 4.2.1
