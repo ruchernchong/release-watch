@@ -5,65 +5,65 @@
   "compatibility_date": "2025-12-11",
   "compatibility_flags": ["nodejs_compat"],
   "observability": {
-    "enabled": true
+    "enabled": true,
   },
   "placement": {
-    "mode": "smart"
+    "mode": "smart",
   },
-  "limits": {
-    "subrequests": 1000
-  },
+  // "limits": {
+  //   "subrequests": 1000
+  // },
   "workflows": [
     {
       "name": "release-check-workflow",
       "binding": "RELEASE_CHECK_WORKFLOW",
-      "class_name": "ReleaseCheckWorkflow"
-    }
+      "class_name": "ReleaseCheckWorkflow",
+    },
   ],
   "durable_objects": {
     "bindings": [
       {
         "name": "STATS",
-        "class_name": "Stats"
-      }
-    ]
+        "class_name": "Stats",
+      },
+    ],
   },
   "migrations": [
     {
       "tag": "v1",
-      "new_sqlite_classes": ["Stats"]
-    }
+      "new_sqlite_classes": ["Stats"],
+    },
   ],
   "kv_namespaces": [
     {
       "binding": "REPOS",
-      "id": "01e881c80e1c4f60953a5a803f74871c"
+      "id": "01e881c80e1c4f60953a5a803f74871c",
     },
     {
       "binding": "NOTIFICATIONS",
-      "id": "e76ea40f05d243feb90386711052a2a4"
+      "id": "e76ea40f05d243feb90386711052a2a4",
     },
     {
       "binding": "CACHE",
-      "id": "cfdec08461684a0dbb8367b7637d1f7c"
+      "id": "cfdec08461684a0dbb8367b7637d1f7c",
     },
     {
       "binding": "CHANNELS",
-      "id": "aaa813672c834fd2b9892a38cc49147d"
-    }
+      "id": "aaa813672c834fd2b9892a38cc49147d",
+    },
   ],
   "triggers": {
-    "crons": ["*/15 * * * *"]
+    "crons": ["*/15 * * * *"],
   },
   "routes": [
     {
       "pattern": "api.releasewatch.dev",
-      "custom_domain": true
-    }
+      "custom_domain": true,
+    },
   ],
   "ai": {
     "binding": "AI",
-    "remote": true
+    "remote": true,
   },
   "ratelimits": [
     {
@@ -71,10 +71,10 @@
       "namespace_id": "1",
       "simple": {
         "limit": 20,
-        "period": 60
-      }
-    }
+        "period": 60,
+      },
+    },
   ],
   "workers_dev": true,
-  "preview_urls": true
+  "preview_urls": true,
 }
