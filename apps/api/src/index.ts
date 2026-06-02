@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { requestId } from "hono/request-id";
 import { type AuthEnv, adminOnly, jwtAuth } from "./middleware/auth";
 import adminActivity from "./routes/admin/activity";
 import adminStats from "./routes/admin/stats";
@@ -12,7 +13,12 @@ import repos from "./routes/repos";
 import stats from "./routes/stats";
 import webhook from "./routes/webhook";
 
-const app = new Hono().route("/", health);
+const app = new Hono()
+  .use("*", requestId())
+  .route("/", health)
+  .onError((error, c) => {
+    return c.json({ error: error.message });
+  });
 
 // Public routes (no auth)
 // app.route("/", stats);
