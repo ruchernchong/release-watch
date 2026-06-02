@@ -45,11 +45,11 @@ export async function GitHubStars() {
   return (
     <a
       href={`https://github.com/${REPO_OWNER}/${REPO_NAME}`}
-      className="flex h-8 items-center border border-border text-muted-foreground text-sm leading-[30px]"
+      className="flex h-8 items-center rounded-lg border border-separator text-muted text-sm leading-[30px]"
       target="_blank"
       rel="noopener noreferrer"
     >
-      <div className="flex items-center gap-2 border-border border-r bg-muted/50 px-3">
+      <div className="flex items-center gap-2 rounded-l-lg border-separator border-r bg-surface-secondary px-3">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width={16}
@@ -58,7 +58,7 @@ export async function GitHubStars() {
           aria-hidden="true"
         >
           <path
-            className="fill-muted-foreground"
+            className="fill-muted"
             d="M5.667 10.372 8 8.943l2.333 1.447-.611-2.71 2.056-1.805-2.703-.245L8 3.057l-1.075 2.54-2.703.246 2.056 1.838-.611 2.69Zm-2.24 3.142 1.203-5.285L.444 4.857l5.334-.47L8 0l2.222 4.387 5.334.47-4.186 3.372 1.203 5.285L8 10.486l-4.573 3.028Z"
           />
         </svg>

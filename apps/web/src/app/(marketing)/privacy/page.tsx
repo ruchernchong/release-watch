@@ -1,5 +1,6 @@
+import { buttonVariants, Separator } from "@heroui/react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Fragment } from "react";
 
 export const metadata = {
   title: "Privacy Policy - ShipRadar",
@@ -116,72 +117,78 @@ const sections = [
 export default function PrivacyPage() {
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="border-b">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <Link href="/" className="font-bold text-xl">
+      <header className="sticky top-0 z-50 border-separator border-b bg-background/70 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+          <Link href="/" className="font-semibold text-foreground text-lg">
             ShipRadar
           </Link>
-          <nav className="flex items-center gap-4">
-            <Button variant="ghost" asChild>
-              <Link href="/login">Log in</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/login">Get Started</Link>
-            </Button>
+          <nav className="flex items-center gap-2">
+            <Link
+              href="/login"
+              className={buttonVariants({ variant: "ghost" })}
+            >
+              Log in
+            </Link>
+            <Link href="/login" className={buttonVariants()}>
+              Get Started
+            </Link>
           </nav>
         </div>
       </header>
 
       <main className="flex-1">
-        <article className="container mx-auto max-w-3xl px-4 py-16">
-          <header className="mb-12">
-            <h1 className="mb-4 font-bold text-4xl tracking-tight">
+        <article className="mx-auto max-w-3xl px-6 py-16">
+          <header className="flex flex-col gap-3 pb-12">
+            <h1 className="font-bold text-4xl tracking-tight">
               Privacy Policy
             </h1>
-            <p className="text-muted-foreground">Last updated: January 2025</p>
+            <p className="text-muted">Last updated: January 2025</p>
           </header>
 
           <div className="flex flex-col gap-8">
             {sections.map((section) => (
-              <section key={section.title}>
-                <h2 className="mb-3 font-semibold text-xl">{section.title}</h2>
-                <p className="text-muted-foreground leading-relaxed">
-                  {section.content}
-                </p>
-                {section.list && (
-                  <ul className="mt-3 flex flex-col gap-2 pl-6 text-muted-foreground">
-                    {section.list.map((item) => (
-                      <li key={item} className="list-disc">
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {section.subsections && (
-                  <div className="mt-4 flex flex-col gap-4 border-border border-l-2 pl-4">
-                    {section.subsections.map((sub) => (
-                      <div key={sub.subtitle}>
-                        <h3 className="mb-1 font-medium text-foreground">
-                          {sub.subtitle}
-                        </h3>
-                        <p className="text-muted-foreground">{sub.content}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </section>
+              <Fragment key={section.title}>
+                <section className="flex flex-col gap-3">
+                  <h2 className="font-semibold text-foreground text-xl">
+                    {section.title}
+                  </h2>
+                  <p className="text-muted leading-relaxed">
+                    {section.content}
+                  </p>
+                  {section.list && (
+                    <ul className="flex list-disc flex-col gap-2 pl-6 text-muted">
+                      {section.list.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  )}
+                  {section.subsections && (
+                    <div className="flex flex-col gap-4 border-separator border-l-2 pl-4">
+                      {section.subsections.map((sub) => (
+                        <div key={sub.subtitle} className="flex flex-col gap-1">
+                          <h3 className="font-medium text-foreground">
+                            {sub.subtitle}
+                          </h3>
+                          <p className="text-muted">{sub.content}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </section>
+                <Separator />
+              </Fragment>
             ))}
 
-            <section>
-              <h2 className="mb-3 font-semibold text-xl">
+            <section className="flex flex-col gap-3">
+              <h2 className="font-semibold text-foreground text-xl">
                 11. Contact Information
               </h2>
-              <p className="text-muted-foreground leading-relaxed">
+              <p className="text-muted leading-relaxed">
                 For privacy-related questions or to exercise your rights, please
                 contact us through our{" "}
                 <a
                   href="https://github.com/tartinerlabs/shipradar/issues"
-                  className="text-foreground underline underline-offset-4 transition-colors hover:text-muted-foreground"
+                  className="text-foreground underline underline-offset-4 transition-colors hover:text-muted"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -194,8 +201,8 @@ export default function PrivacyPage() {
         </article>
       </main>
 
-      <footer className="border-t">
-        <div className="container mx-auto flex flex-col items-center justify-between gap-4 px-4 py-8 text-muted-foreground text-sm sm:flex-row">
+      <footer className="border-separator border-t">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-8 text-muted text-sm sm:flex-row">
           <p>Built with Next.js, Hono on Vercel, and Neon PostgreSQL.</p>
           <nav className="flex gap-6">
             <Link

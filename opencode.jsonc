@@ -8,10 +8,6 @@
         "x-heroui-personal-token": "{env:HEROUI_PERSONAL_TOKEN}"
       }
     },
-    "heroui-react": {
-      "type": "local",
-      "command": ["bunx", "-y", "@heroui/react-mcp@latest"]
-    },
     "polar-sandbox": {
       "type": "remote",
       "url": "https://mcp.polar.sh/mcp/polar-sandbox"
