@@ -13,12 +13,12 @@ import repos from "./routes/repos";
 import stats from "./routes/stats";
 import webhook from "./routes/webhook";
 
-const app = new Hono()
-  .use("*", requestId())
-  .route("/", health)
-  .onError((error, c) => {
-    return c.json({ error: error.message });
-  });
+const app = new Hono();
+// .use("*", requestId())
+// .route("/", health)
+// .onError((error, c) => {
+//   return c.json({ error: error.message });
+// });
 
 // Public routes (no auth)
 // app.route("/", stats);
@@ -43,6 +43,10 @@ const app = new Hono()
 //   .route("/", adminStats);
 
 // .route("/", admin);
+
+app.get("/", (c) => {
+  return c.json({ message: "Hello, Hono with Nitro!" });
+});
 
 export type AppType = typeof app;
 export { app };
