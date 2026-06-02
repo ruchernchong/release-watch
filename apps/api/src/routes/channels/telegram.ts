@@ -4,6 +4,7 @@ import {
   createTelegramLinkCode,
   getChannels,
   invalidateUserStatsCache,
+  normalizeTelegramChatId,
   updateChannelEnabled,
 } from "@api/services/kv.service";
 import { captureEvent, flushPostHog, getPostHog } from "@api/services/posthog";
@@ -40,7 +41,9 @@ const app = new Hono<AuthEnv>()
     try {
       const channels = await getChannels(c.env.CHANNELS, user.sub);
       const telegramChannel = channels.find(
-        (channel) => channel.type === "telegram",
+        (channel) =>
+          channel.type === "telegram" &&
+          normalizeTelegramChatId(channel.chatId),
       );
       return c.json({ linked: !!telegramChannel });
     } catch (err) {

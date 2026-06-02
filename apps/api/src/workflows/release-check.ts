@@ -24,8 +24,11 @@ import {
   getCachedAnalysis,
   getChannels,
   getLastNotifiedTag,
+  getTelegramChatIdsByUserIds,
   getTrackedRepos,
   getUserIdByTelegramChat,
+  normalizeTelegramChatId,
+  pruneInvalidTelegramChannels,
   setCachedAnalysis,
   setLastNotifiedTag,
 } from "../services/kv.service";
@@ -105,6 +108,7 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
 > {
   async run(event: WorkflowEvent<ReleaseCheckParams>, step: WorkflowStep) {
     const { chatId: scopedChatId } = event.payload;
+    const normalizedScopedChatId = normalizeTelegramChatId(scopedChatId);
     logger.workflow.info("Started", {
       triggeredAt: event.payload.triggeredAt,
       chatId: scopedChatId,
@@ -114,10 +118,13 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
       "fetch-kv-repos",
       KV_RETRY_CONFIG,
       async () => {
-        if (scopedChatId) {
-          const repos = await getTrackedRepos(this.env.REPOS, scopedChatId);
+        if (normalizedScopedChatId) {
+          const repos = await getTrackedRepos(
+            this.env.REPOS,
+            normalizedScopedChatId,
+          );
           const entries: [string, string[]][] =
-            repos.length > 0 ? [[scopedChatId, repos]] : [];
+            repos.length > 0 ? [[normalizedScopedChatId, repos]] : [];
           return entries;
         }
         const reposMap = await getAllTrackedRepos(this.env.REPOS);
@@ -134,10 +141,10 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
       KV_RETRY_CONFIG,
       async () => {
         let scopedUserId: string | null = null;
-        if (scopedChatId) {
+        if (normalizedScopedChatId) {
           scopedUserId = await getUserIdByTelegramChat(
             this.env.CHANNELS,
-            scopedChatId,
+            normalizedScopedChatId,
           );
           if (!scopedUserId) {
             return {
@@ -182,12 +189,77 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
 
         const chatEntries: [string, string[]][] = [];
         const chatUserIds: [string, string][] = [];
+        const usersNeedingFallback = new Map<string, string[]>();
+        const usersWithInvalidTelegramChannels = new Set<string>();
+        const addChatTarget = (
+          chatId: string,
+          userId: string,
+          repos: string[],
+        ) => {
+          chatEntries.push([chatId, repos]);
+          chatUserIds.push([chatId, userId]);
+        };
+
         for (const [userId, repos] of byUser) {
+          if (scopedUserId === userId && normalizedScopedChatId) {
+            addChatTarget(normalizedScopedChatId, userId, repos);
+            continue;
+          }
+
           const channels = await getChannels(this.env.CHANNELS, userId);
+          let addedTelegramChannel = false;
           for (const channel of channels) {
             if (channel.type === "telegram" && channel.enabled) {
-              chatEntries.push([channel.chatId, repos]);
-              chatUserIds.push([channel.chatId, userId]);
+              const chatId = normalizeTelegramChatId(channel.chatId);
+              if (!chatId) {
+                usersWithInvalidTelegramChannels.add(userId);
+                continue;
+              }
+              addChatTarget(chatId, userId, repos);
+              addedTelegramChannel = true;
+            }
+          }
+          if (!addedTelegramChannel) {
+            usersNeedingFallback.set(userId, repos);
+          }
+        }
+
+        if (usersNeedingFallback.size > 0) {
+          const fallbackChatIds = await getTelegramChatIdsByUserIds(
+            this.env.CHANNELS,
+            new Set(usersNeedingFallback.keys()),
+          );
+
+          for (const [userId, repos] of usersNeedingFallback) {
+            const chatIds = fallbackChatIds.get(userId) ?? [];
+            for (const chatId of chatIds) {
+              addChatTarget(chatId, userId, repos);
+            }
+
+            if (
+              chatIds.length > 0 &&
+              usersWithInvalidTelegramChannels.has(userId)
+            ) {
+              logger.workflow.warn(
+                "Recovered Telegram chatId from KV mapping",
+                undefined,
+                { userId, recovered: chatIds.length },
+              );
+              continue;
+            }
+
+            if (!usersWithInvalidTelegramChannels.has(userId)) continue;
+
+            const removed = await pruneInvalidTelegramChannels(
+              this.env.CHANNELS,
+              userId,
+            );
+            if (removed > 0) {
+              logger.workflow.warn(
+                "Pruned Telegram channels missing chatId",
+                undefined,
+                { userId, removed },
+              );
             }
           }
         }
@@ -206,10 +278,15 @@ export class ReleaseCheckWorkflow extends WorkflowEntrypoint<
       set.add(repoName);
     }
 
-    const trackedRepos: [string, string[]][] = [
+    const trackedRepos: [string, string[]][] = [];
+    for (const [chatId, repos] of [
       ...kvTrackedRepos,
       ...dbSource.chatEntries,
-    ];
+    ]) {
+      const normalizedChatId = normalizeTelegramChatId(chatId);
+      if (!normalizedChatId || repos.length === 0) continue;
+      trackedRepos.push([normalizedChatId, repos]);
+    }
 
     if (trackedRepos.length === 0) {
       logger.workflow.info("No tracked repos found");

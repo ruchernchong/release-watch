@@ -149,6 +149,68 @@ export async function getChannels(
   return data ?? [];
 }
 
+export function normalizeTelegramChatId(chatId: unknown): string | null {
+  if (typeof chatId !== "string") return null;
+  const trimmed = chatId.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+export async function getTelegramChatIdsByUserIds(
+  kv: KVNamespace,
+  userIds: Set<string>,
+): Promise<Map<string, string[]>> {
+  const chatIdsByUserId = new Map<string, string[]>();
+  if (userIds.size === 0) return chatIdsByUserId;
+
+  let cursor: string | undefined;
+  do {
+    const result = await kv.list({ prefix: TELEGRAM_PREFIX, cursor });
+    for (const key of result.keys) {
+      const chatId = normalizeTelegramChatId(
+        key.name.slice(TELEGRAM_PREFIX.length),
+      );
+      if (!chatId) continue;
+
+      const userId = await kv.get(key.name);
+      if (!userId || !userIds.has(userId)) continue;
+
+      const chatIds = chatIdsByUserId.get(userId);
+      if (chatIds) {
+        chatIds.push(chatId);
+      } else {
+        chatIdsByUserId.set(userId, [chatId]);
+      }
+    }
+    cursor = result.list_complete ? undefined : result.cursor;
+  } while (cursor);
+
+  return chatIdsByUserId;
+}
+
+export async function pruneInvalidTelegramChannels(
+  kv: KVNamespace,
+  userId: string,
+): Promise<number> {
+  const channels = await getChannels(kv, userId);
+  let removed = 0;
+  const validChannels = channels.filter((channel) => {
+    if (channel.type !== "telegram") return true;
+    if (normalizeTelegramChatId(channel.chatId)) return true;
+    removed++;
+    return false;
+  });
+
+  if (removed === 0) return 0;
+
+  if (validChannels.length === 0) {
+    await kv.delete(`${CHANNELS_PREFIX}${userId}`);
+  } else {
+    await kv.put(`${CHANNELS_PREFIX}${userId}`, JSON.stringify(validChannels));
+  }
+
+  return removed;
+}
+
 export async function addChannel(
   kv: KVNamespace,
   userId: string,
