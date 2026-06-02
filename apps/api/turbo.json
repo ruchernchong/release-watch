@@ -38,8 +38,7 @@
         "TELEGRAM_BOT_TOKEN",
         "UPSTASH_REDIS_REST_TOKEN",
         "UPSTASH_REDIS_REST_URL"
-      ],
-      "passThroughEnv": ["CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_API_TOKEN"]
+      ]
     },
     "bot:set-commands": {
       "cache": false,

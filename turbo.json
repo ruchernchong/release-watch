@@ -1,6 +1,7 @@
 {
   "$schema": "./node_modules/turbo/schema.json",
   "ui": "tui",
+  "globalPassThroughEnv": ["DATABASE_URL", "HEROUI_AUTH_TOKEN"],
   "tasks": {
     "dev": {
       "cache": false,
