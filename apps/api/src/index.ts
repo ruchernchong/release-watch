@@ -6,7 +6,7 @@ import adminActivity from "./routes/admin/activity";
 import adminStats from "./routes/admin/stats";
 import adminUsers from "./routes/admin/users";
 // import discord from "./routes/channels/discord";
-import telegram from "./routes/channels/telegram";
+// import telegram from "./routes/channels/telegram";
 import dashboard from "./routes/dashboard";
 import health from "./routes/health";
 
@@ -21,8 +21,8 @@ import stats from "./routes/stats";
 const api = new Hono<AuthEnv>()
   .use("*", jwtAuth)
   .route("/", dashboard)
-  .route("/", repos)
-  .route("/", telegram);
+  .route("/", repos);
+// .route("/", telegram);
 // .route("/", discord);
 
 // Admin routes
