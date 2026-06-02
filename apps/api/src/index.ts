@@ -9,18 +9,18 @@ import { requestId } from "hono/request-id";
 // import telegram from "./routes/channels/telegram";
 // import dashboard from "./routes/dashboard";
 import health from "./routes/health";
-
 import internal from "./routes/internal";
+
 // import repos from "./routes/repos";
-import stats from "./routes/stats";
-import webhook from "./routes/webhook";
+// import stats from "./routes/stats";
+// import webhook from "./routes/webhook";
 
 const app = new Hono()
   .use("*", requestId())
-  .route("/", health)
-  .route("/", stats)
-  .route("/", webhook)
-  .route("/", internal)
+  .route("/health", health)
+  // .route("/", stats)
+  // .route("/", webhook)
+  .route("/internal", internal)
   .onError((error, c) => {
     return c.json({ error: error.message });
   });
