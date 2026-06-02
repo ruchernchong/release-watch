@@ -3,10 +3,6 @@ enabled = true
 url = "https://mcp.heroui.pro/mcp"
 env_http_headers = { "x-heroui-personal-token" = "HEROUI_PERSONAL_TOKEN" }
 
-[mcp_servers.polar-sandbox]
-enabled = true
-url = "https://mcp.polar.sh/mcp/polar-sandbox"
-
 [mcp_servers.posthog]
 enabled = true
 url = "https://mcp.posthog.com/mcp"
@@ -14,7 +10,7 @@ bearer_token_env_var = "POSTHOG_PERSONAL_API_KEY"
 
 [mcp_servers.sentry]
 enabled = true
-command = "bunx"
+command = "pnx"
 args = [
     "@sentry/mcp-server@latest",
     "--disable-skills=seer",

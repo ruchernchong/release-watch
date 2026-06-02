@@ -26,11 +26,6 @@
       "groupName": "radix-ui"
     },
     {
-      "description": "Group @polar-sh packages",
-      "matchPackageNames": ["@polar-sh/*"],
-      "groupName": "polar-sh"
-    },
-    {
       "description": "Group @types packages",
       "matchPackageNames": ["@types/*"],
       "groupName": "types"

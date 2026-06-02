@@ -82,14 +82,10 @@ pnpm auth:generate        # Regenerate BetterAuth schema
 - `GOOGLE_CLIENT_SECRET` - Google OAuth client secret
 - `NEXT_PUBLIC_API_URL` - Hono API URL (e.g., `https://api.shipradar.dev`)
 - `NEXT_PUBLIC_POSTHOG_KEY` - PostHog project API key (optional, for analytics)
-- `POLAR_ACCESS_TOKEN` - Polar.sh access token (optional)
-- `POLAR_WEBHOOK_SECRET` - Polar.sh webhook secret (optional)
-- `POLAR_SERVER` - Polar.sh server (`"sandbox"` or `"production"`)
 
 **packages/database** (.env):
 - `DATABASE_URL` - Neon Postgres connection string
 - OAuth secrets (same as apps/web)
-- Polar secrets (same as apps/web)
 
 ## Code Standards
 

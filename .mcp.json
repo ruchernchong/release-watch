@@ -6,10 +6,6 @@
         "x-heroui-personal-token": "${HEROUI_PERSONAL_TOKEN}"
       }
     },
-    "polar-sandbox": {
-      "type": "http",
-      "url": "https://mcp.polar.sh/mcp/polar-sandbox"
-    },
     "posthog": {
       "type": "http",
       "url": "https://mcp.posthog.com/mcp",
@@ -18,7 +14,7 @@
       }
     },
     "sentry": {
-      "command": "bunx",
+      "command": "pnx",
       "args": [
         "@sentry/mcp-server@latest",
         "--access-token=${SENTRY_ACCESS_TOKEN}",

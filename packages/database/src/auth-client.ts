@@ -1,5 +1,4 @@
 import { passkeyClient } from "@better-auth/passkey/client";
-import { polarClient } from "@polar-sh/better-auth";
 import {
   adminClient,
   jwtClient,
@@ -13,6 +12,5 @@ export const authClient = createAuthClient({
     jwtClient(),
     lastLoginMethodClient(),
     passkeyClient(),
-    polarClient(),
   ],
 });

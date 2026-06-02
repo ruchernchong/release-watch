@@ -8,14 +8,10 @@
         "x-heroui-personal-token": "{env:HEROUI_PERSONAL_TOKEN}"
       }
     },
-    "polar-sandbox": {
-      "type": "remote",
-      "url": "https://mcp.polar.sh/mcp/polar-sandbox"
-    },
     "sentry": {
       "type": "local",
       "command": [
-        "bunx",
+        "pnx",
         "@sentry/mcp-server@latest",
         "--access-token={env:SENTRY_ACCESS_TOKEN}",
         "--disable-skills=seer"

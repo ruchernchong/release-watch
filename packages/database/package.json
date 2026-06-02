@@ -16,8 +16,6 @@
   "dependencies": {
     "@better-auth/passkey": "1.6.8",
     "@neondatabase/serverless": "catalog:",
-    "@polar-sh/better-auth": "1.8.1",
-    "@polar-sh/sdk": "0.42.1",
     "better-auth": "catalog:",
     "dotenv": "17.2.3",
     "drizzle-orm": "catalog:",
