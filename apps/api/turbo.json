@@ -9,36 +9,8 @@
     },
     "dev": {
       "cache": false,
-      "env": [
-        "DEBUG",
-        "DISCORD_BOT_TOKEN",
-        "DISCORD_CLIENT_ID",
-        "GITHUB_TOKEN",
-        "JWKS_URL",
-        "POSTHOG_API_KEY",
-        "SENTRY_DSN",
-        "TELEGRAM_BOT_TOKEN",
-        "UPSTASH_REDIS_REST_TOKEN",
-        "UPSTASH_REDIS_REST_URL"
-      ],
-      "inputs": ["$TURBO_DEFAULT$", ".dev.vars", ".env", ".env.*"],
+      "inputs": ["$TURBO_DEFAULT$"],
       "persistent": true
-    },
-    "deploy": {
-      "dependsOn": ["^build"],
-      "cache": false,
-      "env": [
-        "DEBUG",
-        "DISCORD_BOT_TOKEN",
-        "DISCORD_CLIENT_ID",
-        "GITHUB_TOKEN",
-        "JWKS_URL",
-        "POSTHOG_API_KEY",
-        "SENTRY_DSN",
-        "TELEGRAM_BOT_TOKEN",
-        "UPSTASH_REDIS_REST_TOKEN",
-        "UPSTASH_REDIS_REST_URL"
-      ]
     },
     "bot:set-commands": {
       "cache": false,

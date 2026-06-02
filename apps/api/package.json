@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "nitro dev",
     "build": "nitro build",
+    "preview": "nitro preview",
     "bot:set-commands": "node scripts/set-bot-commands.mjs",
     "lint": "biome check",
     "format": "biome check --write",

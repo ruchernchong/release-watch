@@ -12,6 +12,7 @@
       "inputs": ["$TURBO_DEFAULT$"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
     },
+    "preview": {},
     "start": {
       "dependsOn": ["build"],
       "persistent": true,
