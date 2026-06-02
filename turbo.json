@@ -27,13 +27,7 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [
-        "$TURBO_DEFAULT$",
-        "dist/**",
-        ".next/**",
-        "!.next/cache/**",
-        ".output"
-      ]
+      "outputs": ["dist/**"]
     },
     "preview": {},
     "start": {
