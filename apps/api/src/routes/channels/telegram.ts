@@ -1,4 +1,3 @@
-import { logger } from "@api/lib/logger";
 import type { AuthEnv } from "@api/middleware/auth";
 import {
   createTelegramLinkCode,
@@ -18,18 +17,18 @@ const app = new Hono<AuthEnv>()
     const user = c.get("user");
 
     try {
-      const code = await createTelegramLinkCode(c.env.CHANNELS, user.sub);
+      const code = await createTelegramLinkCode(user.sub);
 
-      const posthog = getPostHog(c.env.POSTHOG_API_KEY);
+      const posthog = getPostHog(process.env.POSTHOG_API_KEY);
       captureEvent(posthog, {
         distinctId: user.sub,
         event: "Telegram Link Generated",
       });
-      c.executionCtx.waitUntil(flushPostHog(posthog));
+      await flushPostHog(posthog);
 
       return c.json({ code });
     } catch (err) {
-      logger.api.error("Failed to create Telegram link code", err, {
+      console.error("Failed to create Telegram link code", err, {
         userId: user.sub,
       });
       return c.json({ error: "Failed to generate link code" }, 500);
@@ -39,7 +38,7 @@ const app = new Hono<AuthEnv>()
     const user = c.get("user");
 
     try {
-      const channels = await getChannels(c.env.CHANNELS, user.sub);
+      const channels = await getChannels(user.sub);
       const telegramChannel = channels.find(
         (channel) =>
           channel.type === "telegram" &&
@@ -47,7 +46,7 @@ const app = new Hono<AuthEnv>()
       );
       return c.json({ linked: !!telegramChannel });
     } catch (err) {
-      logger.api.error("Failed to fetch telegram link status", err, {
+      console.error("Failed to fetch telegram link status", err, {
         userId: user.sub,
       });
       return c.json({ error: "Failed to fetch link status" }, 500);
@@ -67,26 +66,20 @@ const app = new Hono<AuthEnv>()
       const { chatId, enabled } = c.req.valid("json");
 
       try {
-        await updateChannelEnabled(
-          c.env.CHANNELS,
-          user.sub,
-          "telegram",
-          chatId,
-          enabled,
-        );
+        await updateChannelEnabled(user.sub, "telegram", chatId, enabled);
 
-        const posthog = getPostHog(c.env.POSTHOG_API_KEY);
+        const posthog = getPostHog(process.env.POSTHOG_API_KEY);
         captureEvent(posthog, {
           distinctId: user.sub,
           event: "Telegram Toggled",
           properties: { enabled },
         });
-        c.executionCtx.waitUntil(flushPostHog(posthog));
+        await flushPostHog(posthog);
 
-        await invalidateUserStatsCache(c.env.CACHE, user.sub);
+        await invalidateUserStatsCache(user.sub);
         return c.json({ success: true, enabled });
       } catch (err) {
-        logger.api.error("Failed to toggle telegram channel", err, {
+        console.error("Failed to toggle telegram channel", err, {
           userId: user.sub,
           chatId,
         });

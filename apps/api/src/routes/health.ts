@@ -1,7 +1,6 @@
 import { Hono } from "hono";
-import type { Env } from "../types/env";
 
-const app = new Hono<{ Bindings: Env }>().get("/", (c) => {
+const app = new Hono().get("/", (c) => {
   return c.json({
     name: "ShipRadar",
     status: "ok",

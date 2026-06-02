@@ -17,7 +17,9 @@
         "JWKS_URL",
         "POSTHOG_API_KEY",
         "SENTRY_DSN",
-        "TELEGRAM_BOT_TOKEN"
+        "TELEGRAM_BOT_TOKEN",
+        "UPSTASH_REDIS_REST_TOKEN",
+        "UPSTASH_REDIS_REST_URL"
       ],
       "inputs": ["$TURBO_DEFAULT$", ".dev.vars", ".env", ".env.*"],
       "persistent": true
@@ -33,7 +35,9 @@
         "JWKS_URL",
         "POSTHOG_API_KEY",
         "SENTRY_DSN",
-        "TELEGRAM_BOT_TOKEN"
+        "TELEGRAM_BOT_TOKEN",
+        "UPSTASH_REDIS_REST_TOKEN",
+        "UPSTASH_REDIS_REST_URL"
       ],
       "passThroughEnv": ["CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_API_TOKEN"]
     },

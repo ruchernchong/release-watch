@@ -1,7 +1,5 @@
 import { createMiddleware } from "hono/factory";
 import { importJWK, type JWK, jwtVerify } from "jose";
-import { logger } from "../lib/logger";
-import type { Env } from "../types/env";
 
 export interface JWTPayload {
   sub: string;
@@ -19,7 +17,6 @@ export type AuthVariables = {
 };
 
 export type AuthEnv = {
-  Bindings: Env;
   Variables: AuthVariables;
 };
 
@@ -27,40 +24,41 @@ interface JWKSResponse {
   keys: JWK[];
 }
 
+type JWKSKey = Awaited<ReturnType<typeof importJWK>>;
+
 // Cache JWKS keys per isolate with TTL
-let cachedKeys: Map<string, CryptoKey> | null = null;
+let cachedKeys: Map<string, JWKSKey> | null = null;
 let cachedJWKSUrl: string | null = null;
 let cacheExpiry = 0;
-let fetchPromise: Promise<Map<string, CryptoKey>> | null = null;
+let fetchPromise: Promise<Map<string, JWKSKey>> | null = null;
 
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 async function fetchAndCacheJWKS(
   jwksUrl: string,
-): Promise<Map<string, CryptoKey>> {
+): Promise<Map<string, JWKSKey>> {
   const response = await fetch(jwksUrl, {
     headers: { Accept: "application/json" },
-    cf: { cacheTtl: 600, cacheEverything: true }, // Cloudflare edge cache for 10 min
-  } as RequestInit);
+  });
 
   if (!response.ok) {
     throw new Error(`Failed to fetch JWKS: ${response.status}`);
   }
 
-  const jwks: JWKSResponse = await response.json();
-  const keyMap = new Map<string, CryptoKey>();
+  const jwks = (await response.json()) as JWKSResponse;
+  const keyMap = new Map<string, JWKSKey>();
 
   for (const jwk of jwks.keys) {
     if (jwk.kid) {
       const key = await importJWK(jwk, jwk.alg || "RS256");
-      keyMap.set(jwk.kid, key as CryptoKey);
+      keyMap.set(jwk.kid, key);
     }
   }
 
   return keyMap;
 }
 
-async function getKey(jwksUrl: string, kid: string): Promise<CryptoKey> {
+async function getKey(jwksUrl: string, kid: string): Promise<JWKSKey> {
   const now = Date.now();
 
   // Return cached key if valid
@@ -105,12 +103,7 @@ export const jwtAuth = createMiddleware<AuthEnv>(async (c, next) => {
   }
 
   const token = authHeader.slice(7);
-  const jwksUrl = c.env.JWKS_URL;
-
-  if (!jwksUrl) {
-    logger.auth.error("JWKS_URL environment variable is not set");
-    return c.json({ error: "Server configuration error" }, 500);
-  }
+  const jwksUrl = process.env.JWKS_URL as string;
 
   try {
     const keyResolver = getKeyResolver(jwksUrl);
@@ -123,7 +116,7 @@ export const jwtAuth = createMiddleware<AuthEnv>(async (c, next) => {
       if (error.message.includes("expired")) {
         return c.json({ error: "Token expired" }, 401);
       }
-      logger.auth.warn("JWT verification failed", error);
+      console.warn("JWT verification failed", error);
     }
     return c.json({ error: "Invalid token" }, 401);
   }

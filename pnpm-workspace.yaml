@@ -19,6 +19,8 @@ catalog:
   "@sentry/cloudflare": 10.32.1
   "@sentry/nextjs": 10.32.1
   "@tailwindcss/postcss": 4.1.18
+  "@upstash/redis": 1.35.8
+  "@vercel/config": 0.5.1
   better-auth: 1.6.8
   drizzle-kit: 0.31.8
   drizzle-orm: 0.45.2

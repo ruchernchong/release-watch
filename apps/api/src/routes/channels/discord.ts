@@ -1,4 +1,3 @@
-import { logger } from "@api/lib/logger";
 import type { AuthEnv } from "@api/middleware/auth";
 import {
   fetchGuildChannels,
@@ -32,7 +31,7 @@ const app = new Hono<AuthEnv>()
           ),
       });
 
-      const channels = await getChannels(c.env.CHANNELS, user.sub);
+      const channels = await getChannels(user.sub);
       const discordChannels = channels.filter(
         (channel) => channel.type === "discord",
       );
@@ -48,7 +47,7 @@ const app = new Hono<AuthEnv>()
         })),
       });
     } catch (err) {
-      logger.discord.error("Failed to fetch status", err, {
+      console.error("Failed to fetch status", err, {
         userId: user.sub,
       });
       return c.json({ error: "Failed to fetch status" }, 500);
@@ -75,7 +74,7 @@ const app = new Hono<AuthEnv>()
       const guildsWithBotStatus = await Promise.all(
         userGuilds.map(async (guild) => {
           const botPresent = await isBotInGuild(
-            c.env.DISCORD_BOT_TOKEN,
+            process.env.DISCORD_BOT_TOKEN as string,
             guild.id,
           );
           return {
@@ -89,7 +88,7 @@ const app = new Hono<AuthEnv>()
 
       return c.json({ guilds: guildsWithBotStatus });
     } catch (err) {
-      logger.discord.error("Failed to fetch guilds", err, {
+      console.error("Failed to fetch guilds", err, {
         userId: user.sub,
       });
       return c.json({ error: "Failed to fetch guilds" }, 500);
@@ -99,20 +98,23 @@ const app = new Hono<AuthEnv>()
     const guildId = c.req.param("guildId");
 
     try {
-      const botPresent = await isBotInGuild(c.env.DISCORD_BOT_TOKEN, guildId);
+      const botPresent = await isBotInGuild(
+        process.env.DISCORD_BOT_TOKEN as string,
+        guildId,
+      );
 
       if (!botPresent) {
         return c.json(
           {
             error: "Bot not in server",
-            inviteUrl: `https://discord.com/oauth2/authorize?client_id=${c.env.DISCORD_CLIENT_ID}&permissions=2048&scope=bot&guild_id=${guildId}`,
+            inviteUrl: `https://discord.com/oauth2/authorize?client_id=${process.env.DISCORD_CLIENT_ID}&permissions=2048&scope=bot&guild_id=${guildId}`,
           },
           400,
         );
       }
 
       const channels = await fetchGuildChannels(
-        c.env.DISCORD_BOT_TOKEN,
+        process.env.DISCORD_BOT_TOKEN as string,
         guildId,
       );
 
@@ -124,7 +126,7 @@ const app = new Hono<AuthEnv>()
         })),
       });
     } catch (err) {
-      logger.discord.error("Failed to fetch channels", err, { guildId });
+      console.error("Failed to fetch channels", err, { guildId });
       return c.json({ error: "Failed to fetch channels" }, 500);
     }
   })
@@ -145,12 +147,15 @@ const app = new Hono<AuthEnv>()
         c.req.valid("json");
 
       try {
-        const botPresent = await isBotInGuild(c.env.DISCORD_BOT_TOKEN, guildId);
+        const botPresent = await isBotInGuild(
+          process.env.DISCORD_BOT_TOKEN as string,
+          guildId,
+        );
         if (!botPresent) {
           return c.json({ error: "Bot not in server" }, 400);
         }
 
-        await addChannel(c.env.CHANNELS, user.sub, {
+        await addChannel(user.sub, {
           type: "discord",
           guildId,
           guildName,
@@ -160,18 +165,18 @@ const app = new Hono<AuthEnv>()
           addedAt: new Date().toISOString(),
         });
 
-        const posthog = getPostHog(c.env.POSTHOG_API_KEY);
+        const posthog = getPostHog(process.env.POSTHOG_API_KEY);
         captureEvent(posthog, {
           distinctId: user.sub,
           event: "Discord Channel Added",
           properties: { guildName, channelName },
         });
-        c.executionCtx.waitUntil(flushPostHog(posthog));
+        await flushPostHog(posthog);
 
-        await invalidateUserStatsCache(c.env.CACHE, user.sub);
+        await invalidateUserStatsCache(user.sub);
         return c.json({ success: true }, 201);
       } catch (err) {
-        logger.discord.error("Failed to add channel", err, {
+        console.error("Failed to add channel", err, {
           userId: user.sub,
           guildId,
           channelId,
@@ -185,19 +190,19 @@ const app = new Hono<AuthEnv>()
     const channelId = c.req.param("channelId");
 
     try {
-      await removeChannel(c.env.CHANNELS, user.sub, "discord", channelId);
+      await removeChannel(user.sub, "discord", channelId);
 
-      const posthog = getPostHog(c.env.POSTHOG_API_KEY);
+      const posthog = getPostHog(process.env.POSTHOG_API_KEY);
       captureEvent(posthog, {
         distinctId: user.sub,
         event: "Discord Channel Removed",
       });
-      c.executionCtx.waitUntil(flushPostHog(posthog));
+      await flushPostHog(posthog);
 
-      await invalidateUserStatsCache(c.env.CACHE, user.sub);
+      await invalidateUserStatsCache(user.sub);
       return c.json({ success: true });
     } catch (err) {
-      logger.discord.error("Failed to remove channel", err, {
+      console.error("Failed to remove channel", err, {
         userId: user.sub,
         channelId,
       });
@@ -218,26 +223,20 @@ const app = new Hono<AuthEnv>()
       const { channelId, enabled } = c.req.valid("json");
 
       try {
-        await updateChannelEnabled(
-          c.env.CHANNELS,
-          user.sub,
-          "discord",
-          channelId,
-          enabled,
-        );
+        await updateChannelEnabled(user.sub, "discord", channelId, enabled);
 
-        const posthog = getPostHog(c.env.POSTHOG_API_KEY);
+        const posthog = getPostHog(process.env.POSTHOG_API_KEY);
         captureEvent(posthog, {
           distinctId: user.sub,
           event: "Discord Channel Toggled",
           properties: { enabled },
         });
-        c.executionCtx.waitUntil(flushPostHog(posthog));
+        await flushPostHog(posthog);
 
-        await invalidateUserStatsCache(c.env.CACHE, user.sub);
+        await invalidateUserStatsCache(user.sub);
         return c.json({ success: true, enabled });
       } catch (err) {
-        logger.discord.error("Failed to toggle channel", err, {
+        console.error("Failed to toggle channel", err, {
           userId: user.sub,
           channelId,
         });

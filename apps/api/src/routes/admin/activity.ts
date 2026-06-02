@@ -3,7 +3,6 @@ import { db, sessions, users } from "@shipradar/database";
 import { desc, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import * as z from "zod";
-import { logger } from "../../lib/logger";
 import type { AuthEnv } from "../../middleware/auth";
 
 const app = new Hono<AuthEnv>().basePath("/activity").get(
@@ -40,7 +39,7 @@ const app = new Hono<AuthEnv>().basePath("/activity").get(
 
       return c.json({ activity: activityLogs, limit, offset });
     } catch (err) {
-      logger.api.error("Failed to fetch activity logs", err);
+      console.error("Failed to fetch activity logs", err);
       return c.json({ error: "Failed to fetch activity logs" }, 500);
     }
   },

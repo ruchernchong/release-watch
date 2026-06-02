@@ -4,7 +4,6 @@ import { db, userRepos } from "@shipradar/database";
 import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import * as z from "zod";
-import { logger } from "../lib/logger";
 import type { AuthEnv } from "../middleware/auth";
 import {
   createOctokit,
@@ -27,10 +26,7 @@ const app = new Hono<AuthEnv>()
     const cacheKey = reposCacheKey(user.sub);
 
     try {
-      const cached = await getCached<{ repos: unknown[] }>(
-        c.env.CACHE,
-        cacheKey,
-      );
+      const cached = await getCached<{ repos: unknown[] }>(cacheKey);
       if (cached) return c.json(cached);
 
       const repos = await db.query.userRepos.findMany({
@@ -38,10 +34,10 @@ const app = new Hono<AuthEnv>()
       });
 
       const response = { repos };
-      await setCache(c.env.CACHE, cacheKey, response, REPOS_CACHE_TTL);
+      await setCache(cacheKey, response, REPOS_CACHE_TTL);
       return c.json(response);
     } catch (err) {
-      logger.api.error("Failed to fetch repos", err, { userId: user.sub });
+      console.error("Failed to fetch repos", err, { userId: user.sub });
       return c.json({ error: "Failed to fetch repos" }, 500);
     }
   })
@@ -68,7 +64,7 @@ const app = new Hono<AuthEnv>()
       }
 
       try {
-        const octokit = createOctokit(c.env.GITHUB_TOKEN);
+        const octokit = createOctokit(process.env.GITHUB_TOKEN as string);
         const parsed = parseFullName(normalizedRepo);
         if (!parsed) {
           return c.json({ error: "Invalid repository format" }, 400);
@@ -94,18 +90,18 @@ const app = new Hono<AuthEnv>()
           return c.json({ error: "Already tracking this repository" }, 409);
         }
 
-        const posthog = getPostHog(c.env.POSTHOG_API_KEY);
+        const posthog = getPostHog(process.env.POSTHOG_API_KEY);
         captureEvent(posthog, {
           distinctId: user.sub,
           event: "Repo Added",
           properties: { repo: normalizedRepo },
         });
-        c.executionCtx.waitUntil(flushPostHog(posthog));
+        await flushPostHog(posthog);
 
-        await invalidateRepoRelatedCaches(c.env.CACHE, user.sub);
+        await invalidateRepoRelatedCaches(user.sub);
         return c.json({ repo: trackedRepo }, 201);
       } catch (err) {
-        logger.api.error("Failed to add repo", err, {
+        console.error("Failed to add repo", err, {
           userId: user.sub,
           repoName: normalizedRepo,
         });
@@ -127,18 +123,18 @@ const app = new Hono<AuthEnv>()
         return c.json({ error: "Repo not found" }, 404);
       }
 
-      const posthog = getPostHog(c.env.POSTHOG_API_KEY);
+      const posthog = getPostHog(process.env.POSTHOG_API_KEY);
       captureEvent(posthog, {
         distinctId: user.sub,
         event: "Repo Removed",
         properties: { repo: deleted.repoName },
       });
-      c.executionCtx.waitUntil(flushPostHog(posthog));
+      await flushPostHog(posthog);
 
-      await invalidateRepoRelatedCaches(c.env.CACHE, user.sub);
+      await invalidateRepoRelatedCaches(user.sub);
       return c.json({ success: true });
     } catch (err) {
-      logger.api.error("Failed to delete repo", err, {
+      console.error("Failed to delete repo", err, {
         userId: user.sub,
         repoId: id,
       });
@@ -175,7 +171,7 @@ const app = new Hono<AuthEnv>()
 
         if (!paused) {
           try {
-            const octokit = createOctokit(c.env.GITHUB_TOKEN);
+            const octokit = createOctokit(process.env.GITHUB_TOKEN as string);
             const parsed = parseFullName(repo.repoName);
             if (parsed) {
               const { owner, repo: repoName } = parsed;
@@ -190,13 +186,9 @@ const app = new Hono<AuthEnv>()
               }
             }
           } catch (err) {
-            logger.api.warn(
-              "Failed to fetch latest release when unpausing",
-              err,
-              {
-                repoName: repo.repoName,
-              },
-            );
+            console.warn("Failed to fetch latest release when unpausing", err, {
+              repoName: repo.repoName,
+            });
           }
         }
 
@@ -206,10 +198,10 @@ const app = new Hono<AuthEnv>()
           .where(and(eq(userRepos.id, id), eq(userRepos.userId, user.sub)))
           .returning();
 
-        await invalidateUserReposCache(c.env.CACHE, user.sub);
+        await invalidateUserReposCache(user.sub);
         return c.json({ repo: updated });
       } catch (err) {
-        logger.api.error("Failed to update repo pause status", err, {
+        console.error("Failed to update repo pause status", err, {
           userId: user.sub,
           repoId: id,
         });

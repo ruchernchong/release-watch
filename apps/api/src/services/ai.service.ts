@@ -1,10 +1,9 @@
 import type { AIAnalysisResult, ReleaseCategory } from "@shipradar/types";
-import { logger } from "../lib/logger";
+import { gateway, generateObject } from "ai";
+import * as z from "zod";
 
-const MODEL = "minimax/m3" as keyof AiModels;
+const MODEL = "openai/gpt-4.1-mini";
 const MAX_RELEASE_NOTES_CHARS = 6000;
-const DEFAULT_AI_GATEWAY_ID = "default";
-const AI_GATEWAY_CACHE_TTL_SECONDS = 7 * 24 * 60 * 60;
 
 const RELEASE_CATEGORIES = [
   "major",
@@ -17,34 +16,21 @@ const RELEASE_CATEGORIES = [
 
 const VALID_CATEGORIES = new Set<ReleaseCategory>(RELEASE_CATEGORIES);
 
-const ANALYSIS_SCHEMA = {
-  type: "object",
-  properties: {
-    summary: {
-      type: "string",
-      description:
-        "One or two natural-language sentences for a mobile notification. No Markdown, raw URLs, headings, or changelog boilerplate.",
-    },
-    category: {
-      type: "string",
-      enum: RELEASE_CATEGORIES,
-      description: "The release category based on semver and content",
-    },
-    hasBreakingChanges: {
-      type: "boolean",
-      description: "Whether the release contains breaking changes",
-    },
-    highlights: {
-      type: "array",
-      items: { type: "string" },
-      description:
-        "Two or three short, plain-language user-impact highlights. No Markdown, headings, links, or trailing punctuation unless needed.",
-      minItems: 0,
-      maxItems: 3,
-    },
-  },
-  required: ["summary", "category", "hasBreakingChanges", "highlights"],
-} as const;
+const analysisSchema = z.object({
+  summary: z
+    .string()
+    .describe(
+      "One or two natural-language sentences for a mobile notification. No Markdown, raw URLs, headings, or changelog boilerplate.",
+    ),
+  category: z.enum(RELEASE_CATEGORIES),
+  hasBreakingChanges: z.boolean(),
+  highlights: z
+    .array(z.string())
+    .max(3)
+    .describe(
+      "Two or three short, plain-language user-impact highlights. No Markdown, headings, links, or trailing punctuation unless needed.",
+    ),
+});
 
 const SYSTEM_PROMPT = `You rewrite GitHub release notes into concise Telegram notifications.
 
@@ -71,8 +57,6 @@ Provide:
 4. 2-3 short highlights`;
 
 export async function analyzeRelease(
-  ai: Ai,
-  gatewayId: string | undefined,
   repoName: string,
   tagName: string,
   releaseName: string | null,
@@ -90,39 +74,18 @@ export async function analyzeRelease(
   );
 
   try {
-    const response = await ai.run(
-      MODEL,
-      {
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userPrompt },
-        ],
-        max_tokens: 300,
-        temperature: 0.3,
-        response_format: {
-          type: "json_schema",
-          json_schema: {
-            name: "release_analysis",
-            schema: ANALYSIS_SCHEMA,
-            strict: true,
-          },
-        },
-      },
-      buildAiRunOptions(gatewayId, repoName, tagName),
-    );
+    const { object } = await generateObject({
+      model: gateway(MODEL),
+      system: SYSTEM_PROMPT,
+      prompt: userPrompt,
+      schema: analysisSchema,
+      temperature: 0.3,
+    });
 
-    if (!response || typeof response !== "object") {
-      logger.ai.error("Invalid response format", undefined, {
-        repo: repoName,
-        tag: tagName,
-      });
-      return null;
-    }
-
-    const analysis = parseAnalysisResponse(response);
+    const analysis = normalizeAnalysis(object);
 
     if (!analysis) {
-      logger.ai.error("Invalid AI analysis result", undefined, {
+      console.error("Invalid AI analysis result", {
         repo: repoName,
         tag: tagName,
       });
@@ -130,35 +93,12 @@ export async function analyzeRelease(
 
     return analysis;
   } catch (error) {
-    logger.ai.error("Failed to analyze release", error, {
+    console.error("Failed to analyze release", error, {
       repo: repoName,
       tag: tagName,
     });
     return null;
   }
-}
-
-function buildAiRunOptions(
-  gatewayId: string | undefined,
-  repoName: string,
-  tagName: string,
-): AiOptions {
-  const id = gatewayId?.trim() || DEFAULT_AI_GATEWAY_ID;
-
-  return {
-    gateway: {
-      id,
-      skipCache: false,
-      cacheTtl: AI_GATEWAY_CACHE_TTL_SECONDS,
-      metadata: {
-        app: "shipradar",
-        feature: "release-analysis",
-        model: MODEL,
-        repo: repoName,
-        tag: tagName,
-      },
-    },
-  };
 }
 
 function buildReleaseAnalysisPrompt(
@@ -175,36 +115,6 @@ Release Name: ${releaseName || tagName}
 
 Release Notes:
 ${body.slice(0, MAX_RELEASE_NOTES_CHARS)}`;
-}
-
-function parseAnalysisResponse(response: unknown): AIAnalysisResult | null {
-  const result = extractResponsePayload(response);
-
-  if (typeof result === "string") {
-    try {
-      return normalizeAnalysis(JSON.parse(result));
-    } catch {
-      return null;
-    }
-  }
-
-  return normalizeAnalysis(result);
-}
-
-function extractResponsePayload(response: unknown): unknown {
-  if (!response || typeof response !== "object") {
-    return response;
-  }
-
-  if ("response" in response) {
-    return extractResponsePayload(response.response);
-  }
-
-  if ("content" in response) {
-    return response.content;
-  }
-
-  return response;
 }
 
 function normalizeAnalysis(value: unknown): AIAnalysisResult | null {

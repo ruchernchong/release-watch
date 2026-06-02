@@ -1,4 +1,3 @@
-import * as Sentry from "@sentry/cloudflare";
 import type { NotificationPayload, ReleaseCategory } from "@shipradar/types";
 
 const CATEGORY_EMOJI: Record<ReleaseCategory, string> = {
@@ -32,14 +31,12 @@ export async function sendTelegramNotification(
   if (!response.ok) {
     const body = await response.text();
     const error = new Error(`Telegram API error ${response.status}: ${body}`);
-    Sentry.captureException(error, {
-      tags: { service: "telegram", op: "sendMessage" },
-      extra: {
-        chatId,
-        repo: payload.repoName,
-        tag: payload.tagName,
-        status: response.status,
-      },
+    console.error("Telegram notification failed", {
+      chatId,
+      repo: payload.repoName,
+      tag: payload.tagName,
+      status: response.status,
+      error,
     });
     throw error;
   }

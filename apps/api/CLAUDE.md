@@ -2,21 +2,22 @@
 
 ## Overview
 
-Cloudflare Worker that serves as the main API backend. Handles REST APIs, Telegram bot, and scheduled release checking.
+Standalone Hono API deployed on Vercel. Handles REST APIs, Telegram bot webhook, scheduled release checking, and Vercel Workflow-backed background work.
 
 ## Commands
 
 ```bash
-wrangler dev              # Local dev server
-wrangler deploy --minify  # Deploy to Cloudflare
-wrangler types            # Generate CloudflareBindings types
+pnpm dev        # Vercel local dev server
+pnpm typecheck  # Type-check
+pnpm lint       # Biome check
 ```
 
 ## Architecture
 
 ```
 src/
-  index.ts                 # App composition + AppType export
+  index.ts                 # Vercel/Hono entrypoint
+  app.ts                   # App composition + AppType export
   routes/
     health.ts              # GET /
     stats.ts               # GET /stats
@@ -34,8 +35,7 @@ src/
     auth.ts                # JWT authentication (verifies via JWKS)
     db.ts                  # Database context middleware
   bot/                     # Grammy Telegram bot
-  workflows/               # Cloudflare Workflows
-  durable-objects/         # SQLite-backed stats
+  workflows/               # Vercel Workflows
   services/                # GitHub, Telegram, KV, AI, Stats
 ```
 
@@ -80,18 +80,21 @@ JWT tokens are issued by BetterAuth (Next.js) and verified here via JWKS.
 - Tokens fetched from `JWKS_URL` env var (e.g., `https://shipradar.dev/api/auth/jwks`)
 - JWKS is cached per isolate for performance
 
-## KV Namespaces
+## Redis Keys
 
-- **REPOS** - Tracked repos per chat
+- **repos** - Tracked repos per chat
   - `chat:{chatId}` - Array of repo names
 
-- **NOTIFICATIONS** - Notification state
+- **notifications** - Notification state
   - `notified:{chatId}:{repo}` - Last notified tag
 
-- **CACHE** - AI analysis cache
+- **cache** - AI/API response cache
   - `release:{repo}:{tag}` - Cached AI analysis
+  - `api:repos:{userId}` - Repos API cache
+  - `api:stats:{userId}` - Dashboard stats cache
+  - `api:releases:{userId}:{limit}` - Dashboard releases cache
 
-- **CHANNELS** - User notification channels
+- **channels** - User notification channels
   - `channels:{userId}` - Array of channel configs
   - `telegram:{chatId}` - Maps chatId → userId
   - `link:{code}` - Temporary link codes (10min TTL)
@@ -109,14 +112,16 @@ PostHog tracks key API events:
 
 Service: `src/services/posthog.ts` (uses `posthog-node` with Workers-compatible settings)
 
-## Secrets (wrangler secret put)
+## Environment
 
-`GITHUB_TOKEN`, `TELEGRAM_BOT_TOKEN`, `DISCORD_WEBHOOK_URL`, `JWKS_URL`, `POSTHOG_API_KEY`
+Required: `DATABASE_URL`, `GITHUB_TOKEN`, `TELEGRAM_BOT_TOKEN`, `JWKS_URL`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `CRON_SECRET`, `AI_GATEWAY_API_KEY`
 
-## Bindings (wrangler.jsonc)
+Optional: `DISCORD_WEBHOOK_URL`, `DISCORD_BOT_TOKEN`, `DISCORD_CLIENT_ID`, `POSTHOG_API_KEY`
 
-`REPOS` (KV), `NOTIFICATIONS` (KV), `CACHE` (KV), `CHANNELS` (KV), `STATS` (DO), `RELEASE_CHECK_WORKFLOW`, `AI`
+## Cron
+
+Vercel Cron calls `GET /internal/release-check` every 15 minutes. The endpoint requires `Authorization: Bearer ${CRON_SECRET}`.
 
 ## Database
 
-Neon Postgres via `@neondatabase/serverless` HTTP driver. The singleton `db` from `@shipradar/database` is imported directly in routes/workflows — no factory, no middleware. `DATABASE_URL` must be set as a Worker secret.
+Neon Postgres via `@neondatabase/serverless` HTTP driver. The singleton `db` from `@shipradar/database` is imported directly in routes/workflows.

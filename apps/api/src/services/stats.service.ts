@@ -1,21 +1,14 @@
+import { redis } from "@shipradar/redis";
 import type { SystemStats } from "@shipradar/types";
-import type { Stats } from "../durable-objects/stats";
-import type { Env } from "../types/env";
 import { getAllTrackedRepos } from "./kv.service";
 
-const STATS_ID = "global-stats";
 const NOTIFICATIONS_SENT_KEY = "notifications_sent";
 const RELEASES_NOTIFIED_KEY = "releases_notified";
 
-function getStatsStub(env: Env): DurableObjectStub<Stats> {
-  const id = env.STATS.idFromName(STATS_ID);
-  return env.STATS.get(id) as DurableObjectStub<Stats>;
-}
-
-async function computeStats(
-  kv: KVNamespace,
-): Promise<Pick<SystemStats, "uniqueUsers" | "reposWatched" | "reposTracked">> {
-  const trackedReposMap = await getAllTrackedRepos(kv);
+async function computeStats(): Promise<
+  Pick<SystemStats, "uniqueUsers" | "reposWatched" | "reposTracked">
+> {
+  const trackedReposMap = await getAllTrackedRepos();
 
   const uniqueUsers = trackedReposMap.size;
   const allRepos = new Set<string>();
@@ -35,31 +28,24 @@ async function computeStats(
   };
 }
 
-export async function incrementNotificationsSent(
-  env: Env,
-  amount = 1,
-): Promise<number> {
-  const stub = getStatsStub(env);
-  return stub.increment(NOTIFICATIONS_SENT_KEY, amount);
+export async function incrementNotificationsSent(amount = 1): Promise<number> {
+  return redis.incrby(NOTIFICATIONS_SENT_KEY, amount);
 }
 
-export async function incrementReleasesNotified(
-  env: Env,
-  amount = 1,
-): Promise<number> {
-  const stub = getStatsStub(env);
-  return stub.increment(RELEASES_NOTIFIED_KEY, amount);
+export async function incrementReleasesNotified(amount = 1): Promise<number> {
+  return redis.incrby(RELEASES_NOTIFIED_KEY, amount);
 }
 
-export async function getSystemStats(env: Env): Promise<SystemStats> {
-  const [computed, doStats] = await Promise.all([
-    computeStats(env.REPOS),
-    getStatsStub(env).getAll(),
+export async function getSystemStats(): Promise<SystemStats> {
+  const [computed, notificationsSent, releasesNotified] = await Promise.all([
+    computeStats(),
+    redis.get<number>(NOTIFICATIONS_SENT_KEY),
+    redis.get<number>(RELEASES_NOTIFIED_KEY),
   ]);
 
   return {
     ...computed,
-    notificationsSent: doStats[NOTIFICATIONS_SENT_KEY] ?? 0,
-    releasesNotified: doStats[RELEASES_NOTIFIED_KEY] ?? 0,
+    notificationsSent: notificationsSent ?? 0,
+    releasesNotified: releasesNotified ?? 0,
   };
 }

@@ -1,5 +1,4 @@
 import { Bot, type CommandContext, type Context, InlineKeyboard } from "grammy";
-import { logger } from "../lib/logger";
 import {
   createOctokit,
   type GitHubRelease,
@@ -24,7 +23,6 @@ import {
   removeTrackedRepoForChat,
   setRepoPausedForChat,
 } from "../services/tracking.service";
-import type { Env } from "../types/env";
 
 const GITHUB_URL_PATTERN =
   /(?:https?:\/\/)?github\.com\/([a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+)/i;
@@ -40,11 +38,10 @@ function formatLatestRelease(release: GitHubRelease): string {
 }
 
 async function fetchAndFormatLatestRelease(
-  env: Env,
   repo: string,
 ): Promise<string | null> {
   try {
-    const octokit = createOctokit(env.GITHUB_TOKEN);
+    const octokit = createOctokit(process.env.GITHUB_TOKEN as string);
     const parsed = parseFullName(repo);
     if (!parsed) return null;
     const releases = await getLatestReleases(
@@ -63,9 +60,8 @@ async function fetchAndFormatLatestRelease(
   }
 }
 
-export function createBot(env: Env): Bot {
-  const bot = new Bot(env.TELEGRAM_BOT_TOKEN);
-  const channelsKv = env.CHANNELS;
+export function createBot(): Bot {
+  const bot = new Bot(process.env.TELEGRAM_BOT_TOKEN as string);
 
   bot.use(async (ctx, next) => {
     if (ctx.chat && ctx.chat.type !== "private") {
@@ -80,35 +76,14 @@ export function createBot(env: Env): Bot {
           );
         }
       } catch (error) {
-        logger.bot.error("Failed to reject non-private chat", error, {
+        console.error("Failed to reject non-private chat", error, {
           chatType: ctx.chat.type,
         });
       }
       return;
     }
 
-    const chatId = ctx.chat?.id.toString();
-    if (!chatId || !env.RATE_LIMITER) {
-      return next();
-    }
-
-    const { success } = await env.RATE_LIMITER.limit({ key: `bot:${chatId}` });
-    if (success) {
-      return next();
-    }
-
-    logger.bot.warn("Rate limit exceeded", undefined, { chatId });
-    try {
-      if (ctx.callbackQuery) {
-        await ctx.answerCallbackQuery({
-          text: "Too many requests. Please try again in a minute.",
-        });
-      } else {
-        await ctx.reply("⏱ Too many requests. Please try again in a minute.");
-      }
-    } catch (error) {
-      logger.bot.error("Failed to send rate-limit reply", error, { chatId });
-    }
+    return next();
   });
 
   bot.command("start", async (ctx) => {
@@ -130,7 +105,7 @@ export function createBot(env: Env): Bot {
 
   bot.command("check", async (ctx) => {
     const chatId = ctx.chat.id.toString();
-    const trackedRepos = await getTrackedReposForChat(env, chatId);
+    const trackedRepos = await getTrackedReposForChat(chatId);
 
     if (trackedRepos.length === 0) {
       await ctx.reply(
@@ -139,27 +114,15 @@ export function createBot(env: Env): Bot {
       return;
     }
 
-    await ctx.reply("🔍 Checking for new releases...");
-
-    try {
-      const instanceId = `manual-check-${chatId}-${Date.now()}`;
-      await env.RELEASE_CHECK_WORKFLOW.create({
-        id: instanceId,
-        params: { triggeredAt: new Date().toISOString(), chatId },
-      });
-      await ctx.reply(
-        `✅ Release check triggered for ${trackedRepos.length} tracked repo(s)`,
-      );
-    } catch (error) {
-      logger.bot.error("Failed to trigger release check", error, { chatId });
-      await ctx.reply("❌ Failed to trigger release check. Please try again.");
-    }
+    await ctx.reply(
+      `Manual release checks are being migrated to Vercel Workflows. You have ${trackedRepos.length} tracked repo(s).`,
+    );
   });
 
   bot.command("untrack", async (ctx) => {
     const repo = ctx.match?.trim();
     const chatId = ctx.chat.id.toString();
-    const trackedRepos = await getTrackedReposForChat(env, chatId);
+    const trackedRepos = await getTrackedReposForChat(chatId);
 
     if (trackedRepos.length === 0) {
       await ctx.reply("No tracked repos to remove.");
@@ -189,13 +152,13 @@ export function createBot(env: Env): Bot {
       return;
     }
 
-    await removeTrackedRepoForChat(env, chatId, matchedRepo);
+    await removeTrackedRepoForChat(chatId, matchedRepo);
     await ctx.reply(`✅ Stopped tracking ${matchedRepo}`);
   });
 
   bot.command("list", async (ctx) => {
     const chatId = ctx.chat.id.toString();
-    const trackedRepos = await getTrackedReposForChat(env, chatId);
+    const trackedRepos = await getTrackedReposForChat(chatId);
 
     if (trackedRepos.length === 0) {
       await ctx.reply(
@@ -216,10 +179,7 @@ export function createBot(env: Env): Bot {
     const chatId = ctx.chat.id.toString();
     const action = paused ? "pause" : "resume";
 
-    const { linked, repos } = await getTrackedReposWithStateForChat(
-      env,
-      chatId,
-    );
+    const { linked, repos } = await getTrackedReposWithStateForChat(chatId);
 
     if (!linked) {
       await ctx.reply(
@@ -263,12 +223,7 @@ export function createBot(env: Env): Bot {
       return;
     }
 
-    const result = await setRepoPausedForChat(
-      env,
-      chatId,
-      matched.repoName,
-      paused,
-    );
+    const result = await setRepoPausedForChat(chatId, matched.repoName, paused);
     if (result.status === "updated") {
       await ctx.reply(
         paused
@@ -308,7 +263,7 @@ export function createBot(env: Env): Bot {
       return;
     }
 
-    const result = await completeTelegramLink(channelsKv, code, chatId);
+    const result = await completeTelegramLink(code, chatId);
 
     if (!result) {
       await ctx.reply(
@@ -326,16 +281,12 @@ export function createBot(env: Env): Bot {
 
     let migratedMessage = "";
     try {
-      const { migrated } = await migrateChatReposToDb(
-        env,
-        chatId,
-        result.userId,
-      );
+      const { migrated } = await migrateChatReposToDb(chatId, result.userId);
       if (migrated > 0) {
         migratedMessage = ` Moved ${migrated} tracked repo(s) to your dashboard.`;
       }
     } catch (error) {
-      logger.bot.error("Failed to migrate KV repos to DB on link", error, {
+      console.error("Failed to migrate KV repos to DB on link", error, {
         chatId,
         userId: result.userId,
       });
@@ -348,7 +299,7 @@ export function createBot(env: Env): Bot {
 
   bot.command("unlink", async (ctx) => {
     const chatId = ctx.chat.id.toString();
-    const userId = await getUserIdByTelegramChat(channelsKv, chatId);
+    const userId = await getUserIdByTelegramChat(chatId);
 
     if (!userId) {
       await ctx.reply(
@@ -357,7 +308,7 @@ export function createBot(env: Env): Bot {
       return;
     }
 
-    await unlinkTelegramChat(channelsKv, chatId);
+    await unlinkTelegramChat(chatId);
     await ctx.reply(
       "✅ Unlinked from the dashboard. You can re-link anytime with /link.",
     );
@@ -373,14 +324,14 @@ export function createBot(env: Env): Bot {
       return;
     }
 
-    const trackedRepos = await getTrackedReposForChat(env, chatId);
+    const trackedRepos = await getTrackedReposForChat(chatId);
     if (!trackedRepos.includes(repo)) {
       await ctx.answerCallbackQuery({ text: "Already removed" });
       await ctx.editMessageText("Repository already removed.");
       return;
     }
 
-    await removeTrackedRepoForChat(env, chatId, repo);
+    await removeTrackedRepoForChat(chatId, repo);
     await ctx.answerCallbackQuery({ text: "Removed!" });
     await ctx.editMessageText(`✅ Stopped tracking ${repo}`);
   });
@@ -396,7 +347,7 @@ export function createBot(env: Env): Bot {
     }
 
     const paused = action === "pause";
-    const result = await setRepoPausedForChat(env, chatId, repo, paused);
+    const result = await setRepoPausedForChat(chatId, repo, paused);
 
     if (result.status === "not-linked") {
       await ctx.answerCallbackQuery({ text: "Link your dashboard first" });
@@ -449,14 +400,14 @@ export function createBot(env: Env): Bot {
     }
 
     try {
-      const octokit = createOctokit(env.GITHUB_TOKEN);
+      const octokit = createOctokit(process.env.GITHUB_TOKEN as string);
       await octokit.repos.get({ owner: parsed.owner, repo: parsed.repo });
     } catch {
       await ctx.reply(`Repository not found on GitHub: ${repo}`);
       return;
     }
 
-    const { added } = await addTrackedRepoForChat(env, chatId, repo);
+    const { added } = await addTrackedRepoForChat(chatId, repo);
     if (!added) {
       await ctx.reply(`Already tracking ${repo}`);
       return;
@@ -464,7 +415,7 @@ export function createBot(env: Env): Bot {
 
     await ctx.reply(`✅ Now tracking ${repo}`);
 
-    const latestRelease = await fetchAndFormatLatestRelease(env, repo);
+    const latestRelease = await fetchAndFormatLatestRelease(repo);
     if (latestRelease) {
       await ctx.reply(latestRelease, { parse_mode: "HTML" });
     }

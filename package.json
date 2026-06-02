@@ -4,6 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "turbo run dev",
+    "dev:api": "turbo run @shipradar/api#dev",
+    "dev:web": "turbo run @shipradar/web#dev",
     "build": "turbo run build",
     "start": "turbo run start",
     "lint": "turbo run lint",
@@ -20,6 +22,7 @@
     "@commitlint/cli": "21.0.1",
     "@commitlint/config-conventional": "21.0.1",
     "@commitlint/types": "21.0.1",
+    "@vercel/config": "catalog:",
     "husky": "9.1.7",
     "turbo": "2.9.14"
   },

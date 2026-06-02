@@ -2,7 +2,6 @@ import { zValidator } from "@hono/zod-validator";
 import { db } from "@shipradar/database";
 import { Hono } from "hono";
 import * as z from "zod";
-import { logger } from "../lib/logger";
 import type { AuthEnv } from "../middleware/auth";
 import {
   createOctokit,
@@ -31,7 +30,7 @@ const app = new Hono<AuthEnv>()
         reposWatched: number;
         activeChannels: number;
         totalChannels: number;
-      }>(c.env.CACHE, cacheKey);
+      }>(cacheKey);
       if (cached) return c.json(cached);
 
       const repos = await db.query.userRepos.findMany({
@@ -39,7 +38,7 @@ const app = new Hono<AuthEnv>()
         columns: { id: true },
       });
 
-      const channels = await getChannels(c.env.CHANNELS, user.sub);
+      const channels = await getChannels(user.sub);
       const activeChannels = channels.filter((ch) => ch.enabled).length;
 
       const response = {
@@ -47,10 +46,10 @@ const app = new Hono<AuthEnv>()
         activeChannels,
         totalChannels: channels.length,
       };
-      await setCache(c.env.CACHE, cacheKey, response, STATS_CACHE_TTL);
+      await setCache(cacheKey, response, STATS_CACHE_TTL);
       return c.json(response);
     } catch (err) {
-      logger.api.error("Failed to fetch dashboard stats", err, {
+      console.error("Failed to fetch dashboard stats", err, {
         userId: user.sub,
       });
       return c.json({ error: "Failed to fetch stats" }, 500);
@@ -70,13 +69,10 @@ const app = new Hono<AuthEnv>()
       const cacheKey = releasesCacheKey(user.sub, limit);
 
       try {
-        const cached = await getCached<{ releases: unknown[] }>(
-          c.env.CACHE,
-          cacheKey,
-        );
+        const cached = await getCached<{ releases: unknown[] }>(cacheKey);
         if (cached) return c.json(cached);
 
-        const octokit = createOctokit(c.env.GITHUB_TOKEN);
+        const octokit = createOctokit(process.env.GITHUB_TOKEN as string);
 
         const repos = await db.query.userRepos.findMany({
           where: (userRepos, { eq }) => eq(userRepos.userId, user.sub),
@@ -101,7 +97,6 @@ const app = new Hono<AuthEnv>()
 
               const release = latestReleases[0];
               const aiAnalysis = await getCachedAnalysis(
-                c.env.CACHE,
                 repoName,
                 release.tag_name,
               );
@@ -131,10 +126,10 @@ const app = new Hono<AuthEnv>()
           .slice(0, limit);
 
         const response = { releases: validReleases };
-        await setCache(c.env.CACHE, cacheKey, response, RELEASES_CACHE_TTL);
+        await setCache(cacheKey, response, RELEASES_CACHE_TTL);
         return c.json(response);
       } catch (err) {
-        logger.api.error("Failed to fetch releases", err, { userId: user.sub });
+        console.error("Failed to fetch releases", err, { userId: user.sub });
         return c.json({ error: "Failed to fetch releases" }, 500);
       }
     },

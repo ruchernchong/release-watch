@@ -1,3 +1,4 @@
+import { redis } from "@shipradar/redis";
 import type {
   AIAnalysisResult,
   ChannelConfig,
@@ -5,68 +6,146 @@ import type {
   TelegramLinkRequest,
 } from "@shipradar/types";
 
-// Key prefixes for each KV namespace
-// REPOS KV - tracked repos per chat
+type KVGetType = "text" | "json" | "arrayBuffer" | "stream";
+
+type KVListOptions = {
+  prefix?: string;
+  cursor?: string;
+  limit?: number;
+};
+
+type KVPutOptions = {
+  expirationTtl?: number;
+};
+
+type KVListResult = {
+  keys: { name: string }[];
+  list_complete: boolean;
+  cursor?: string;
+};
+
+type KVNamespaceLike = {
+  get(key: string): Promise<string | null>;
+  get<T>(key: string, type: "json"): Promise<T | null>;
+  get(key: string, type: Exclude<KVGetType, "json">): Promise<string | null>;
+  put(key: string, value: string, options?: KVPutOptions): Promise<void>;
+  delete(key: string): Promise<void>;
+  list(options?: KVListOptions): Promise<KVListResult>;
+};
+
+function createKVNamespace(namespace: string): KVNamespaceLike {
+  const key = (key: string) => `${namespace}:${key}`;
+  const stripNamespace = (redisKey: string) =>
+    redisKey.startsWith(`${namespace}:`)
+      ? redisKey.slice(namespace.length + 1)
+      : redisKey;
+
+  async function get(keyName: string): Promise<string | null>;
+  async function get<T>(keyName: string, type: "json"): Promise<T | null>;
+  async function get(
+    keyName: string,
+    type: Exclude<KVGetType, "json">,
+  ): Promise<string | null>;
+  async function get(
+    keyName: string,
+    type?: KVGetType,
+  ): Promise<unknown | null> {
+    const value = await redis.get<unknown>(key(keyName));
+    if (value === null) return null;
+
+    if (type === "json") {
+      if (typeof value === "string") return JSON.parse(value) as unknown;
+      return value as unknown;
+    }
+
+    if (typeof value === "string") return value;
+    return JSON.stringify(value);
+  }
+
+  return {
+    get,
+    async put(keyName, value, options) {
+      if (options?.expirationTtl) {
+        await redis.set(key(keyName), value, { ex: options.expirationTtl });
+        return;
+      }
+
+      await redis.set(key(keyName), value);
+    },
+    async delete(keyName) {
+      await redis.del(key(keyName));
+    },
+    async list(options = {}) {
+      const prefix = key(options.prefix ?? "");
+      const cursor = options.cursor ?? "0";
+      const [nextCursor, keys] = await redis.scan(cursor, {
+        match: `${prefix}*`,
+        count: options.limit ?? 100,
+      });
+
+      return {
+        keys: keys.map((redisKey) => ({ name: stripNamespace(redisKey) })),
+        list_complete: nextCursor === "0",
+        cursor: nextCursor === "0" ? undefined : nextCursor,
+      };
+    },
+  };
+}
+
+const reposKv = createKVNamespace("repos");
+const notificationsKv = createKVNamespace("notifications");
+const cacheKv = createKVNamespace("cache");
+const channelsKv = createKVNamespace("channels");
+
 const CHAT_PREFIX = "chat:";
-// NOTIFICATIONS KV - last notified tag per chat/repo
 const NOTIFIED_PREFIX = "notified:";
-// CACHE KV - AI analysis cache per release
 const RELEASE_PREFIX = "release:";
-// CHANNELS KV - user notification channels + integration mappings
 const CHANNELS_PREFIX = "channels:";
 const TELEGRAM_PREFIX = "telegram:";
 const LINK_PREFIX = "link:";
 
-export async function getTrackedRepos(
-  kv: KVNamespace,
-  chatId: string,
-): Promise<string[]> {
-  const data = await kv.get<string[]>(`${CHAT_PREFIX}${chatId}`, "json");
+export async function getTrackedRepos(chatId: string): Promise<string[]> {
+  const data = await reposKv.get<string[]>(`${CHAT_PREFIX}${chatId}`, "json");
   return data ?? [];
 }
 
 export async function addTrackedRepo(
-  kv: KVNamespace,
   chatId: string,
   repo: string,
 ): Promise<{ added: boolean }> {
   const normalized = repo.toLowerCase();
-  const trackedRepos = await getTrackedRepos(kv, chatId);
+  const trackedRepos = await getTrackedRepos(chatId);
   if (trackedRepos.some((existing) => existing.toLowerCase() === normalized)) {
     return { added: false };
   }
   trackedRepos.push(normalized);
-  await kv.put(`${CHAT_PREFIX}${chatId}`, JSON.stringify(trackedRepos));
+  await reposKv.put(`${CHAT_PREFIX}${chatId}`, JSON.stringify(trackedRepos));
   return { added: true };
 }
 
 export async function removeTrackedRepo(
-  kv: KVNamespace,
   chatId: string,
   repo: string,
 ): Promise<void> {
-  const trackedRepos = await getTrackedRepos(kv, chatId);
+  const trackedRepos = await getTrackedRepos(chatId);
   const filtered = trackedRepos.filter((trackedRepo) => trackedRepo !== repo);
   if (filtered.length === 0) {
-    await kv.delete(`${CHAT_PREFIX}${chatId}`);
+    await reposKv.delete(`${CHAT_PREFIX}${chatId}`);
   } else {
-    await kv.put(`${CHAT_PREFIX}${chatId}`, JSON.stringify(filtered));
+    await reposKv.put(`${CHAT_PREFIX}${chatId}`, JSON.stringify(filtered));
   }
 }
 
-export async function clearTrackedRepos(
-  kv: KVNamespace,
-  chatId: string,
-): Promise<void> {
-  await kv.delete(`${CHAT_PREFIX}${chatId}`);
+export async function clearTrackedRepos(chatId: string): Promise<void> {
+  await reposKv.delete(`${CHAT_PREFIX}${chatId}`);
 }
 
-export async function getAllChatIds(kv: KVNamespace): Promise<string[]> {
+export async function getAllChatIds(): Promise<string[]> {
   const chatIds: string[] = [];
   let cursor: string | undefined;
 
   do {
-    const result = await kv.list({ prefix: CHAT_PREFIX, cursor });
+    const result = await reposKv.list({ prefix: CHAT_PREFIX, cursor });
     for (const key of result.keys) {
       chatIds.push(key.name.replace(CHAT_PREFIX, ""));
     }
@@ -76,73 +155,58 @@ export async function getAllChatIds(kv: KVNamespace): Promise<string[]> {
   return chatIds;
 }
 
-// Notification tracking
 function notifiedKey(chatId: string, repo: string): string {
   return `${NOTIFIED_PREFIX}${chatId}:${repo}`;
 }
 
 export async function getLastNotifiedTag(
-  kv: KVNamespace,
   chatId: string,
   repo: string,
 ): Promise<string | null> {
-  return kv.get(notifiedKey(chatId, repo));
+  return notificationsKv.get(notifiedKey(chatId, repo));
 }
 
 export async function setLastNotifiedTag(
-  kv: KVNamespace,
   chatId: string,
   repo: string,
   tag: string,
 ): Promise<void> {
-  await kv.put(notifiedKey(chatId, repo), tag);
+  await notificationsKv.put(notifiedKey(chatId, repo), tag);
 }
 
-export async function getAllTrackedRepos(
-  kv: KVNamespace,
-): Promise<Map<string, string[]>> {
+export async function getAllTrackedRepos(): Promise<Map<string, string[]>> {
   const trackedReposMap = new Map<string, string[]>();
-  const chatIds = await getAllChatIds(kv);
+  const chatIds = await getAllChatIds();
 
   for (const chatId of chatIds) {
-    const repos = await getTrackedRepos(kv, chatId);
+    const repos = await getTrackedRepos(chatId);
     trackedReposMap.set(chatId, repos);
   }
 
   return trackedReposMap;
 }
 
-// Release analysis cache
 function releaseKey(repo: string, tag: string): string {
   return `${RELEASE_PREFIX}${repo}:${tag}`;
 }
 
 export async function getCachedAnalysis(
-  kv: KVNamespace,
   repo: string,
   tag: string,
 ): Promise<AIAnalysisResult | null> {
-  return kv.get<AIAnalysisResult>(releaseKey(repo, tag), "json");
+  return cacheKv.get<AIAnalysisResult>(releaseKey(repo, tag), "json");
 }
 
 export async function setCachedAnalysis(
-  kv: KVNamespace,
   repo: string,
   tag: string,
   analysis: AIAnalysisResult,
 ): Promise<void> {
-  await kv.put(releaseKey(repo, tag), JSON.stringify(analysis));
+  await cacheKv.put(releaseKey(repo, tag), JSON.stringify(analysis));
 }
 
-// ============================================
-// Multi-channel support
-// ============================================
-
-export async function getChannels(
-  kv: KVNamespace,
-  userId: string,
-): Promise<ChannelConfig[]> {
-  const data = await kv.get<ChannelConfig[]>(
+export async function getChannels(userId: string): Promise<ChannelConfig[]> {
+  const data = await channelsKv.get<ChannelConfig[]>(
     `${CHANNELS_PREFIX}${userId}`,
     "json",
   );
@@ -156,7 +220,6 @@ export function normalizeTelegramChatId(chatId: unknown): string | null {
 }
 
 export async function getTelegramChatIdsByUserIds(
-  kv: KVNamespace,
   userIds: Set<string>,
 ): Promise<Map<string, string[]>> {
   const chatIdsByUserId = new Map<string, string[]>();
@@ -164,14 +227,14 @@ export async function getTelegramChatIdsByUserIds(
 
   let cursor: string | undefined;
   do {
-    const result = await kv.list({ prefix: TELEGRAM_PREFIX, cursor });
+    const result = await channelsKv.list({ prefix: TELEGRAM_PREFIX, cursor });
     for (const key of result.keys) {
       const chatId = normalizeTelegramChatId(
         key.name.slice(TELEGRAM_PREFIX.length),
       );
       if (!chatId) continue;
 
-      const userId = await kv.get(key.name);
+      const userId = await channelsKv.get(key.name);
       if (!userId || !userIds.has(userId)) continue;
 
       const chatIds = chatIdsByUserId.get(userId);
@@ -188,10 +251,9 @@ export async function getTelegramChatIdsByUserIds(
 }
 
 export async function pruneInvalidTelegramChannels(
-  kv: KVNamespace,
   userId: string,
 ): Promise<number> {
-  const channels = await getChannels(kv, userId);
+  const channels = await getChannels(userId);
   let removed = 0;
   const validChannels = channels.filter((channel) => {
     if (channel.type !== "telegram") return true;
@@ -203,20 +265,22 @@ export async function pruneInvalidTelegramChannels(
   if (removed === 0) return 0;
 
   if (validChannels.length === 0) {
-    await kv.delete(`${CHANNELS_PREFIX}${userId}`);
+    await channelsKv.delete(`${CHANNELS_PREFIX}${userId}`);
   } else {
-    await kv.put(`${CHANNELS_PREFIX}${userId}`, JSON.stringify(validChannels));
+    await channelsKv.put(
+      `${CHANNELS_PREFIX}${userId}`,
+      JSON.stringify(validChannels),
+    );
   }
 
   return removed;
 }
 
 export async function addChannel(
-  kv: KVNamespace,
   userId: string,
   channel: ChannelConfig,
 ): Promise<void> {
-  const channels = await getChannels(kv, userId);
+  const channels = await getChannels(userId);
 
   const isDuplicate = channels.some((existingChannel) => {
     if (existingChannel.type === "telegram" && channel.type === "telegram") {
@@ -230,41 +294,47 @@ export async function addChannel(
 
   if (!isDuplicate) {
     channels.push(channel);
-    await kv.put(`${CHANNELS_PREFIX}${userId}`, JSON.stringify(channels));
+    await channelsKv.put(
+      `${CHANNELS_PREFIX}${userId}`,
+      JSON.stringify(channels),
+    );
   }
 }
 
 export async function removeChannel(
-  kv: KVNamespace,
   userId: string,
   channelType: ChannelConfig["type"],
   identifier: string,
 ): Promise<void> {
-  const channels = await getChannels(kv, userId);
+  const channels = await getChannels(userId);
   const filtered = channels.filter((existingChannel) => {
     if (existingChannel.type !== channelType) return true;
-    if (existingChannel.type === "telegram")
+    if (existingChannel.type === "telegram") {
       return existingChannel.chatId !== identifier;
-    if (existingChannel.type === "discord")
+    }
+    if (existingChannel.type === "discord") {
       return existingChannel.channelId !== identifier;
+    }
     return true;
   });
 
   if (filtered.length === 0) {
-    await kv.delete(`${CHANNELS_PREFIX}${userId}`);
+    await channelsKv.delete(`${CHANNELS_PREFIX}${userId}`);
   } else {
-    await kv.put(`${CHANNELS_PREFIX}${userId}`, JSON.stringify(filtered));
+    await channelsKv.put(
+      `${CHANNELS_PREFIX}${userId}`,
+      JSON.stringify(filtered),
+    );
   }
 }
 
 export async function updateChannelEnabled(
-  kv: KVNamespace,
   userId: string,
   channelType: ChannelConfig["type"],
   identifier: string,
   enabled: boolean,
 ): Promise<void> {
-  const channels = await getChannels(kv, userId);
+  const channels = await getChannels(userId);
   let changed = false;
   const updated = channels.map((existingChannel) => {
     if (existingChannel.type !== channelType) return existingChannel;
@@ -287,14 +357,10 @@ export async function updateChannelEnabled(
     return existingChannel;
   });
   if (!changed) return;
-  await kv.put(`${CHANNELS_PREFIX}${userId}`, JSON.stringify(updated));
+  await channelsKv.put(`${CHANNELS_PREFIX}${userId}`, JSON.stringify(updated));
 }
 
-// ============================================
-// Telegram account linking
-// ============================================
-
-const LINK_CODE_TTL = 10 * 60; // 10 minutes in seconds
+const LINK_CODE_TTL = 10 * 60;
 
 function generateLinkCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -303,96 +369,80 @@ function generateLinkCode(): string {
   crypto.getRandomValues(bytes);
   let code = "";
   for (let i = 0; i < length; i++) {
-    // chars.length === 32, so bytes[i] & 31 yields a uniform index 0–31
     const index = bytes[i] & 31;
     code += chars.charAt(index);
   }
   return code;
 }
 
-export async function createTelegramLinkCode(
-  kv: KVNamespace,
-  userId: string,
-): Promise<string> {
+export async function createTelegramLinkCode(userId: string): Promise<string> {
   const code = generateLinkCode();
   const request: TelegramLinkRequest = {
     userId,
     expiresAt: new Date(Date.now() + LINK_CODE_TTL * 1000).toISOString(),
   };
-  await kv.put(`${LINK_PREFIX}${code}`, JSON.stringify(request), {
+  await channelsKv.put(`${LINK_PREFIX}${code}`, JSON.stringify(request), {
     expirationTtl: LINK_CODE_TTL,
   });
   return code;
 }
 
 export async function validateTelegramLinkCode(
-  kv: KVNamespace,
   code: string,
 ): Promise<TelegramLinkRequest | null> {
-  const data = await kv.get<TelegramLinkRequest>(
+  const data = await channelsKv.get<TelegramLinkRequest>(
     `${LINK_PREFIX}${code}`,
     "json",
   );
   if (!data) return null;
 
   if (new Date(data.expiresAt) < new Date()) {
-    await kv.delete(`${LINK_PREFIX}${code}`);
+    await channelsKv.delete(`${LINK_PREFIX}${code}`);
     return null;
   }
   return data;
 }
 
 export async function completeTelegramLink(
-  kv: KVNamespace,
   code: string,
   chatId: string,
 ): Promise<{ userId: string; alreadyLinked?: boolean } | null> {
-  const linkRequest = await validateTelegramLinkCode(kv, code);
+  const linkRequest = await validateTelegramLinkCode(code);
   if (!linkRequest) return null;
 
-  // Check if chatId is already linked to a different user
-  const existingUserId = await getUserIdByTelegramChat(kv, chatId);
+  const existingUserId = await getUserIdByTelegramChat(chatId);
   if (existingUserId && existingUserId !== linkRequest.userId) {
     return { userId: existingUserId, alreadyLinked: true };
   }
 
-  // Create telegram -> userId mapping
-  await kv.put(`${TELEGRAM_PREFIX}${chatId}`, linkRequest.userId);
+  await channelsKv.put(`${TELEGRAM_PREFIX}${chatId}`, linkRequest.userId);
 
-  // Add telegram channel to user's channels
   const telegramChannel: TelegramChannelConfig = {
     type: "telegram",
     chatId,
     enabled: true,
     addedAt: new Date().toISOString(),
   };
-  await addChannel(kv, linkRequest.userId, telegramChannel);
-
-  // Delete used link code
-  await kv.delete(`${LINK_PREFIX}${code}`);
+  await addChannel(linkRequest.userId, telegramChannel);
+  await channelsKv.delete(`${LINK_PREFIX}${code}`);
 
   return { userId: linkRequest.userId };
 }
 
 export async function getUserIdByTelegramChat(
-  kv: KVNamespace,
   chatId: string,
 ): Promise<string | null> {
-  return kv.get(`${TELEGRAM_PREFIX}${chatId}`);
+  return channelsKv.get(`${TELEGRAM_PREFIX}${chatId}`);
 }
 
-export async function unlinkTelegramChat(
-  kv: KVNamespace,
-  chatId: string,
-): Promise<void> {
-  const userId = await getUserIdByTelegramChat(kv, chatId);
+export async function unlinkTelegramChat(chatId: string): Promise<void> {
+  const userId = await getUserIdByTelegramChat(chatId);
   if (userId) {
-    await removeChannel(kv, userId, "telegram", chatId);
-    await kv.delete(`${TELEGRAM_PREFIX}${chatId}`);
+    await removeChannel(userId, "telegram", chatId);
+    await channelsKv.delete(`${TELEGRAM_PREFIX}${chatId}`);
   }
 }
 
-// API response cache
 const API_REPOS_PREFIX = "api:repos:";
 const API_STATS_PREFIX = "api:stats:";
 const API_RELEASES_PREFIX = "api:releases:";
@@ -401,20 +451,16 @@ export const REPOS_CACHE_TTL = 5 * 60;
 export const STATS_CACHE_TTL = 5 * 60;
 export const RELEASES_CACHE_TTL = 10 * 60;
 
-export async function getCached<T>(
-  kv: KVNamespace,
-  key: string,
-): Promise<T | null> {
-  return kv.get<T>(key, "json");
+export async function getCached<T>(key: string): Promise<T | null> {
+  return cacheKv.get<T>(key, "json");
 }
 
 export async function setCache<T>(
-  kv: KVNamespace,
   key: string,
   value: T,
   ttl: number,
 ): Promise<void> {
-  await kv.put(key, JSON.stringify(value), { expirationTtl: ttl });
+  await cacheKv.put(key, JSON.stringify(value), { expirationTtl: ttl });
 }
 
 export function reposCacheKey(userId: string): string {
@@ -429,40 +475,32 @@ export function releasesCacheKey(userId: string, limit: number): string {
   return `${API_RELEASES_PREFIX}${userId}:${limit}`;
 }
 
-export async function invalidateUserReposCache(
-  kv: KVNamespace,
-  userId: string,
-): Promise<void> {
-  await kv.delete(reposCacheKey(userId));
+export async function invalidateUserReposCache(userId: string): Promise<void> {
+  await cacheKv.delete(reposCacheKey(userId));
 }
 
-export async function invalidateUserStatsCache(
-  kv: KVNamespace,
-  userId: string,
-): Promise<void> {
-  await kv.delete(statsCacheKey(userId));
+export async function invalidateUserStatsCache(userId: string): Promise<void> {
+  await cacheKv.delete(statsCacheKey(userId));
 }
 
 export async function invalidateUserReleasesCache(
-  kv: KVNamespace,
   userId: string,
 ): Promise<void> {
   const prefix = `${API_RELEASES_PREFIX}${userId}:`;
   let cursor: string | undefined;
   do {
-    const result = await kv.list({ prefix, cursor });
-    await Promise.all(result.keys.map((k) => kv.delete(k.name)));
+    const result = await cacheKv.list({ prefix, cursor });
+    await Promise.all(result.keys.map((key) => cacheKv.delete(key.name)));
     cursor = result.list_complete ? undefined : result.cursor;
   } while (cursor);
 }
 
 export async function invalidateRepoRelatedCaches(
-  kv: KVNamespace,
   userId: string,
 ): Promise<void> {
   await Promise.all([
-    invalidateUserReposCache(kv, userId),
-    invalidateUserStatsCache(kv, userId),
-    invalidateUserReleasesCache(kv, userId),
+    invalidateUserReposCache(userId),
+    invalidateUserStatsCache(userId),
+    invalidateUserReleasesCache(userId),
   ]);
 }

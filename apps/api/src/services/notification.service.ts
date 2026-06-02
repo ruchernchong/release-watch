@@ -3,7 +3,6 @@ import type {
   ChannelType,
   NotificationPayload,
 } from "@shipradar/types";
-import type { Env } from "../types/env";
 import { sendDiscordBotNotification } from "./discord.service";
 import { sendTelegramNotification } from "./telegram.service";
 
@@ -20,7 +19,6 @@ export interface NotificationResult {
 export async function notifyUser(
   channels: ChannelConfig[],
   payload: NotificationPayload,
-  env: Env,
 ): Promise<NotificationResult[]> {
   const enabledChannels = channels.filter((channel) => channel.enabled);
 
@@ -29,7 +27,7 @@ export async function notifyUser(
   }
 
   const results = await Promise.allSettled(
-    enabledChannels.map((channel) => sendToChannel(channel, payload, env)),
+    enabledChannels.map((channel) => sendToChannel(channel, payload)),
   );
 
   return results.map((result, index) => {
@@ -56,12 +54,11 @@ export async function notifyUser(
 async function sendToChannel(
   channel: ChannelConfig,
   payload: NotificationPayload,
-  env: Env,
 ): Promise<void> {
   switch (channel.type) {
     case "telegram":
       await sendTelegramNotification(
-        env.TELEGRAM_BOT_TOKEN,
+        process.env.TELEGRAM_BOT_TOKEN as string,
         channel.chatId,
         payload,
       );
@@ -69,7 +66,7 @@ async function sendToChannel(
 
     case "discord":
       await sendDiscordBotNotification(
-        env.DISCORD_BOT_TOKEN,
+        process.env.DISCORD_BOT_TOKEN as string,
         channel.channelId,
         payload,
       );

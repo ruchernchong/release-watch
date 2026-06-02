@@ -9,7 +9,6 @@ import {
 import { count, desc, eq, ilike, or } from "drizzle-orm";
 import { Hono } from "hono";
 import * as z from "zod";
-import { logger } from "../../lib/logger";
 import type { AuthEnv } from "../../middleware/auth";
 
 const app = new Hono<AuthEnv>()
@@ -66,7 +65,7 @@ const app = new Hono<AuthEnv>()
 
         return c.json({ users: userList, total: totalCount, limit, offset });
       } catch (err) {
-        logger.api.error("Failed to fetch users", err);
+        console.error("Failed to fetch users", err);
         return c.json({ error: "Failed to fetch users" }, 500);
       }
     },
@@ -129,7 +128,7 @@ const app = new Hono<AuthEnv>()
 
       return c.json({ user, repos, channels, connectedAccounts });
     } catch (err) {
-      logger.api.error("Failed to fetch user details", err, {
+      console.error("Failed to fetch user details", err, {
         targetUserId: id,
       });
       return c.json({ error: "Failed to fetch user details" }, 500);
@@ -199,7 +198,7 @@ const app = new Hono<AuthEnv>()
 
       return c.json({ success: true, action: "unbanned" });
     } catch (err) {
-      logger.api.error("Failed to update user ban status", err, {
+      console.error("Failed to update user ban status", err, {
         adminId: adminUser.sub,
         targetUserId: id,
         action,
