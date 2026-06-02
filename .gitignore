@@ -49,3 +49,4 @@ lerna-debug.log*
 .dolt/
 *.db
 .beads-credential-key
+.env*

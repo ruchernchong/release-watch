@@ -1,4 +1,3 @@
-import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { type AuthEnv, adminOnly, jwtAuth } from "./middleware/auth";
@@ -63,11 +62,5 @@ const admin = new Hono<AuthEnv>()
   .route("/", adminStats);
 
 export const routes = app.route("/", api).route("/", admin);
-
-if (!process.env.VERCEL_ENV) {
-  serve({ fetch: app.fetch, port: 8787 }, (info) => {
-    console.log(`Server is running on http://localhost:${info.port}`);
-  });
-}
 
 export default app;

@@ -11,6 +11,9 @@ allowBuilds:
   esbuild: false
   sharp: false
   workerd: false
+  '@nestjs/core': false
+  '@swc/core': false
+  cbor-extract: false
 
 catalog:
   "@cloudflare/workers-types": 4.20260504.1
