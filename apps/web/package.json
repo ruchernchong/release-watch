@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "next dev",
+    "dev": "portless shipradar next dev",
     "build": "next build",
     "start": "next start",
     "lint": "biome check",

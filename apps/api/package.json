@@ -6,7 +6,7 @@
     "./types": "./src/types.ts"
   },
   "scripts": {
-    "dev": "nitro dev",
+    "dev": "portless api.shipradar nitro dev",
     "build": "nitro build",
     "preview": "nitro preview",
     "bot:set-commands": "node scripts/set-bot-commands.mjs",
