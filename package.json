@@ -25,6 +25,7 @@
     "@commitlint/cli": "21.0.1",
     "@commitlint/config-conventional": "21.0.1",
     "@commitlint/types": "21.0.1",
+    "@types/node": "catalog:",
     "@vercel/config": "catalog:",
     "husky": "9.1.7",
     "portless": "0.13.1",

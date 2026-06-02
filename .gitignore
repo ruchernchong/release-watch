@@ -50,3 +50,6 @@ lerna-debug.log*
 *.db
 .beads-credential-key
 .env*
+
+# TypeScript
+*.tsbuildinfo

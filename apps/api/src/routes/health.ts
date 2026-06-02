@@ -1,11 +1,7 @@
 import { Hono } from "hono";
 
 const app = new Hono().get("/", (c) => {
-  return c.json({
-    name: "ShipRadar",
-    status: "ok",
-    timestamp: new Date().toISOString(),
-  });
+  return c.json({ status: "ok" });
 });
 
 export default app;

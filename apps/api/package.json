@@ -2,9 +2,6 @@
   "name": "@shipradar/api",
   "private": true,
   "type": "module",
-  "exports": {
-    "./types": "./src/types.ts"
-  },
   "scripts": {
     "dev": "portless api.shipradar nitro dev",
     "build": "nitro build",
@@ -33,9 +30,8 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@hono/node-server": "2.0.4",
-    "@types/node": "24.10.4",
-    "tsx": "4.22.4",
+    "@types/node": "catalog:",
+    "@vercel/config": "catalog:",
     "typescript": "catalog:"
   }
 }

@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/turbo/schema.json",
   "ui": "tui",
-  "envMode": "strict",
+  "envMode": "loose",
   "remoteCache": {
     "signature": true
   },
@@ -27,7 +27,13 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
+      "outputs": [
+        "$TURBO_DEFAULT$",
+        "dist/**",
+        ".next/**",
+        "!.next/cache/**",
+        ".output"
+      ]
     },
     "preview": {},
     "start": {
@@ -43,10 +49,7 @@
       "cache": false,
       "inputs": ["$TURBO_DEFAULT$"]
     },
-    "typecheck": {
-      "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$"]
-    },
+    "typecheck": {},
     "deploy": {
       "dependsOn": ["build"],
       "cache": false
