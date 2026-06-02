@@ -24,7 +24,7 @@ const config: UserConfig = {
     "scope-enum": [
       RuleConfigSeverity.Error,
       "always",
-      ["api", "web", "database", "types"],
+      ["api", "web", "database", "redis", "types"],
     ],
   },
 };

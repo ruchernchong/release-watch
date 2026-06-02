@@ -18,7 +18,8 @@
     "auth:generate": "turbo run auth:generate",
     "db:drop": "turbo run db:drop",
     "db:generate": "turbo run db:generate",
-    "db:migrate": "turbo run db:migrate"
+    "db:migrate": "turbo run db:migrate",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@biomejs/biome": "2.3.10",
@@ -28,8 +29,12 @@
     "@types/node": "catalog:",
     "@vercel/config": "catalog:",
     "husky": "9.1.7",
+    "lint-staged": "17.0.7",
     "portless": "0.13.1",
     "turbo": "2.9.14"
+  },
+  "lint-staged": {
+    "*": "biome check --write --no-errors-on-unmatched"
   },
   "packageManager": "pnpm@11.1.2"
 }
