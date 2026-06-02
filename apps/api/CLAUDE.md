@@ -77,7 +77,7 @@ No versioning - internal API only.
 ## Authentication
 
 JWT tokens are issued by BetterAuth (Next.js) and verified here via JWKS.
-- Tokens fetched from `JWKS_URL` env var (e.g., `https://releasewatch.dev/api/auth/jwks`)
+- Tokens fetched from `JWKS_URL` env var (e.g., `https://shipradar.dev/api/auth/jwks`)
 - JWKS is cached per isolate for performance
 
 ## KV Namespaces
@@ -119,4 +119,4 @@ Service: `src/services/posthog.ts` (uses `posthog-node` with Workers-compatible 
 
 ## Database
 
-Neon Postgres via `@neondatabase/serverless` HTTP driver. The singleton `db` from `@release-watch/database` is imported directly in routes/workflows — no factory, no middleware. `DATABASE_URL` must be set as a Worker secret.
+Neon Postgres via `@neondatabase/serverless` HTTP driver. The singleton `db` from `@shipradar/database` is imported directly in routes/workflows — no factory, no middleware. `DATABASE_URL` must be set as a Worker secret.

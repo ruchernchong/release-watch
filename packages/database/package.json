@@ -1,5 +1,5 @@
 {
-  "name": "@release-watch/database",
+  "name": "@shipradar/database",
   "description": "Database and authentication package",
   "version": "1.0.0",
   "type": "module",

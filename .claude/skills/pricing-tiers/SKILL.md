@@ -1,6 +1,6 @@
 ---
 name: pricing-tiers
-description: ReleaseWatch subscription tiers, pricing strategy, and Pro feature definitions. Use when discussing pricing plans, comparing tiers, implementing tier-gated features, or setting up Polar integration.
+description: ShipRadar subscription tiers, pricing strategy, and Pro feature definitions. Use when discussing pricing plans, comparing tiers, implementing tier-gated features, or setting up Polar integration.
 ---
 
 # Subscription Tiers

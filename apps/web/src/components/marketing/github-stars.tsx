@@ -1,7 +1,7 @@
 import type { GitHubRepoResponse } from "@/lib/github";
 
 const REPO_OWNER = "ruchernchong";
-const REPO_NAME = "release-watch";
+const REPO_NAME = "shipradar";
 const STAR_THRESHOLD = 50;
 
 async function getGitHubStars(): Promise<number | null> {

@@ -53,4 +53,4 @@
 # - github.org
 # - github.repo
 
-sync.remote: "git+https://github.com/ruchernchong/release-watch.git"
+sync.remote: "git+https://github.com/tartinerlabs/shipradar.git"

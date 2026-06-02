@@ -1,4 +1,4 @@
-import { db, userRepos } from "@release-watch/database";
+import { db, userRepos } from "@shipradar/database";
 import { and, eq } from "drizzle-orm";
 import type { Env } from "../types/env";
 import {

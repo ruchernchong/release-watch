@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-ReleaseWatch monitors GitHub releases and sends Telegram notifications with AI summaries. Monorepo with pnpm workspaces + Turborepo.
+ShipRadar monitors GitHub releases and sends Telegram notifications with AI summaries. Monorepo with pnpm workspaces + Turborepo.
 
 ## Structure
 
@@ -63,7 +63,7 @@ pnpm auth:generate        # Regenerate BetterAuth schema
 - `GITHUB_TOKEN` - GitHub API access
 - `TELEGRAM_BOT_TOKEN` - Telegram bot token
 - `DASHBOARD_API_KEY` - Admin API key
-- `JWKS_URL` - BetterAuth JWKS endpoint (e.g., `https://releasewatch.dev/api/auth/jwks`)
+- `JWKS_URL` - BetterAuth JWKS endpoint (e.g., `https://shipradar.dev/api/auth/jwks`)
 - `DISCORD_WEBHOOK_URL` - Optional Discord notifications
 - `POSTHOG_API_KEY` - PostHog project API key (optional, for analytics)
 - `DEBUG` - Optional debug mode
@@ -76,7 +76,7 @@ pnpm auth:generate        # Regenerate BetterAuth schema
 - `GITHUB_CLIENT_SECRET` - GitHub OAuth client secret
 - `GOOGLE_CLIENT_ID` - Google OAuth client ID
 - `GOOGLE_CLIENT_SECRET` - Google OAuth client secret
-- `NEXT_PUBLIC_API_URL` - Hono API URL (e.g., `https://api.releasewatch.dev`)
+- `NEXT_PUBLIC_API_URL` - Hono API URL (e.g., `https://api.shipradar.dev`)
 - `NEXT_PUBLIC_POSTHOG_KEY` - PostHog project API key (optional, for analytics)
 - `POLAR_ACCESS_TOKEN` - Polar.sh access token (optional)
 - `POLAR_WEBHOOK_SECRET` - Polar.sh webhook secret (optional)

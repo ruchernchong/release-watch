@@ -1,5 +1,5 @@
 import { zValidator } from "@hono/zod-validator";
-import { db } from "@release-watch/database";
+import { db } from "@shipradar/database";
 import { Hono } from "hono";
 import * as z from "zod";
 import { logger } from "../lib/logger";

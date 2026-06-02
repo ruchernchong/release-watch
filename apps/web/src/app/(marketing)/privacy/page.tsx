@@ -2,8 +2,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 export const metadata = {
-  title: "Privacy Policy - ReleaseWatch",
-  description: "Privacy Policy for ReleaseWatch",
+  title: "Privacy Policy - ShipRadar",
+  description: "Privacy Policy for ShipRadar",
 };
 
 const sections = [
@@ -119,7 +119,7 @@ export default function PrivacyPage() {
       <header className="border-b">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <Link href="/" className="font-bold text-xl">
-            ReleaseWatch
+            ShipRadar
           </Link>
           <nav className="flex items-center gap-4">
             <Button variant="ghost" asChild>
@@ -180,7 +180,7 @@ export default function PrivacyPage() {
                 For privacy-related questions or to exercise your rights, please
                 contact us through our{" "}
                 <a
-                  href="https://github.com/ruchernchong/release-watch/issues"
+                  href="https://github.com/tartinerlabs/shipradar/issues"
                   className="text-foreground underline underline-offset-4 transition-colors hover:text-muted-foreground"
                   target="_blank"
                   rel="noopener noreferrer"

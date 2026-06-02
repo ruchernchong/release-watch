@@ -1,4 +1,4 @@
-import type { AIAnalysisResult } from "@release-watch/types";
+import type { AIAnalysisResult } from "@shipradar/types";
 
 // Re-export channel types from shared package
 export type {
@@ -6,7 +6,7 @@ export type {
   ChannelType,
   DiscordChannelConfig,
   TelegramChannelConfig,
-} from "@release-watch/types";
+} from "@shipradar/types";
 
 // Notification payload
 export interface NotificationPayload {
@@ -20,7 +20,7 @@ export interface NotificationPayload {
   aiAnalysis?: AIAnalysisResult | null;
 }
 
-export type { AIAnalysisResult, ReleaseCategory } from "@release-watch/types";
+export type { AIAnalysisResult, ReleaseCategory } from "@shipradar/types";
 
 // System-wide statistics
 export interface SystemStats {

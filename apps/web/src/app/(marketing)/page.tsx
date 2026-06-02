@@ -37,7 +37,7 @@ export default function Home() {
     <div className="flex min-h-screen flex-col gap-0">
       <header className="border-b">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <span className="font-bold text-xl">ReleaseWatch</span>
+          <span className="font-bold text-xl">ShipRadar</span>
           <nav>
             <Link href="/login">
               <Button>Get Started</Button>
@@ -60,7 +60,7 @@ export default function Home() {
               <Button size="lg">Start Monitoring</Button>
             </Link>
             <Link
-              href="https://github.com/ruchernchong/release-watch"
+              href="https://github.com/tartinerlabs/shipradar"
               target="_blank"
               rel="noopener noreferrer"
             >

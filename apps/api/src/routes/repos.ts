@@ -1,6 +1,6 @@
 import { captureEvent, flushPostHog, getPostHog } from "@api/services/posthog";
 import { zValidator } from "@hono/zod-validator";
-import { db, userRepos } from "@release-watch/database";
+import { db, userRepos } from "@shipradar/database";
 import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import * as z from "zod";

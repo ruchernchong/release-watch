@@ -9,7 +9,7 @@ export default function LoginPage() {
           href="/"
           className="flex items-center gap-2 self-center font-medium"
         >
-          <span className="font-bold text-xl">ReleaseWatch</span>
+          <span className="font-bold text-xl">ShipRadar</span>
         </Link>
         <LoginForm />
       </div>

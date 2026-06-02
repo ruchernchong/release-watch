@@ -1,5 +1,5 @@
 {
-  "name": "@release-watch/api",
+  "name": "@shipradar/api",
   "private": true,
   "type": "module",
   "exports": {
@@ -17,8 +17,8 @@
     "@hono/zod-validator": "catalog:",
     "@neondatabase/serverless": "catalog:",
     "@octokit/rest": "22.0.1",
-    "@release-watch/database": "workspace:*",
-    "@release-watch/types": "workspace:*",
+    "@shipradar/database": "workspace:*",
+    "@shipradar/types": "workspace:*",
     "@sentry/cloudflare": "catalog:",
     "drizzle-orm": "catalog:",
     "grammy": "1.38.4",

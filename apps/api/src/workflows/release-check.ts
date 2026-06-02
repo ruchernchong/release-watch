@@ -3,11 +3,8 @@ import {
   type WorkflowEvent,
   type WorkflowStep,
 } from "cloudflare:workers";
-import { db, userRepos } from "@release-watch/database";
-import type {
-  AIAnalysisResult,
-  NotificationPayload,
-} from "@release-watch/types";
+import { db, userRepos } from "@shipradar/database";
+import type { AIAnalysisResult, NotificationPayload } from "@shipradar/types";
 import { eq } from "drizzle-orm";
 import { logger } from "../lib/logger";
 import { analyzeRelease } from "../services/ai.service";

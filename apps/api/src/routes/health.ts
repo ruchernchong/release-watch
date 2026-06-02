@@ -3,7 +3,7 @@ import type { Env } from "../types/env";
 
 const app = new Hono<{ Bindings: Env }>().get("/", (c) => {
   return c.json({
-    name: "ReleaseWatch",
+    name: "ShipRadar",
     status: "ok",
     timestamp: new Date().toISOString(),
   });

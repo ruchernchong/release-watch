@@ -14,7 +14,7 @@
     "start": {
       "dependsOn": ["build"],
       "persistent": true,
-      "with": ["@release-watch/api#dev"]
+      "with": ["@shipradar/api#dev"]
     },
     "lint": {
       "cache": false,

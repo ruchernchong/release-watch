@@ -2,20 +2,20 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 export const metadata = {
-  title: "Terms of Service - ReleaseWatch",
-  description: "Terms of Service for using ReleaseWatch",
+  title: "Terms of Service - ShipRadar",
+  description: "Terms of Service for using ShipRadar",
 };
 
 const sections = [
   {
     title: "1. Acceptance of Terms",
     content:
-      "By accessing or using ReleaseWatch, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the Service.",
+      "By accessing or using ShipRadar, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the Service.",
   },
   {
     title: "2. Description of Service",
     content:
-      "ReleaseWatch monitors GitHub repositories for new releases and sends notifications through various channels including Telegram and Discord. The Service may include AI-generated summaries of release notes.",
+      "ShipRadar monitors GitHub repositories for new releases and sends notifications through various channels including Telegram and Discord. The Service may include AI-generated summaries of release notes.",
   },
   {
     title: "3. User Accounts",
@@ -58,12 +58,12 @@ const sections = [
   {
     title: "8. Intellectual Property",
     content:
-      "The Service, including its design and features, is owned by ReleaseWatch. You retain ownership of any content you submit. ReleaseWatch is open source and available under its respective license on GitHub.",
+      "The Service, including its design and features, is owned by ShipRadar. You retain ownership of any content you submit. ShipRadar is open source and available under its respective license on GitHub.",
   },
   {
     title: "9. Limitation of Liability",
     content:
-      "To the maximum extent permitted by law, ReleaseWatch shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Service.",
+      "To the maximum extent permitted by law, ShipRadar shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Service.",
   },
   {
     title: "10. Disclaimer of Warranties",
@@ -88,7 +88,7 @@ export default function TermsPage() {
       <header className="border-b">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <Link href="/" className="font-bold text-xl">
-            ReleaseWatch
+            ShipRadar
           </Link>
           <nav className="flex items-center gap-4">
             <Button variant="ghost" asChild>
@@ -136,7 +136,7 @@ export default function TermsPage() {
               <p className="text-muted-foreground leading-relaxed">
                 For questions about these Terms, please contact us through our{" "}
                 <a
-                  href="https://github.com/ruchernchong/release-watch/issues"
+                  href="https://github.com/tartinerlabs/shipradar/issues"
                   className="text-foreground underline underline-offset-4 transition-colors hover:text-muted-foreground"
                   target="_blank"
                   rel="noopener noreferrer"

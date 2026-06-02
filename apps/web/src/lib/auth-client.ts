@@ -1,4 +1,4 @@
-import { authClient } from "@release-watch/database/auth-client";
+import { authClient } from "@shipradar/database/auth-client";
 
 export { authClient };
 

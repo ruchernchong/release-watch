@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ReleaseWatch - Never Miss a GitHub Release",
+  title: "ShipRadar - Never Miss a GitHub Release",
   description:
     "Monitor GitHub releases and get notified via Telegram, Discord, and more.",
 };
@@ -39,7 +39,7 @@ export default function RootLayout({
         defer
         src="https://umami.tartinerlabs.com/script.js"
         data-website-id="f76430ee-22b4-49a4-ad62-7ac393f12116"
-        data-domains="releasewatch.dev"
+        data-domains="shipradar.dev"
       />
     </html>
   );

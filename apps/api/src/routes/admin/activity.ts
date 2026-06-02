@@ -1,5 +1,5 @@
 import { zValidator } from "@hono/zod-validator";
-import { db, sessions, users } from "@release-watch/database";
+import { db, sessions, users } from "@shipradar/database";
 import { desc, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import * as z from "zod";

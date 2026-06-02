@@ -3,7 +3,7 @@ import type {
   ChannelConfig,
   TelegramChannelConfig,
   TelegramLinkRequest,
-} from "@release-watch/types";
+} from "@shipradar/types";
 
 // Key prefixes for each KV namespace
 // REPOS KV - tracked repos per chat

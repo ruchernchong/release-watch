@@ -5,7 +5,7 @@ import {
   userChannels,
   userRepos,
   users,
-} from "@release-watch/database";
+} from "@shipradar/database";
 import { count, desc, eq, ilike, or } from "drizzle-orm";
 import { Hono } from "hono";
 import * as z from "zod";

@@ -17,8 +17,8 @@ import type { Env } from "./types/env";
 const ALLOWED_ORIGINS = [
   "http://localhost:3000",
   "http://localhost:8787",
-  "https://releasewatch.dev",
-  "https://www.releasewatch.dev",
+  "https://shipradar.dev",
+  "https://www.shipradar.dev",
 ];
 
 export const app = new Hono<{ Bindings: Env }>();

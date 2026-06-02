@@ -1,7 +1,4 @@
-import type {
-  NotificationPayload,
-  ReleaseCategory,
-} from "@release-watch/types";
+import type { NotificationPayload, ReleaseCategory } from "@shipradar/types";
 
 const DISCORD_API_BASE = "https://discord.com/api/v10";
 

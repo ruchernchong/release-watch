@@ -97,7 +97,7 @@ const integrationConfig = {
     label: "Telegram",
     iconBg: "bg-[#0088cc]",
     icon: Send,
-    link: "https://t.me/ReleaseWatch_Bot",
+    link: "https://t.me/ShipRadar_Bot",
   },
   discord: {
     label: "Discord",

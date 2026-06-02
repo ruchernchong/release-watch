@@ -1,7 +1,7 @@
-import { auth } from "@release-watch/database";
+import { auth } from "@shipradar/database";
 import { headers } from "next/headers";
 
-export { auth } from "@release-watch/database";
+export { auth } from "@shipradar/database";
 
 export async function getSession() {
   return auth.api.getSession({

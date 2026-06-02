@@ -1,4 +1,4 @@
-import type { AIAnalysisResult, ReleaseCategory } from "@release-watch/types";
+import type { AIAnalysisResult, ReleaseCategory } from "@shipradar/types";
 import { logger } from "../lib/logger";
 
 const MODEL = "minimax/m3" as keyof AiModels;
@@ -151,7 +151,7 @@ function buildAiRunOptions(
       skipCache: false,
       cacheTtl: AI_GATEWAY_CACHE_TTL_SECONDS,
       metadata: {
-        app: "release-watch",
+        app: "shipradar",
         feature: "release-analysis",
         model: MODEL,
         repo: repoName,

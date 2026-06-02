@@ -1,4 +1,4 @@
-# ReleaseWatch
+# ShipRadar
 
 Monitor GitHub releases and receive Telegram notifications with AI-powered summaries. Full-stack monorepo with Next.js dashboard and Cloudflare Worker backend.
 
@@ -39,7 +39,7 @@ Monitor GitHub releases and receive Telegram notifications with AI-powered summa
 ## Project Structure
 
 ```
-release-watch/
+release/
 ├── apps/
 │   ├── api/          # Cloudflare Worker (Hono + Grammy bot)
 │   └── web/          # Next.js 16 dashboard
@@ -98,7 +98,7 @@ pnpm install
    wrangler secret put GITHUB_TOKEN
    wrangler secret put TELEGRAM_BOT_TOKEN
    wrangler secret put DASHBOARD_API_KEY
-   wrangler secret put JWKS_URL  # https://releasewatch.dev/api/auth/jwks
+   wrangler secret put JWKS_URL  # https://shipradar.dev/api/auth/jwks
    wrangler secret put POSTHOG_API_KEY  # Optional, for analytics
    ```
 
@@ -117,8 +117,8 @@ pnpm dev  # Start all apps (Next.js + Wrangler)
 
 Individual apps:
 ```bash
-pnpm --filter @release-watch/web dev
-pnpm --filter @release-watch/api dev
+pnpm --filter @shipradar/web dev
+pnpm --filter @shipradar/api dev
 ```
 
 ### Build

@@ -1,4 +1,4 @@
-import type { ReleaseCategory } from "@release-watch/types";
+import type { ReleaseCategory } from "@shipradar/types";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 

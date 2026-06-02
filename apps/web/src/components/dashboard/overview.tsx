@@ -186,7 +186,7 @@ export function Overview({ stats, releases, telegramStatus }: OverviewProps) {
               </div>
               {optimisticTelegram.linked ? (
                 <a
-                  href="https://t.me/ReleaseWatch_Bot"
+                  href="https://t.me/ShipRadar_Bot"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1 text-muted-foreground text-sm transition-colors hover:text-foreground"

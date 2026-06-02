@@ -93,12 +93,12 @@ export function TelegramLinkDialog({
                 <p className="text-muted-foreground text-sm">
                   Send this command to{" "}
                   <a
-                    href="https://t.me/ReleaseWatch_Bot"
+                    href="https://t.me/ShipRadar_Bot"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="font-medium text-primary underline"
                   >
-                    @ReleaseWatch_Bot
+                    @ShipRadar_Bot
                   </a>
                   :
                 </p>
@@ -125,7 +125,7 @@ export function TelegramLinkDialog({
               </div>
               <Button variant="outline" asChild>
                 <a
-                  href="https://t.me/ReleaseWatch_Bot"
+                  href="https://t.me/ShipRadar_Bot"
                   target="_blank"
                   rel="noopener noreferrer"
                 >

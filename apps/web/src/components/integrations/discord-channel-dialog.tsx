@@ -224,7 +224,7 @@ export function DiscordChannelDialog({
           {inviteUrl && (
             <div className="flex flex-col gap-2 rounded-lg border bg-muted/50 p-4">
               <p className="text-muted-foreground text-sm">
-                The ReleaseWatch bot needs to be added to this server.
+                The ShipRadar bot needs to be added to this server.
               </p>
               <Button variant="outline" asChild>
                 <a href={inviteUrl} target="_blank" rel="noopener noreferrer">

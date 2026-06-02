@@ -187,7 +187,7 @@ export function IntegrationsSection() {
                 </div>
                 <Button variant="outline" size="sm" asChild>
                   <a
-                    href="https://t.me/ReleaseWatch_Bot"
+                    href="https://t.me/ShipRadar_Bot"
                     target="_blank"
                     rel="noopener noreferrer"
                   >

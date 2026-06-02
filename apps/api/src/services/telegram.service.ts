@@ -1,8 +1,5 @@
-import type {
-  NotificationPayload,
-  ReleaseCategory,
-} from "@release-watch/types";
 import * as Sentry from "@sentry/cloudflare";
+import type { NotificationPayload, ReleaseCategory } from "@shipradar/types";
 
 const CATEGORY_EMOJI: Record<ReleaseCategory, string> = {
   major: "🚀",

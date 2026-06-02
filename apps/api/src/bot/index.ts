@@ -113,7 +113,7 @@ export function createBot(env: Env): Bot {
 
   bot.command("start", async (ctx) => {
     await ctx.reply(
-      "👋 Welcome to ReleaseWatch!\n\n" +
+      "👋 Welcome to ShipRadar!\n\n" +
         "I monitor GitHub releases and notify you when new versions are published.\n\n" +
         "To track a repo, simply paste a GitHub repository URL:\n" +
         "https://github.com/owner/repo\n\n" +
@@ -290,7 +290,7 @@ export function createBot(env: Env): Bot {
     if (!code) {
       await ctx.reply(
         "🔗 To link your Telegram account:\n\n" +
-          "1. Go to the ReleaseWatch dashboard\n" +
+          "1. Go to the ShipRadar dashboard\n" +
           "2. Click 'Link Telegram'\n" +
           "3. Copy the 6-character code\n" +
           "4. Send /link CODE here\n\n" +
@@ -342,7 +342,7 @@ export function createBot(env: Env): Bot {
     }
 
     await ctx.reply(
-      `✅ Successfully linked to your ReleaseWatch account!${migratedMessage}`,
+      `✅ Successfully linked to your ShipRadar account!${migratedMessage}`,
     );
   });
 

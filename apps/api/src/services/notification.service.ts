@@ -2,7 +2,7 @@ import type {
   ChannelConfig,
   ChannelType,
   NotificationPayload,
-} from "@release-watch/types";
+} from "@shipradar/types";
 import type { Env } from "../types/env";
 import { sendDiscordBotNotification } from "./discord.service";
 import { sendTelegramNotification } from "./telegram.service";

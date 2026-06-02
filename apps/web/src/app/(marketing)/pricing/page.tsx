@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 export const metadata = {
-  title: "Pricing - ReleaseWatch",
+  title: "Pricing - ShipRadar",
   description:
     "Simple, transparent pricing. Start free and upgrade when you need more.",
 };
@@ -17,7 +17,7 @@ export default function PricingPage() {
       <header className="border-b">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <Link href="/" className="font-bold text-xl">
-            ReleaseWatch
+            ShipRadar
           </Link>
           <nav className="flex items-center gap-4">
             <Button variant="ghost" asChild>

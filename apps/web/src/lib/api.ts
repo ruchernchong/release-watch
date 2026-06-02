@@ -1,4 +1,4 @@
-import type { AppType } from "@release-watch/api/types";
+import type { AppType } from "@shipradar/api/types";
 import { hc } from "hono/client";
 import { headers } from "next/headers";
 import { auth } from "./auth";

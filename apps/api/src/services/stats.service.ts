@@ -1,4 +1,4 @@
-import type { SystemStats } from "@release-watch/types";
+import type { SystemStats } from "@shipradar/types";
 import type { Stats } from "../durable-objects/stats";
 import type { Env } from "../types/env";
 import { getAllTrackedRepos } from "./kv.service";
