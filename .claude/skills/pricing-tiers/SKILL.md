@@ -1,6 +1,6 @@
 ---
 name: pricing-tiers
-description: ShipRadar subscription tiers, pricing strategy, and Pro feature definitions. Use when discussing pricing plans, comparing tiers, implementing tier-gated features, or setting up Polar integration.
+description: ShipRadar subscription tiers, pricing strategy, and Pro feature definitions. Use when discussing pricing plans, comparing tiers, implementing tier-gated features, or wiring up the billing provider.
 ---
 
 # Subscription Tiers
@@ -30,9 +30,9 @@ description: ShipRadar subscription tiers, pricing strategy, and Pro feature def
 
 ## Grandfathering
 
-Polar handles automatically:
+Handled by the billing provider (TODO: Stripe):
 1. Create products at launch price
-2. After launch period, update prices in Polar dashboard
+2. After launch period, update prices in the provider dashboard
 3. Existing subscribers keep original price forever
 
 ## Pro Features
@@ -80,28 +80,25 @@ Apply middleware to:
 - `POST /webhooks` - Check webhook count vs tier limit
 - AI analysis in workflow - Check monthly AI summary usage
 
-## Polar Integration
+## Billing Provider (TODO: Stripe)
 
-Environment variables (set per environment):
-- `POLAR_SERVER` - `sandbox` or `production`
-- `POLAR_PRODUCT_ID_PRO_MONTHLY` - Product ID for monthly plan
-- `POLAR_PRODUCT_ID_PRO_ANNUAL` - Product ID for annual plan
+> Polar has been removed. The subscription/tier UI and `useUserTier` hook remain
+> in place but inert — every user is treated as `free` until a provider is wired
+> in. Checkout/portal CTAs are commented out with `TODO(stripe)` markers in:
+> `subscription-section.tsx`, `pricing-cards.tsx`, `marketing-pricing.tsx`,
+> `upgrade-prompt.tsx`, and `use-user-tier.ts`.
 
-Sandbox Product IDs:
-- `pro-monthly`: `c43ab049-bafd-45ff-a48c-c6dbc3167411`
-- `pro-annual`: `b1bc732e-3bf3-4672-8e0a-e34267202903`
-
-Checkout URLs:
-- `/api/auth/checkout/pro-monthly`
-- `/api/auth/checkout/pro-annual`
-
-Webhook handlers:
-- `onSubscriptionCreated` → Update user tier to 'pro'
-- `onSubscriptionCanceled` → Downgrade to 'free'
+When integrating Stripe, the provider should supply:
+- Two products: monthly + annual, with launch prices (see Pricing Strategy).
+- Checkout + customer portal flows (replace the commented `authClient.checkout()`
+  / `authClient.customer.*` calls).
+- Webhook handlers mapping subscription lifecycle to the user tier:
+  - subscription created/active → set user tier to `pro`
+  - subscription canceled/expired → downgrade to `free`
 
 ## UI Touchpoints
 
 1. **Pricing page**: `/app/(marketing)/pricing/page.tsx`
 2. **Upgrade prompts**: Show when approaching limits
-3. **Settings**: Subscription management via Polar portal
+3. **Settings**: Subscription management via the billing provider's customer portal
 4. **Feature teasers**: "Available with Pro" for gated features

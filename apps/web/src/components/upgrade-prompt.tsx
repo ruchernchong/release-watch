@@ -74,9 +74,11 @@ export function UpgradePrompt({
         <Button size="sm" asChild>
           <Link href="/pricing">Upgrade to Pro</Link>
         </Button>
+        {/* TODO(stripe): re-enable the quick-checkout CTA once billing is wired up.
+            This linked to Polar's /api/auth/checkout/pro-monthly route.
         <Button size="sm" variant="ghost" asChild>
           <a href="/api/auth/checkout/pro-monthly">$3/mo →</a>
-        </Button>
+        </Button> */}
       </div>
     </div>
   );

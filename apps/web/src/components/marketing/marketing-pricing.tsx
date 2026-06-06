@@ -1,7 +1,8 @@
 "use client";
 
+// TODO(stripe): Button is needed again when the Pro checkout CTA below is
+// re-enabled against the billing provider.
 import {
-  Button,
   buttonVariants,
   Card,
   Chip,
@@ -15,15 +16,13 @@ import {
   pricing,
   tiers,
 } from "@web/components/pricing/pricing-data";
-import { authClient } from "@web/lib/auth-client";
 import { Check, X } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 
 export function MarketingPricing() {
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly");
-  const [isPending, startTransition] = useTransition();
   const currentPricing = pricing[billingPeriod];
 
   const handleSelectionChange = (keys: Set<string | number>) => {
@@ -33,11 +32,13 @@ export function MarketingPricing() {
     }
   };
 
-  const handleCheckout = () => {
-    startTransition(async () => {
-      await authClient.checkout({ slug: `pro-${billingPeriod}` });
-    });
-  };
+  // TODO(stripe): re-implement checkout against the billing provider. This
+  // called Polar's authClient.checkout().
+  // const handleCheckout = () => {
+  //   startTransition(async () => {
+  //     await authClient.checkout({ slug: `pro-${billingPeriod}` });
+  //   });
+  // };
 
   const savingsPercent = Math.round(
     (1 - currentPricing.price / currentPricing.regularPrice) * 100,
@@ -117,7 +118,7 @@ export function MarketingPricing() {
                 </div>
 
                 {/* CTA */}
-                {tier.href ? (
+                {tier.href && (
                   <Link
                     href={tier.href as Route}
                     className={buttonVariants({
@@ -127,7 +128,9 @@ export function MarketingPricing() {
                   >
                     {tier.cta}
                   </Link>
-                ) : (
+                )}
+                {/* TODO(stripe): re-enable the Pro checkout CTA once billing is wired up.
+                {!tier.href && (
                   <Button
                     fullWidth
                     isPending={isPending}
@@ -135,7 +138,7 @@ export function MarketingPricing() {
                   >
                     {tier.cta}
                   </Button>
-                )}
+                )} */}
 
                 {/* Features */}
                 <ul className="flex flex-col gap-3">

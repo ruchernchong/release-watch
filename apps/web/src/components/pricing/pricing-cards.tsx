@@ -16,33 +16,32 @@ import {
   CardTitle,
 } from "@web/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@web/components/ui/toggle-group";
-import { authClient } from "@web/lib/auth-client";
 import { cn } from "@web/lib/utils";
 import { Check, X } from "lucide-react";
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 
 interface PricingCardsProps {
+  // TODO(stripe): consumed by the commented-out checkout handler below; kept so
+  // callers (e.g. PricingDialog) keep type-checking until billing is re-enabled.
   onCheckout?: () => void;
   compact?: boolean;
 }
 
-export function PricingCards({
-  onCheckout,
-  compact = false,
-}: PricingCardsProps = {}) {
+export function PricingCards({ compact = false }: PricingCardsProps = {}) {
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly");
-  const [isPending, startTransition] = useTransition();
   const currentPricing = pricing[billingPeriod];
 
-  const handleCheckout = () => {
-    startTransition(async () => {
-      await authClient.checkout({
-        slug: `pro-${billingPeriod}`,
-      });
-      onCheckout?.();
-    });
-  };
+  // TODO(stripe): re-implement checkout against the billing provider. This
+  // called Polar's authClient.checkout() and then invoked onCheckout?.().
+  // const handleCheckout = () => {
+  //   startTransition(async () => {
+  //     await authClient.checkout({
+  //       slug: `pro-${billingPeriod}`,
+  //     });
+  //     onCheckout?.();
+  //   });
+  // };
 
   return (
     <div className="flex flex-col gap-12">
@@ -138,11 +137,13 @@ export function PricingCards({
               </div>
 
               {/* CTA */}
-              {tier.href ? (
+              {tier.href && (
                 <Button size="lg" className="w-full" variant="outline" asChild>
                   <Link href={tier.href as "/login"}>{tier.cta}</Link>
                 </Button>
-              ) : (
+              )}
+              {/* TODO(stripe): re-enable the Pro checkout CTA once billing is wired up.
+              {!tier.href && (
                 <Button
                   size="lg"
                   className="w-full"
@@ -151,7 +152,7 @@ export function PricingCards({
                 >
                   {isPending ? "Loading..." : tier.cta}
                 </Button>
-              )}
+              )} */}
 
               {/* Features */}
               <ul className="flex flex-col gap-3">

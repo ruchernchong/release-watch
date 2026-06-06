@@ -1,8 +1,8 @@
 "use client";
 
-import { PricingDialog } from "@web/components/pricing/pricing-dialog";
+// TODO(stripe): PricingDialog, Button, authClient, ExternalLink, RefreshCw and
+// useTransition are needed again when the billing CTAs below are re-enabled.
 import { Badge } from "@web/components/ui/badge";
-import { Button } from "@web/components/ui/button";
 import {
   Card,
   CardContent,
@@ -12,18 +12,15 @@ import {
 } from "@web/components/ui/card";
 import { Skeleton } from "@web/components/ui/skeleton";
 import { useUserTier } from "@web/hooks/use-user-tier";
-import { authClient } from "@web/lib/auth-client";
 import {
   CalendarClock,
   CreditCard,
   Crown,
-  ExternalLink,
-  RefreshCw,
   Sparkles,
   TrendingDown,
 } from "lucide-react";
 import { parseAsString, useQueryState } from "nuqs";
-import { useEffect, useTransition } from "react";
+import { useEffect } from "react";
 
 export function SubscriptionSection() {
   const {
@@ -35,7 +32,6 @@ export function SubscriptionSection() {
     cancelAtPeriodEnd,
     refetch,
   } = useUserTier();
-  const [isPending, startTransition] = useTransition();
   const [checkout, setCheckout] = useQueryState("checkout", parseAsString);
 
   const isProTier = tier === "pro";
@@ -60,18 +56,20 @@ export function SubscriptionSection() {
     }
   }, [checkout, refetch, setCheckout]);
 
-  const handleManageSubscription = async () => {
-    const result = await authClient.customer.portal();
-    if (result.data?.url) {
-      window.open(result.data.url, "_blank");
-    }
-  };
-
-  const handleQuickCheckout = () => {
-    startTransition(async () => {
-      await authClient.checkout({ slug: "pro-monthly" });
-    });
-  };
+  // TODO(stripe): re-implement subscription management against the billing
+  // provider. These called Polar's authClient.customer.portal() / checkout().
+  // const handleManageSubscription = async () => {
+  //   const result = await authClient.customer.portal();
+  //   if (result.data?.url) {
+  //     window.open(result.data.url, "_blank");
+  //   }
+  // };
+  //
+  // const handleQuickCheckout = () => {
+  //   startTransition(async () => {
+  //     await authClient.checkout({ slug: "pro-monthly" });
+  //   });
+  // };
 
   if (isTierPending) {
     return (
@@ -163,6 +161,7 @@ export function SubscriptionSection() {
               </div>
             </div>
 
+            {/* TODO(stripe): re-enable the "Manage" CTA once billing is wired up.
             {isProTier && isSubscriptionActive && !isSubscriptionCanceling && (
               <Button
                 variant="outline"
@@ -172,7 +171,7 @@ export function SubscriptionSection() {
                 Manage
                 <ExternalLink className="ml-2 size-3" />
               </Button>
-            )}
+            )} */}
           </div>
 
           {/* Cancellation Context Banner */}
@@ -245,6 +244,8 @@ export function SubscriptionSection() {
                 </div>
 
                 {/* Actions */}
+                {/* TODO(stripe): re-enable the resubscribe / manage-billing CTAs
+                    once billing is wired up.
                 <div className="flex items-center gap-3">
                   <Button
                     onClick={handleQuickCheckout}
@@ -265,7 +266,7 @@ export function SubscriptionSection() {
                     Manage billing
                     <ExternalLink className="ml-2 size-3" />
                   </Button>
-                </div>
+                </div> */}
               </div>
             </div>
           )}
@@ -285,6 +286,8 @@ export function SubscriptionSection() {
                   </p>
                 </div>
               </div>
+              {/* TODO(stripe): re-enable the "View Plans" / "Subscribe" CTAs
+                  once billing is wired up.
               <div className="flex gap-3">
                 <PricingDialog>
                   <Button>View Plans</Button>
@@ -296,7 +299,7 @@ export function SubscriptionSection() {
                 >
                   {isPending ? "Loading..." : "Subscribe — $3/mo"}
                 </Button>
-              </div>
+              </div> */}
             </div>
           )}
         </div>
