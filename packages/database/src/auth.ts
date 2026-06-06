@@ -14,6 +14,15 @@ import * as schema from "./schema";
 
 export const auth = betterAuth({
   appName: "Release Watch",
+  baseURL: {
+    allowedHosts: [
+      "shipradar.dev",
+      "www.shipradar.dev",
+      "*.vercel.app",
+      "shipradar.localhost",
+      "*.shipradar.localhost",
+    ],
+  },
   database: drizzleAdapter(db, {
     provider: "pg",
     schema,
@@ -29,7 +38,7 @@ export const auth = betterAuth({
   plugins: [
     admin(),
     lastLoginMethod(),
-    oAuthProxy(),
+    oAuthProxy({ productionURL: "https://shipradar.dev" }),
     passkey(),
     twoFactor(),
     jwt(),
