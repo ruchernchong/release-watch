@@ -382,7 +382,7 @@ export function createBot(): Bot {
     const match = text.match(GITHUB_URL_PATTERN);
 
     if (!match) {
-      if (/github\.com/i.test(text)) {
+      if (/^(?:https?:\/\/)?(?:www\.)?github\.com(?:\/|$)/i.test(text.trim())) {
         await ctx.reply(
           "That doesn't look like a GitHub repo URL. Try https://github.com/owner/repo",
         );
