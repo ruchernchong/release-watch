@@ -12,6 +12,7 @@ import {
   TextField,
   Typography,
 } from "@heroui/react";
+import { ItemCard, ItemCardGroup } from "@heroui-pro/react";
 import { SubscriptionSection } from "@web/components/settings/subscription-section";
 import { useSession } from "@web/lib/auth-client";
 import { Bell, Download, Shield, Trash2, User, Zap } from "lucide-react";
@@ -29,22 +30,16 @@ function SettingRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between gap-6 py-4">
-      <div className="flex items-center gap-4">
-        <Avatar>
-          <Avatar.Fallback>
-            <Icon className="size-4" />
-          </Avatar.Fallback>
-        </Avatar>
-        <div className="flex flex-col gap-1">
-          <Label>{label}</Label>
-          <Typography type="body-sm" color="muted">
-            {description}
-          </Typography>
-        </div>
-      </div>
-      <div className="shrink-0">{children}</div>
-    </div>
+    <ItemCard variant="transparent" className="px-0 py-4">
+      <ItemCard.Icon>
+        <Icon className="size-4" />
+      </ItemCard.Icon>
+      <ItemCard.Content>
+        <ItemCard.Title>{label}</ItemCard.Title>
+        <ItemCard.Description>{description}</ItemCard.Description>
+      </ItemCard.Content>
+      <ItemCard.Action>{children}</ItemCard.Action>
+    </ItemCard>
   );
 }
 
@@ -57,7 +52,7 @@ export function SettingsSection() {
   const [aiSummaries, setAiSummaries] = useState(true);
 
   return (
-    <>
+    <div className="flex w-full max-w-5xl flex-col gap-6">
       <div className="flex flex-col gap-2">
         <Typography type="h1">Settings</Typography>
         <Typography color="muted">
@@ -68,7 +63,7 @@ export function SettingsSection() {
       <div className="flex flex-col gap-8">
         {/* Profile Section */}
         <Card>
-          <Card.Header>
+          <Card.Header className="items-start gap-4">
             <Avatar>
               <Avatar.Fallback>
                 <User className="size-5" />
@@ -81,9 +76,9 @@ export function SettingsSection() {
               </Card.Description>
             </div>
           </Card.Header>
-          <Card.Content>
-            <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-8">
-              <div className="flex flex-col items-center gap-4">
+          <Card.Content className="gap-6">
+            <div className="grid gap-6 md:grid-cols-[180px_1fr] md:items-start md:gap-8">
+              <div className="flex flex-col items-start gap-4 sm:flex-row md:flex-col md:items-center">
                 <Avatar size="lg">
                   {user?.image && (
                     <Avatar.Image src={user.image} alt={user.name ?? ""} />
@@ -129,7 +124,7 @@ export function SettingsSection() {
 
         {/* Notifications Section */}
         <Card>
-          <Card.Header>
+          <Card.Header className="items-start gap-4">
             <Avatar>
               <Avatar.Fallback>
                 <Bell className="size-5" />
@@ -143,59 +138,61 @@ export function SettingsSection() {
             </div>
           </Card.Header>
           <Card.Content>
-            <SettingRow
-              icon={Zap}
-              label="Release notifications"
-              description="Get notified immediately when a watched repo publishes a new release."
-            >
-              <Switch
-                aria-label="Release notifications"
-                isSelected={releaseNotifications}
-                onChange={setReleaseNotifications}
+            <ItemCardGroup variant="transparent">
+              <SettingRow
+                icon={Zap}
+                label="Release notifications"
+                description="Get notified immediately when a watched repo publishes a new release."
               >
-                <Switch.Control>
-                  <Switch.Thumb />
-                </Switch.Control>
-              </Switch>
-            </SettingRow>
-            <Separator />
-            <SettingRow
-              icon={Bell}
-              label="Weekly digest"
-              description="Receive a weekly summary of all releases from your watched repos."
-            >
-              <Switch
-                aria-label="Weekly digest"
-                isSelected={weeklyDigest}
-                onChange={setWeeklyDigest}
+                <Switch
+                  aria-label="Release notifications"
+                  isSelected={releaseNotifications}
+                  onChange={setReleaseNotifications}
+                >
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                </Switch>
+              </SettingRow>
+              <Separator />
+              <SettingRow
+                icon={Bell}
+                label="Weekly digest"
+                description="Receive a weekly summary of all releases from your watched repos."
               >
-                <Switch.Control>
-                  <Switch.Thumb />
-                </Switch.Control>
-              </Switch>
-            </SettingRow>
-            <Separator />
-            <SettingRow
-              icon={Zap}
-              label="AI summaries"
-              description="Include AI-generated summaries in release notifications."
-            >
-              <Switch
-                aria-label="AI summaries"
-                isSelected={aiSummaries}
-                onChange={setAiSummaries}
+                <Switch
+                  aria-label="Weekly digest"
+                  isSelected={weeklyDigest}
+                  onChange={setWeeklyDigest}
+                >
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                </Switch>
+              </SettingRow>
+              <Separator />
+              <SettingRow
+                icon={Zap}
+                label="AI summaries"
+                description="Include AI-generated summaries in release notifications."
               >
-                <Switch.Control>
-                  <Switch.Thumb />
-                </Switch.Control>
-              </Switch>
-            </SettingRow>
+                <Switch
+                  aria-label="AI summaries"
+                  isSelected={aiSummaries}
+                  onChange={setAiSummaries}
+                >
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                </Switch>
+              </SettingRow>
+            </ItemCardGroup>
           </Card.Content>
         </Card>
 
         {/* Data & Privacy Section */}
         <Card>
-          <Card.Header>
+          <Card.Header className="items-start gap-4">
             <Avatar>
               <Avatar.Fallback>
                 <Shield className="size-5" />
@@ -208,26 +205,30 @@ export function SettingsSection() {
               </Card.Description>
             </div>
           </Card.Header>
-          <Card.Content>
-            <div className="flex items-start gap-4">
-              <Avatar>
-                <Avatar.Fallback>
+          <Card.Content className="gap-6">
+            <ItemCardGroup variant="transparent">
+              <ItemCard variant="transparent" className="px-0">
+                <ItemCard.Icon>
                   <Download className="size-4" />
-                </Avatar.Fallback>
-              </Avatar>
-              <div className="flex flex-1 flex-col gap-1">
-                <Typography type="body-sm" weight="medium">
-                  Export your data
-                </Typography>
-                <Typography type="body-sm" color="muted">
-                  Download a copy of your subscriptions and notification
-                  history.
-                </Typography>
-              </div>
-              <Button variant="outline" size="sm">
-                Export
-              </Button>
-            </div>
+                </ItemCard.Icon>
+                <ItemCard.Content>
+                  <ItemCard.Title>Export your data</ItemCard.Title>
+                  <ItemCard.Description>
+                    Download a copy of your subscriptions and notification
+                    history.
+                  </ItemCard.Description>
+                </ItemCard.Content>
+                <ItemCard.Action>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full sm:w-auto"
+                  >
+                    Export
+                  </Button>
+                </ItemCard.Action>
+              </ItemCard>
+            </ItemCardGroup>
 
             <Separator />
 
@@ -238,29 +239,34 @@ export function SettingsSection() {
                   Irreversible actions that affect your account.
                 </Typography>
               </div>
-              <div className="flex items-start gap-4 rounded-lg border border-danger/30 bg-danger/5 p-4">
-                <Avatar>
-                  <Avatar.Fallback>
-                    <Trash2 className="size-4 text-danger" />
-                  </Avatar.Fallback>
-                </Avatar>
-                <div className="flex flex-1 flex-col gap-1">
-                  <Typography type="body-sm" weight="medium">
-                    Delete account
-                  </Typography>
-                  <Typography type="body-sm" color="muted">
+              <ItemCard
+                variant="outline"
+                className="border-danger/30 bg-danger/5"
+              >
+                <ItemCard.Icon>
+                  <Trash2 className="size-4 text-danger" />
+                </ItemCard.Icon>
+                <ItemCard.Content>
+                  <ItemCard.Title>Delete account</ItemCard.Title>
+                  <ItemCard.Description>
                     Permanently delete your account and all associated data.
                     This action cannot be undone.
-                  </Typography>
-                </div>
-                <Button variant="danger-soft" size="sm">
-                  Delete
-                </Button>
-              </div>
+                  </ItemCard.Description>
+                </ItemCard.Content>
+                <ItemCard.Action>
+                  <Button
+                    variant="danger-soft"
+                    size="sm"
+                    className="w-full sm:w-auto"
+                  >
+                    Delete
+                  </Button>
+                </ItemCard.Action>
+              </ItemCard>
             </div>
           </Card.Content>
         </Card>
       </div>
-    </>
+    </div>
   );
 }

@@ -10,7 +10,7 @@ import {
   Switch,
   Typography,
 } from "@heroui/react";
-import { NumberValue } from "@heroui-pro/react";
+import { ItemCard, ItemCardGroup, KPI, KPIGroup } from "@heroui-pro/react";
 import { toggleTelegramChannel } from "@web/app/(dashboard)/dashboard/integrations/actions";
 import { TelegramLinkDialog } from "@web/components/integrations/telegram-link-dialog";
 import { AddRepoDialog } from "@web/components/repos/add-repo-dialog";
@@ -73,7 +73,7 @@ export function Overview({ stats, releases, telegramStatus }: OverviewProps) {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex w-full max-w-6xl flex-col gap-6">
       <div className="flex flex-col gap-1">
         <Typography type="h1">Dashboard</Typography>
         <Typography type="body-sm" color="muted">
@@ -81,75 +81,61 @@ export function Overview({ stats, releases, telegramStatus }: OverviewProps) {
         </Typography>
       </div>
 
-      <div className="grid auto-rows-[minmax(140px,auto)] grid-cols-1 gap-4 md:grid-cols-6 lg:grid-cols-12">
-        {/* Repos Watched */}
-        <div className="md:col-span-3 lg:col-span-4">
-          <Card>
-            <Card.Content>
-              <Avatar>
-                <Avatar.Fallback>
-                  <FolderGit2 className="size-5" />
-                </Avatar.Fallback>
-              </Avatar>
-              <div className="flex flex-col gap-1">
-                <Typography type="body-xs" color="muted">
-                  Watching
-                </Typography>
-                <NumberValue value={stats.reposWatched} />
+      <KPIGroup className="flex-col md:flex-row">
+        <KPI>
+          <KPI.Header>
+            <KPI.Icon status="success">
+              <FolderGit2 className="size-4" />
+            </KPI.Icon>
+            <KPI.Title>Repositories</KPI.Title>
+          </KPI.Header>
+          <KPI.Content>
+            <KPI.Value value={stats.reposWatched} />
+            <Typography type="body-sm" color="muted">
+              tracked
+            </Typography>
+          </KPI.Content>
+        </KPI>
+        <KPIGroup.Separator />
+        <KPI>
+          <KPI.Header>
+            <KPI.Icon status="success">
+              <Bell className="size-4" />
+            </KPI.Icon>
+            <KPI.Title>Active Channels</KPI.Title>
+          </KPI.Header>
+          <KPI.Content>
+            <div className="flex items-baseline gap-1">
+              <KPI.Value value={stats.activeChannels} />
+              {stats.totalChannels > 0 && (
                 <Typography type="body-sm" color="muted">
-                  repositories tracked
+                  / {stats.totalChannels}
                 </Typography>
-              </div>
-            </Card.Content>
-          </Card>
-        </div>
+              )}
+            </div>
+            <Typography type="body-sm" color="muted">
+              enabled
+            </Typography>
+          </KPI.Content>
+        </KPI>
+      </KPIGroup>
 
-        {/* Active Channels */}
-        <div className="md:col-span-3 lg:col-span-4">
-          <Card>
-            <Card.Content>
-              <Avatar>
-                <Avatar.Fallback>
-                  <Bell className="size-5" />
-                </Avatar.Fallback>
-              </Avatar>
-              <div className="flex flex-col gap-1">
-                <Typography type="body-xs" color="muted">
-                  Active
-                </Typography>
-                <div className="flex items-baseline gap-1">
-                  <NumberValue value={stats.activeChannels} />
-                  {stats.totalChannels > 0 && (
-                    <Typography type="body-sm" color="muted">
-                      / {stats.totalChannels}
-                    </Typography>
-                  )}
-                </div>
-                <Typography type="body-sm" color="muted">
-                  notification channels
-                </Typography>
-              </div>
-            </Card.Content>
-          </Card>
-        </div>
-
-        {/* Quick Add Repo */}
-        <div className="md:col-span-3 lg:col-span-4">
-          <Card>
-            <Card.Content>
-              <Avatar>
-                <Avatar.Fallback>
-                  <Github className="size-5" />
-                </Avatar.Fallback>
-              </Avatar>
-              <div className="flex flex-col gap-1">
-                <Typography type="body-sm" weight="semibold">
-                  Add Repository
-                </Typography>
-                <Typography type="body-sm" color="muted">
-                  Start watching a new repo
-                </Typography>
-              </div>
+      <div className="grid grid-cols-1 gap-4">
+        <ItemCardGroup
+          layout="grid"
+          className="lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]"
+        >
+          <ItemCard>
+            <ItemCard.Icon>
+              <Github className="size-5" />
+            </ItemCard.Icon>
+            <ItemCard.Content>
+              <ItemCard.Title>Add Repository</ItemCard.Title>
+              <ItemCard.Description>
+                Start watching a new repo
+              </ItemCard.Description>
+            </ItemCard.Content>
+            <ItemCard.Action>
               <Button
                 isIconOnly
                 variant="ghost"
@@ -159,30 +145,32 @@ export function Overview({ stats, releases, telegramStatus }: OverviewProps) {
               >
                 <Plus className="size-4" />
               </Button>
-            </Card.Content>
-          </Card>
-        </div>
+            </ItemCard.Action>
+          </ItemCard>
 
-        {/* Telegram Integration */}
-        <div className="md:col-span-3 lg:col-span-4">
-          <Card>
-            <Card.Content>
-              <Avatar>
-                <Avatar.Fallback>
-                  <Send className="size-5" />
-                </Avatar.Fallback>
-              </Avatar>
-              <div className="flex min-w-0 flex-1 flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <Typography type="body-sm" weight="semibold">
-                    Telegram
-                  </Typography>
+          <ItemCard>
+            <ItemCard.Icon>
+              <Send className="size-5" />
+            </ItemCard.Icon>
+            <ItemCard.Content>
+              <ItemCard.Title>
+                <span className="flex flex-wrap items-center gap-2">
+                  Telegram
                   {optimisticTelegram.linked && (
                     <Chip color="success" variant="soft" size="sm">
                       <Chip.Label>Connected</Chip.Label>
                     </Chip>
                   )}
-                </div>
+                </span>
+              </ItemCard.Title>
+              <ItemCard.Description>
+                {optimisticTelegram.linked
+                  ? "Telegram release alerts are connected"
+                  : "Connect the bot to receive release alerts"}
+              </ItemCard.Description>
+            </ItemCard.Content>
+            <ItemCard.Action>
+              <div className="flex items-center gap-2">
                 {optimisticTelegram.linked && (
                   <Link
                     href="https://t.me/ShipRadar_Bot"
@@ -203,25 +191,24 @@ export function Overview({ stats, releases, telegramStatus }: OverviewProps) {
                     Connect
                   </Button>
                 )}
+                {optimisticTelegram.linked && (
+                  <Switch
+                    aria-label="Toggle Telegram notifications"
+                    isSelected={optimisticTelegram.channel?.enabled ?? false}
+                    onChange={handleTelegramToggle}
+                    isDisabled={isPending}
+                  >
+                    <Switch.Control>
+                      <Switch.Thumb />
+                    </Switch.Control>
+                  </Switch>
+                )}
               </div>
-              {optimisticTelegram.linked && (
-                <Switch
-                  aria-label="Toggle Telegram notifications"
-                  isSelected={optimisticTelegram.channel?.enabled ?? false}
-                  onChange={handleTelegramToggle}
-                  isDisabled={isPending}
-                >
-                  <Switch.Control>
-                    <Switch.Thumb />
-                  </Switch.Control>
-                </Switch>
-              )}
-            </Card.Content>
-          </Card>
-        </div>
+            </ItemCard.Action>
+          </ItemCard>
+        </ItemCardGroup>
 
-        {/* Recent Releases */}
-        <div className="row-span-2 md:col-span-6 lg:col-span-8">
+        <div>
           <Card>
             <Card.Header>
               <Card.Title>Recent Releases</Card.Title>
@@ -281,7 +268,7 @@ function ReleaseItem({ release }: ReleaseItemProps) {
       href={release.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-start gap-3 rounded-lg p-2 transition-colors hover:bg-surface-secondary"
+      className="group flex items-start gap-3 rounded-lg p-2 transition-colors hover:bg-surface-secondary"
     >
       <Avatar size="sm">
         <Avatar.Fallback>
