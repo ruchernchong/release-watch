@@ -90,7 +90,7 @@ pnpm install
    DATABASE_URL=          # Neon Postgres connection string
    GITHUB_TOKEN=
    TELEGRAM_BOT_TOKEN=
-   JWKS_URL=              # https://shipradar.dev/api/auth/jwks
+   JWKS_URL=              # https://shipradar.localhost/api/auth/jwks locally; https://shipradar.dev/api/auth/jwks in production
    UPSTASH_REDIS_REST_URL=
    UPSTASH_REDIS_REST_TOKEN=
    CRON_SECRET=

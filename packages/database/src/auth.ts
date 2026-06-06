@@ -28,7 +28,7 @@ export const auth = betterAuth({
     schema,
     usePlural: true,
   }),
-  trustedOrigins: ["https://*.vercel.app"],
+  trustedOrigins: ["https://shipradar-web-*.vercel.app"],
   account: {
     accountLinking: {
       enabled: true,

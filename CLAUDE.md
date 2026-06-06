@@ -63,7 +63,7 @@ pnpm auth:generate        # Regenerate BetterAuth schema
 - `DATABASE_URL` - Neon Postgres connection string
 - `GITHUB_TOKEN` - GitHub API access
 - `TELEGRAM_BOT_TOKEN` - Telegram bot token
-- `JWKS_URL` - BetterAuth JWKS endpoint (e.g., `https://shipradar.dev/api/auth/jwks`)
+- `JWKS_URL` - BetterAuth JWKS endpoint (e.g., `https://shipradar.localhost/api/auth/jwks` locally, `https://shipradar.dev/api/auth/jwks` in production)
 - `UPSTASH_REDIS_REST_URL` - Upstash Redis REST endpoint
 - `UPSTASH_REDIS_REST_TOKEN` - Upstash Redis REST token
 - `CRON_SECRET` - Bearer secret for the internal release-check cron endpoint
@@ -75,12 +75,13 @@ pnpm auth:generate        # Regenerate BetterAuth schema
 **apps/web** (.env):
 - `DATABASE_URL` - Neon Postgres connection string
 - `BETTER_AUTH_SECRET` - Auth secret (generate random string)
-- `BETTER_AUTH_URL` - Auth callback URL (e.g., `http://localhost:3000`)
+- `BETTER_AUTH_URL` - Auth callback URL (e.g., `https://shipradar.localhost` locally, `https://shipradar.dev` in production)
+- `NEXT_PUBLIC_BETTER_AUTH_URL` - Browser auth URL (e.g., `https://shipradar.localhost` locally, `https://shipradar.dev` in production)
 - `GITHUB_CLIENT_ID` - GitHub OAuth client ID
 - `GITHUB_CLIENT_SECRET` - GitHub OAuth client secret
 - `GOOGLE_CLIENT_ID` - Google OAuth client ID
 - `GOOGLE_CLIENT_SECRET` - Google OAuth client secret
-- `NEXT_PUBLIC_API_URL` - Hono API URL (e.g., `https://api.shipradar.dev`)
+- `NEXT_PUBLIC_API_URL` - Hono API URL (e.g., `https://api.shipradar.localhost` locally, `https://api.shipradar.dev` in production)
 - `NEXT_PUBLIC_POSTHOG_KEY` - PostHog project API key (optional, for analytics)
 
 **packages/database** (.env):

@@ -226,8 +226,9 @@ PostHog is configured for product analytics with a reverse proxy to bypass ad bl
 
 - `DATABASE_URL` - Neon Postgres connection
 - `BETTER_AUTH_SECRET` - Auth secret
-- `BETTER_AUTH_URL` - Auth callback URL (e.g., `http://localhost:3000`)
-- `NEXT_PUBLIC_API_URL` - Hono API URL (e.g., `https://api.shipradar.dev`)
+- `BETTER_AUTH_URL` - Auth callback URL (e.g., `https://shipradar.localhost` locally, `https://shipradar.dev` in production)
+- `NEXT_PUBLIC_BETTER_AUTH_URL` - Browser auth URL (e.g., `https://shipradar.localhost` locally, `https://shipradar.dev` in production)
+- `NEXT_PUBLIC_API_URL` - Hono API URL (e.g., `https://api.shipradar.localhost` locally, `https://api.shipradar.dev` in production)
 - `NEXT_PUBLIC_POSTHOG_KEY` - PostHog project API key (optional)
 - `GITHUB_CLIENT_ID` - GitHub OAuth client ID
 - `GITHUB_CLIENT_SECRET` - GitHub OAuth client secret

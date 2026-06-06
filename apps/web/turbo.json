@@ -10,6 +10,7 @@
       "dependsOn": ["^build"],
       "env": [
         "NEXT_PUBLIC_API_URL",
+        "NEXT_PUBLIC_BETTER_AUTH_URL",
         "NEXT_PUBLIC_DISCORD_CLIENT_ID",
         "NEXT_PUBLIC_POSTHOG_KEY"
       ],
