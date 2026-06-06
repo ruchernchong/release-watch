@@ -1,7 +1,7 @@
 "use server";
 
+import { getApi } from "@web/lib/api";
 import { revalidatePath } from "next/cache";
-import { getApi } from "@/lib/api";
 
 // Telegram Actions
 

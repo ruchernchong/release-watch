@@ -1,16 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useState, useTransition } from "react";
-import { TelegramLinkDialog } from "@/components/integrations/telegram-link-dialog";
-import { AddRepoForm } from "@/components/repos/add-repo-form";
+import { TelegramLinkDialog } from "@web/components/integrations/telegram-link-dialog";
+import { AddRepoForm } from "@web/components/repos/add-repo-form";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { api } from "@/lib/api-client";
+} from "@web/components/ui/card";
+import { api } from "@web/lib/api-client";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { IntegrationToggle } from "./integration-toggle";
 
 interface TelegramChannel {

@@ -1,4 +1,4 @@
-import type { GitHubRepoResponse } from "@/lib/github";
+import type { GitHubRepoResponse } from "@web/lib/github";
 
 const REPO_OWNER = "tartinerlabs";
 const REPO_NAME = "shipradar";

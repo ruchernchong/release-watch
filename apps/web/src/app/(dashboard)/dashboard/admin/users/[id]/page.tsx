@@ -1,9 +1,8 @@
+import { UserDetailCard } from "@web/components/admin/user-detail-card";
+import { Button } from "@web/components/ui/button";
 import { ArrowLeft, Shield } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
-
-import { UserDetailCard } from "@/components/admin/user-detail-card";
-import { Button } from "@/components/ui/button";
 
 interface UserDetailPageProps {
   params: Promise<{ id: string }>;

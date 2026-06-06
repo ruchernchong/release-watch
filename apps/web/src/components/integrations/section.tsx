@@ -1,5 +1,17 @@
 "use client";
 
+import { Button } from "@web/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@web/components/ui/card";
+import { Switch } from "@web/components/ui/switch";
+import { useNotifications } from "@web/hooks/use-notifications";
+import { api } from "@web/lib/api-client";
+import { signIn } from "@web/lib/auth-client";
 import {
   Bell,
   BellOff,
@@ -13,18 +25,6 @@ import {
   Trash2,
 } from "lucide-react";
 import { useCallback, useEffect, useState, useTransition } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { useNotifications } from "@/hooks/use-notifications";
-import { api } from "@/lib/api-client";
-import { signIn } from "@/lib/auth-client";
 import { DiscordChannelDialog } from "./discord-channel-dialog";
 import { TelegramLinkDialog } from "./telegram-link-dialog";
 

@@ -1,15 +1,15 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@web/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { signIn } from "@/lib/auth-client";
-import { cn } from "@/lib/utils";
+} from "@web/components/ui/card";
+import { signIn } from "@web/lib/auth-client";
+import { cn } from "@web/lib/utils";
 
 export function LoginForm({
   className,

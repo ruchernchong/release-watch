@@ -1,24 +1,24 @@
 "use client";
 
-import { ExternalLink, Hash, Loader2, RefreshCw, Server } from "lucide-react";
-import { useEffect, useEffectEvent, useState, useTransition } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@web/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+} from "@web/components/ui/dialog";
+import { Label } from "@web/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { api } from "@/lib/api-client";
+} from "@web/components/ui/select";
+import { api } from "@web/lib/api-client";
+import { ExternalLink, Hash, Loader2, RefreshCw, Server } from "lucide-react";
+import { useEffect, useEffectEvent, useState, useTransition } from "react";
 
 interface Guild {
   id: string;

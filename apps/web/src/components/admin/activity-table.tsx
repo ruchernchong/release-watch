@@ -7,6 +7,19 @@ import {
   getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { Avatar, AvatarFallback, AvatarImage } from "@web/components/ui/avatar";
+import { Badge } from "@web/components/ui/badge";
+import { Button } from "@web/components/ui/button";
+import { Skeleton } from "@web/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@web/components/ui/table";
+import { api } from "@web/lib/api-client";
 import {
   Activity,
   Laptop,
@@ -18,20 +31,6 @@ import {
 import type { Route } from "next";
 import Link from "next/link";
 import { useCallback, useEffect, useState, useTransition } from "react";
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { api } from "@/lib/api-client";
 
 interface ActivityLog {
   id: string;

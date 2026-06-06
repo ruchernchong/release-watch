@@ -1,5 +1,5 @@
+import { authClient, useSession } from "@web/lib/auth-client";
 import { useCallback, useEffect, useState, useTransition } from "react";
-import { authClient, useSession } from "@/lib/auth-client";
 
 export type UserTier = "free" | "pro";
 export type SubscriptionStatus = "active" | "canceled" | "past_due" | "none";

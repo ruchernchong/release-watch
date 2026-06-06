@@ -1,7 +1,6 @@
+import { ActivityTable } from "@web/components/admin/activity-table";
+import { AdminNav } from "@web/components/admin/admin-nav";
 import { Activity, Shield } from "lucide-react";
-
-import { ActivityTable } from "@/components/admin/activity-table";
-import { AdminNav } from "@/components/admin/admin-nav";
 
 export default function AdminActivityPage() {
   return (

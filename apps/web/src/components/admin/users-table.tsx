@@ -11,6 +11,28 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
+import { BanUserDialog } from "@web/components/admin/ban-user-dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@web/components/ui/avatar";
+import { Badge } from "@web/components/ui/badge";
+import { Button } from "@web/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@web/components/ui/dropdown-menu";
+import { Input } from "@web/components/ui/input";
+import { Skeleton } from "@web/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@web/components/ui/table";
+import { api } from "@web/lib/api-client";
 import {
   ArrowUpDown,
   Ban,
@@ -25,29 +47,6 @@ import {
 import type { Route } from "next";
 import Link from "next/link";
 import { useCallback, useEffect, useState, useTransition } from "react";
-
-import { BanUserDialog } from "@/components/admin/ban-user-dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { api } from "@/lib/api-client";
 
 interface User {
   id: string;

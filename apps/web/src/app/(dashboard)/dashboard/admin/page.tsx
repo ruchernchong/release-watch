@@ -1,10 +1,9 @@
+import { AdminNav } from "@web/components/admin/admin-nav";
+import { AdminStatsCards } from "@web/components/admin/admin-stats-cards";
+import { Card, CardHeader, CardTitle } from "@web/components/ui/card";
 import { Activity, ArrowRight, Shield, Users } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
-
-import { AdminNav } from "@/components/admin/admin-nav";
-import { AdminStatsCards } from "@/components/admin/admin-stats-cards";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function AdminPage() {
   return (

@@ -1,7 +1,7 @@
 import { buttonVariants, Chip } from "@heroui/react";
+import { MarketingPricing } from "@web/components/marketing/marketing-pricing";
 import { Bell } from "lucide-react";
 import Link from "next/link";
-import { MarketingPricing } from "@/components/marketing/marketing-pricing";
 
 export const metadata = {
   title: "Pricing - ShipRadar",

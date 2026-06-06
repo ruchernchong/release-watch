@@ -1,26 +1,26 @@
 "use client";
 
-import { Check, X } from "lucide-react";
-import Link from "next/link";
-import { useState, useTransition } from "react";
 import {
   type BillingPeriod,
   highlights,
   pricing,
   tiers,
-} from "@/components/pricing/pricing-data";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+} from "@web/components/pricing/pricing-data";
+import { Badge } from "@web/components/ui/badge";
+import { Button } from "@web/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { authClient } from "@/lib/auth-client";
-import { cn } from "@/lib/utils";
+} from "@web/components/ui/card";
+import { ToggleGroup, ToggleGroupItem } from "@web/components/ui/toggle-group";
+import { authClient } from "@web/lib/auth-client";
+import { cn } from "@web/lib/utils";
+import { Check, X } from "lucide-react";
+import Link from "next/link";
+import { useState, useTransition } from "react";
 
 interface PricingCardsProps {
   onCheckout?: () => void;

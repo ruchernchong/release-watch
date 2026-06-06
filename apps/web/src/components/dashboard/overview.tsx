@@ -1,5 +1,11 @@
 "use client";
 
+import { toggleTelegramChannel } from "@web/app/(dashboard)/dashboard/integrations/actions";
+import { TelegramLinkDialog } from "@web/components/integrations/telegram-link-dialog";
+import { AddRepoDialog } from "@web/components/repos/add-repo-dialog";
+import { Button } from "@web/components/ui/button";
+import { Switch } from "@web/components/ui/switch";
+import { cn } from "@web/lib/utils";
 import {
   Bell,
   ExternalLink,
@@ -9,12 +15,6 @@ import {
   Send,
 } from "lucide-react";
 import { useOptimistic, useState, useTransition } from "react";
-import { toggleTelegramChannel } from "@/app/(dashboard)/dashboard/integrations/actions";
-import { TelegramLinkDialog } from "@/components/integrations/telegram-link-dialog";
-import { AddRepoDialog } from "@/components/repos/add-repo-dialog";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { cn } from "@/lib/utils";
 import { CategoryBadge } from "./category-badge";
 import type { Release } from "./release-card";
 

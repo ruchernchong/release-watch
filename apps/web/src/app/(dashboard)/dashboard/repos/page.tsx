@@ -1,13 +1,13 @@
-import { AddRepoForm } from "@/components/repos/add-repo-form";
-import { ReposTable } from "@/components/repos/table";
+import { AddRepoForm } from "@web/components/repos/add-repo-form";
+import { ReposTable } from "@web/components/repos/table";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { getRepos } from "@/lib/data/repos";
+} from "@web/components/ui/card";
+import { getRepos } from "@web/lib/data/repos";
 
 export default async function ReposPage() {
   const { repos } = await getRepos();

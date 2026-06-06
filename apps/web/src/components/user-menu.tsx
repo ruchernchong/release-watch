@@ -1,10 +1,7 @@
 "use client";
 
-import { LogOut, Settings } from "lucide-react";
-import Link from "next/link";
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@web/components/ui/avatar";
+import { Button } from "@web/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,9 +9,11 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useUserTier } from "@/hooks/use-user-tier";
-import { signOut, useSession } from "@/lib/auth-client";
+} from "@web/components/ui/dropdown-menu";
+import { useUserTier } from "@web/hooks/use-user-tier";
+import { signOut, useSession } from "@web/lib/auth-client";
+import { LogOut, Settings } from "lucide-react";
+import Link from "next/link";
 
 export function UserMenu() {
   const { data: session } = useSession();

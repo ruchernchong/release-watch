@@ -1,9 +1,9 @@
 "use client";
 
+import { Card, CardContent } from "@web/components/ui/card";
+import { Skeleton } from "@web/components/ui/skeleton";
+import { api } from "@web/lib/api-client";
 import { useCallback, useEffect, useState, useTransition } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { api } from "@/lib/api-client";
 import { type Release, ReleaseCard } from "./release-card";
 
 interface ReleasesResponse {

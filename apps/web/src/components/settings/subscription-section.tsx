@@ -1,5 +1,18 @@
 "use client";
 
+import { PricingDialog } from "@web/components/pricing/pricing-dialog";
+import { Badge } from "@web/components/ui/badge";
+import { Button } from "@web/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@web/components/ui/card";
+import { Skeleton } from "@web/components/ui/skeleton";
+import { useUserTier } from "@web/hooks/use-user-tier";
+import { authClient } from "@web/lib/auth-client";
 import {
   CalendarClock,
   CreditCard,
@@ -11,19 +24,6 @@ import {
 } from "lucide-react";
 import { parseAsString, useQueryState } from "nuqs";
 import { useEffect, useTransition } from "react";
-import { PricingDialog } from "@/components/pricing/pricing-dialog";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useUserTier } from "@/hooks/use-user-tier";
-import { authClient } from "@/lib/auth-client";
 
 export function SubscriptionSection() {
   const {

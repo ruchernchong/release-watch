@@ -1,11 +1,10 @@
 "use client";
 
+import { cn } from "@web/lib/utils";
 import { Activity, LayoutDashboard, Users } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-import { cn } from "@/lib/utils";
 
 const navItems = [
   {

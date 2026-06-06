@@ -1,5 +1,5 @@
-import type { Release } from "@/components/dashboard/release-card";
-import { getApi } from "@/lib/api";
+import type { Release } from "@web/components/dashboard/release-card";
+import { getApi } from "@web/lib/api";
 
 export interface DashboardStats {
   reposWatched: number;

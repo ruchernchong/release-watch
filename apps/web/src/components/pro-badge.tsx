@@ -1,14 +1,14 @@
 "use client";
 
-import { Crown, Lock } from "lucide-react";
-import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@web/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@web/components/ui/tooltip";
+import { Crown, Lock } from "lucide-react";
+import Link from "next/link";
 
 interface ProBadgeProps {
   showLock?: boolean;

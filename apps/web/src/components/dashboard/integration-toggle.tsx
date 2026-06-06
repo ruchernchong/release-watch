@@ -1,11 +1,11 @@
 "use client";
 
+import { Button } from "@web/components/ui/button";
+import { Label } from "@web/components/ui/label";
+import { Switch } from "@web/components/ui/switch";
+import { api } from "@web/lib/api-client";
 import { Check, ExternalLink, Loader2, Send } from "lucide-react";
 import { useState, useTransition } from "react";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { api } from "@/lib/api-client";
 
 interface IntegrationToggleProps {
   type: "telegram" | "discord";

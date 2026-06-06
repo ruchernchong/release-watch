@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -8,7 +7,8 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet";
+} from "@web/components/ui/sheet";
+import { useState } from "react";
 import { PricingCards } from "./pricing-cards";
 
 interface PricingDialogProps {

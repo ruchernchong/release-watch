@@ -13,19 +13,9 @@ import {
   type VisibilityState,
 } from "@tanstack/react-table";
 import {
-  ArrowUpDown,
-  ChevronDown,
-  ExternalLink,
-  MoreHorizontal,
-  Pause,
-  Play,
-  Trash2,
-} from "lucide-react";
-import * as React from "react";
-import {
   deleteRepo,
   toggleRepoPause,
-} from "@/app/(dashboard)/dashboard/repos/actions";
+} from "@web/app/(dashboard)/dashboard/repos/actions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,18 +25,18 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+} from "@web/components/ui/alert-dialog";
+import { Badge } from "@web/components/ui/badge";
+import { Button } from "@web/components/ui/button";
+import { Checkbox } from "@web/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
+} from "@web/components/ui/dropdown-menu";
+import { Input } from "@web/components/ui/input";
 import {
   Table,
   TableBody,
@@ -54,7 +44,17 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@web/components/ui/table";
+import {
+  ArrowUpDown,
+  ChevronDown,
+  ExternalLink,
+  MoreHorizontal,
+  Pause,
+  Play,
+  Trash2,
+} from "lucide-react";
+import * as React from "react";
 
 interface Repo {
   id: string;

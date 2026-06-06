@@ -1,5 +1,18 @@
 "use client";
 
+import { BanUserDialog } from "@web/components/admin/ban-user-dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@web/components/ui/avatar";
+import { Badge } from "@web/components/ui/badge";
+import { Button } from "@web/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@web/components/ui/card";
+import { Separator } from "@web/components/ui/separator";
+import { Skeleton } from "@web/components/ui/skeleton";
+import { api } from "@web/lib/api-client";
 import {
   AlertTriangle,
   Ban,
@@ -15,15 +28,6 @@ import {
   UserX,
 } from "lucide-react";
 import { useCallback, useEffect, useState, useTransition } from "react";
-
-import { BanUserDialog } from "@/components/admin/ban-user-dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
-import { api } from "@/lib/api-client";
 
 interface UserDetail {
   user: {

@@ -1,7 +1,6 @@
+import { AdminNav } from "@web/components/admin/admin-nav";
+import { UsersTable } from "@web/components/admin/users-table";
 import { Shield, Users } from "lucide-react";
-
-import { AdminNav } from "@/components/admin/admin-nav";
-import { UsersTable } from "@/components/admin/users-table";
 
 export default function AdminUsersPage() {
   return (

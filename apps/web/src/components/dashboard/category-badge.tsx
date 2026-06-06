@@ -1,6 +1,6 @@
 import type { ReleaseCategory } from "@shipradar/types";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { Badge } from "@web/components/ui/badge";
+import { cn } from "@web/lib/utils";
 
 const categoryStyles: Record<ReleaseCategory, string> = {
   major: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/20",

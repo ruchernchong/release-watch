@@ -1,11 +1,10 @@
 "use client";
 
+import { Card, CardContent } from "@web/components/ui/card";
+import { Skeleton } from "@web/components/ui/skeleton";
+import { api } from "@web/lib/api-client";
 import { Bell, FolderGit2, Send, Tag, Users } from "lucide-react";
 import { useCallback, useEffect, useState, useTransition } from "react";
-
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { api } from "@/lib/api-client";
 
 interface AdminStats {
   uniqueUsers: number;

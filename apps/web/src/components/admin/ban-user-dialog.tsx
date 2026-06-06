@@ -1,9 +1,6 @@
 "use client";
 
-import { AlertTriangle, Ban, Loader2 } from "lucide-react";
-import { useState, useTransition } from "react";
-
-import { Button } from "@/components/ui/button";
+import { Button } from "@web/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -11,17 +8,19 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+} from "@web/components/ui/dialog";
+import { Label } from "@web/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { api } from "@/lib/api-client";
+} from "@web/components/ui/select";
+import { Textarea } from "@web/components/ui/textarea";
+import { api } from "@web/lib/api-client";
+import { AlertTriangle, Ban, Loader2 } from "lucide-react";
+import { useState, useTransition } from "react";
 
 interface BanUserDialogProps {
   user: {

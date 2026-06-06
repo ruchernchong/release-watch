@@ -1,11 +1,11 @@
 "use client";
 
+import { Badge } from "@web/components/ui/badge";
+import { Button } from "@web/components/ui/button";
+import { Progress } from "@web/components/ui/progress";
 import { Crown, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 
 interface UpgradePromptProps {
   current: number;

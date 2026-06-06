@@ -9,17 +9,17 @@ import {
   ToggleButtonGroup,
 } from "@heroui/react";
 import { ItemCard, ItemCardGroup } from "@heroui-pro/react";
-import { Check, X } from "lucide-react";
-import type { Route } from "next";
-import Link from "next/link";
-import { useState, useTransition } from "react";
 import {
   type BillingPeriod,
   highlights,
   pricing,
   tiers,
-} from "@/components/pricing/pricing-data";
-import { authClient } from "@/lib/auth-client";
+} from "@web/components/pricing/pricing-data";
+import { authClient } from "@web/lib/auth-client";
+import { Check, X } from "lucide-react";
+import type { Route } from "next";
+import Link from "next/link";
+import { useState, useTransition } from "react";
 
 export function MarketingPricing() {
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly");

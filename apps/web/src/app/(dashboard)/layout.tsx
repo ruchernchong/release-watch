@@ -1,17 +1,16 @@
-import { NuqsAdapter } from "nuqs/adapters/next/app";
-import { type ReactNode, Suspense } from "react";
-
-import { AppSidebar } from "@/components/app-sidebar";
-import { RepoSearch } from "@/components/repos/repo-search";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { Separator } from "@/components/ui/separator";
+import { AppSidebar } from "@web/components/app-sidebar";
+import { RepoSearch } from "@web/components/repos/repo-search";
+import { ThemeToggle } from "@web/components/theme-toggle";
+import { Separator } from "@web/components/ui/separator";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar";
-import { Skeleton } from "@/components/ui/skeleton";
-import { UserMenu } from "@/components/user-menu";
+} from "@web/components/ui/sidebar";
+import { Skeleton } from "@web/components/ui/skeleton";
+import { UserMenu } from "@web/components/user-menu";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { type ReactNode, Suspense } from "react";
 
 function DashboardSkeleton() {
   return (

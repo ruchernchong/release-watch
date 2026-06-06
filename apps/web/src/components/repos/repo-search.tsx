@@ -1,5 +1,15 @@
 "use client";
 
+import { Button } from "@web/components/ui/button";
+import { Input } from "@web/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@web/components/ui/popover";
+import { Skeleton } from "@web/components/ui/skeleton";
+import { api } from "@web/lib/api-client";
+import { cn } from "@web/lib/utils";
 import {
   AlertCircle,
   ArrowLeft,
@@ -20,16 +30,6 @@ import {
   useState,
   useTransition,
 } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Skeleton } from "@/components/ui/skeleton";
-import { api } from "@/lib/api-client";
-import { cn } from "@/lib/utils";
 
 interface RepoPreview {
   name: string;

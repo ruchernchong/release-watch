@@ -1,17 +1,6 @@
 "use client";
 
 import {
-  BadgeCheck,
-  FolderGit2,
-  LayoutDashboard,
-  Plug,
-  Shield,
-} from "lucide-react";
-import type { Route } from "next";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-
-import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
@@ -21,8 +10,18 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar";
-import { useSession } from "@/lib/auth-client";
+} from "@web/components/ui/sidebar";
+import { useSession } from "@web/lib/auth-client";
+import {
+  BadgeCheck,
+  FolderGit2,
+  LayoutDashboard,
+  Plug,
+  Shield,
+} from "lucide-react";
+import type { Route } from "next";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const navItems = [
   {

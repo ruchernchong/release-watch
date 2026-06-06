@@ -1,5 +1,17 @@
 "use client";
 
+import { createRepo } from "@web/app/(dashboard)/dashboard/repos/actions";
+import { Button } from "@web/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@web/components/ui/dialog";
+import { Input } from "@web/components/ui/input";
+import { Skeleton } from "@web/components/ui/skeleton";
+import type { GitHubLanguageColors, GitHubRepoResponse } from "@web/lib/github";
 import {
   AlertCircle,
   ExternalLink,
@@ -9,18 +21,6 @@ import {
   Star,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import { createRepo } from "@/app/(dashboard)/dashboard/repos/actions";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import type { GitHubLanguageColors, GitHubRepoResponse } from "@/lib/github";
 
 interface AddRepoDialogProps {
   open: boolean;

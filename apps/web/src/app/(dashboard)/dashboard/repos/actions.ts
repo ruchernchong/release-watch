@@ -1,7 +1,7 @@
 "use server";
 
+import { getApi } from "@web/lib/api";
 import { revalidatePath } from "next/cache";
-import { getApi } from "@/lib/api";
 
 export async function createRepo(repoName: string) {
   const api = await getApi();

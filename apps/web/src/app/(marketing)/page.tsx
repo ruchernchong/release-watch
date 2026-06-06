@@ -1,10 +1,10 @@
 import { buttonVariants } from "@heroui/react";
+import { FeatureCards } from "@web/components/marketing/feature-cards";
+import { GitHubStars } from "@web/components/marketing/github-stars";
+import { NotificationDemo } from "@web/components/marketing/notification-demo";
+import { Reveal } from "@web/components/marketing/reveal";
 import { Github, Sparkles } from "lucide-react";
 import Link from "next/link";
-import { FeatureCards } from "@/components/marketing/feature-cards";
-import { GitHubStars } from "@/components/marketing/github-stars";
-import { NotificationDemo } from "@/components/marketing/notification-demo";
-import { Reveal } from "@/components/marketing/reveal";
 
 export default function Home() {
   return (

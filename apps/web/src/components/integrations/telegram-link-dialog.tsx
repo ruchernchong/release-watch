@@ -1,16 +1,16 @@
 "use client";
 
-import { Check, Copy, ExternalLink, Loader2 } from "lucide-react";
-import { useState, useTransition } from "react";
-import { generateTelegramCode } from "@/app/(dashboard)/dashboard/integrations/actions";
-import { Button } from "@/components/ui/button";
+import { generateTelegramCode } from "@web/app/(dashboard)/dashboard/integrations/actions";
+import { Button } from "@web/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@web/components/ui/dialog";
+import { Check, Copy, ExternalLink, Loader2 } from "lucide-react";
+import { useState, useTransition } from "react";
 
 interface TelegramLinkDialogProps {
   open: boolean;

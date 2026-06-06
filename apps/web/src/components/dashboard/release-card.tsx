@@ -1,6 +1,6 @@
 import type { AIAnalysisResult } from "@shipradar/types";
+import { Card, CardContent, CardHeader } from "@web/components/ui/card";
 import { ExternalLink } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { CategoryBadge } from "./category-badge";
 
 export interface Release {

@@ -1,23 +1,22 @@
 "use client";
 
-import { Bell, Download, Shield, Trash2, User, Zap } from "lucide-react";
-import { useState } from "react";
-
-import { SubscriptionSection } from "@/components/settings/subscription-section";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { SubscriptionSection } from "@web/components/settings/subscription-section";
+import { Avatar, AvatarFallback, AvatarImage } from "@web/components/ui/avatar";
+import { Button } from "@web/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
-import { useSession } from "@/lib/auth-client";
+} from "@web/components/ui/card";
+import { Input } from "@web/components/ui/input";
+import { Label } from "@web/components/ui/label";
+import { Separator } from "@web/components/ui/separator";
+import { Switch } from "@web/components/ui/switch";
+import { useSession } from "@web/lib/auth-client";
+import { Bell, Download, Shield, Trash2, User, Zap } from "lucide-react";
+import { useState } from "react";
 
 function SettingRow({
   icon: Icon,

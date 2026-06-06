@@ -1,4 +1,4 @@
-import { getApi } from "@/lib/api";
+import { getApi } from "@web/lib/api";
 
 export interface DiscordChannel {
   channelId: string;
