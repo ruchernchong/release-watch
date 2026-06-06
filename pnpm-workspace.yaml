@@ -23,7 +23,7 @@ catalog:
   "@upstash/redis": 1.35.8
   "@vercel/config": 0.5.1
   '@types/node': 24.12.2
-  better-auth: 1.6.8
+  better-auth: 1.6.11
   drizzle-kit: 0.31.8
   drizzle-orm: 0.45.2
   hono: 4.12.19
