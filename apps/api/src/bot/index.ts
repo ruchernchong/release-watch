@@ -61,7 +61,12 @@ async function fetchAndFormatLatestRelease(
 }
 
 export function createBot(): Bot {
-  const bot = new Bot(process.env.TELEGRAM_BOT_TOKEN as string);
+  const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
+  if (!telegramBotToken) {
+    throw new Error("Missing required environment variable: TELEGRAM_BOT_TOKEN");
+  }
+
+  const bot = new Bot(telegramBotToken);
 
   bot.use(async (ctx, next) => {
     if (ctx.chat && ctx.chat.type !== "private") {
