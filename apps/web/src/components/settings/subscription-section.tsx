@@ -105,7 +105,7 @@ export function SubscriptionSection() {
       </Card.Header>
       <Card.Content>
         {/* Current Plan */}
-        <div className="flex items-start justify-between rounded-lg border border-border p-4">
+        <div className="flex items-start justify-between rounded-lg border border-separator p-4">
           <div className="flex items-start gap-4">
             <Avatar>
               <Avatar.Fallback>

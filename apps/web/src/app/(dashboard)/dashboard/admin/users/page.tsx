@@ -8,12 +8,12 @@ export default function AdminUsersPage() {
       {/* Header */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-lg bg-primary">
-            <Shield className="size-5 text-primary-foreground" />
+          <div className="flex size-10 items-center justify-center rounded-lg bg-accent">
+            <Shield className="size-5 text-accent-foreground" />
           </div>
           <div>
             <h1 className="font-bold text-3xl tracking-tight">Admin</h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted">
               System overview and administration tools
             </p>
           </div>

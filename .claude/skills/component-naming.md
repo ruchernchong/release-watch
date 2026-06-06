@@ -17,7 +17,7 @@ components/
 ├── auth/
 │   ├── login-form.tsx
 │   └── oauth-buttons.tsx
-└── ui/                  # Shared primitives (shadcn)
+└── shared/              # Shared app-specific components
 ```
 
 ## Rules

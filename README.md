@@ -17,7 +17,7 @@ Monitor GitHub releases and receive Telegram notifications with AI-powered summa
 **Frontend** (apps/web):
 - Next.js 16 with React 19
 - BetterAuth (OAuth + JWT)
-- shadcn/ui components
+- HeroUI v3 components
 - TanStack Table
 - PostHog (analytics, reverse proxy via `/ingest`)
 - Deployed on Vercel

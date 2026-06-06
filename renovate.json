@@ -21,11 +21,6 @@
       "groupName": "sentry"
     },
     {
-      "description": "Group @radix-ui packages",
-      "matchPackageNames": ["@radix-ui/*"],
-      "groupName": "radix-ui"
-    },
-    {
       "description": "Group @types packages",
       "matchPackageNames": ["@types/*"],
       "groupName": "types"

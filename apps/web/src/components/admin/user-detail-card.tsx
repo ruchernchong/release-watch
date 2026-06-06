@@ -257,7 +257,7 @@ export function UserDetailCard({ userId }: UserDetailCardProps) {
                   {connectedAccounts.map((account) => (
                     <div
                       key={account.id}
-                      className="flex items-center gap-2 rounded-md border border-border p-2"
+                      className="flex items-center gap-2 rounded-md border border-separator p-2"
                     >
                       <ProviderIcon provider={account.providerId} />
                       <Typography type="body-sm" className="capitalize">
@@ -287,7 +287,7 @@ export function UserDetailCard({ userId }: UserDetailCardProps) {
                   {channels.map((channel) => (
                     <div
                       key={channel.id}
-                      className="flex items-center gap-2 rounded-md border border-border p-2"
+                      className="flex items-center gap-2 rounded-md border border-separator p-2"
                     >
                       <ChannelIcon type={channel.type} />
                       <Typography type="body-sm" className="capitalize">
@@ -338,7 +338,7 @@ export function UserDetailCard({ userId }: UserDetailCardProps) {
                     href={`https://github.com/${sub.repoName}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 rounded-md border border-border p-3"
+                    className="flex items-center gap-2 rounded-md border border-separator p-3"
                   >
                     <FolderGit2 className="size-4 text-muted" />
                     <Typography type="body-sm" weight="medium" truncate>

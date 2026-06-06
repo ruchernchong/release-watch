@@ -230,7 +230,7 @@ export function DiscordChannelDialog({
             </div>
 
             {inviteUrl && (
-              <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface-secondary p-4">
+              <div className="flex flex-col gap-2 rounded-lg border border-separator bg-surface-secondary p-4">
                 <Typography type="body-sm" color="muted">
                   The ShipRadar bot needs to be added to this server.
                 </Typography>

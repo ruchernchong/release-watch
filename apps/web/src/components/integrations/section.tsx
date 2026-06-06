@@ -326,7 +326,7 @@ export function IntegrationsSection() {
                   {discordChannels.map((channel) => (
                     <div
                       key={channel.channelId}
-                      className="flex items-center justify-between rounded-lg border border-border p-3"
+                      className="flex items-center justify-between rounded-lg border border-separator p-3"
                     >
                       <div className="flex items-center gap-2">
                         <Hash className="size-4 text-muted" />

@@ -205,7 +205,7 @@ export function AddRepoDialog({ open, onOpenChange }: AddRepoDialogProps) {
               )}
 
               {isFetching && !preview && (
-                <div className="flex items-center gap-3 rounded-xl border border-border p-4">
+                <div className="flex items-center gap-3 rounded-xl border border-separator p-4">
                   <Skeleton className="size-10 rounded-lg" />
                   <div className="flex flex-col gap-1.5">
                     <Skeleton className="h-4 w-28" />
@@ -215,7 +215,7 @@ export function AddRepoDialog({ open, onOpenChange }: AddRepoDialogProps) {
               )}
 
               {preview && !isFetching && (
-                <div className="flex items-start gap-3 rounded-xl border border-border p-4">
+                <div className="flex items-start gap-3 rounded-xl border border-separator p-4">
                   <Avatar>
                     <Avatar.Fallback>
                       <Github className="size-4" />

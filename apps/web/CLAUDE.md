@@ -6,7 +6,7 @@ Next.js 16 dashboard with React 19, BetterAuth, and HeroUI v3 (`@heroui/react` +
 
 ## UI: HeroUI v3 (Tailwind CSS v4 + React Aria)
 
-The dashboard, admin, auth, and pricing surfaces are built entirely on HeroUI v3. There is **no shadcn/ui** in this app.
+The dashboard, admin, auth, and pricing surfaces are built entirely on HeroUI v3.
 
 - **No provider** — HeroUI v3 needs no `<HeroUIProvider>`; styles come from `@heroui/styles` + the Pro glass theme in `globals.css`.
 - **Compound components** — use dot notation: `Card.Header`/`Card.Content`, `Switch.Control`/`Switch.Thumb`, `Modal.Backdrop`/`Modal.Dialog`, `Select.Trigger`/`Select.Popover`, `Dropdown.Popover`/`Dropdown.Menu`.
