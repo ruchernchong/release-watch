@@ -211,7 +211,10 @@ export function UsersTable() {
               <MoreHorizontal className="size-4" />
             </Button>
             <Dropdown.Popover>
-              <Dropdown.Menu onAction={(key) => handleRowAction(user, key)}>
+              <Dropdown.Menu
+                aria-label="User actions"
+                onAction={(key) => handleRowAction(user, key)}
+              >
                 <Dropdown.Item id="view" textValue="View Details">
                   <Eye className="size-4 text-muted" />
                   <Label>View Details</Label>

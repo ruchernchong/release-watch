@@ -171,7 +171,10 @@ export function ReposTable({ initialRepos }: ReposTableProps) {
               <MoreHorizontal className="size-4" />
             </Button>
             <Dropdown.Popover>
-              <Dropdown.Menu onAction={(key) => handleRowAction(repo, key)}>
+              <Dropdown.Menu
+                aria-label="Repository actions"
+                onAction={(key) => handleRowAction(repo, key)}
+              >
                 <Dropdown.Item id="github" textValue="View on GitHub">
                   <ExternalLink className="size-4 text-muted" />
                   <Label>View on GitHub</Label>

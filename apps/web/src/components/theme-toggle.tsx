@@ -29,7 +29,10 @@ export function ThemeToggle() {
         {isDark ? <Moon className="size-4" /> : <Sun className="size-4" />}
       </Button>
       <Dropdown.Popover className="min-w-40">
-        <Dropdown.Menu onAction={(key: Key) => setTheme(key as string)}>
+        <Dropdown.Menu
+          aria-label="Theme"
+          onAction={(key: Key) => setTheme(key as string)}
+        >
           <Dropdown.Item id="light" textValue="Light">
             <Sun className="size-4 text-muted" />
             <Label>Light</Label>

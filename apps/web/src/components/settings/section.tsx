@@ -4,6 +4,7 @@ import {
   Avatar,
   Button,
   Card,
+  Description,
   InputGroup,
   Label,
   Separator,
@@ -111,9 +112,9 @@ export function SettingsSection() {
                   <InputGroup>
                     <InputGroup.Input />
                   </InputGroup>
-                  <Typography type="body-xs" color="muted">
+                  <Description>
                     Email cannot be changed. Contact support for assistance.
-                  </Typography>
+                  </Description>
                 </TextField>
               </div>
             </div>
@@ -148,6 +149,7 @@ export function SettingsSection() {
               description="Get notified immediately when a watched repo publishes a new release."
             >
               <Switch
+                aria-label="Release notifications"
                 isSelected={releaseNotifications}
                 onChange={setReleaseNotifications}
               >
@@ -162,7 +164,11 @@ export function SettingsSection() {
               label="Weekly digest"
               description="Receive a weekly summary of all releases from your watched repos."
             >
-              <Switch isSelected={weeklyDigest} onChange={setWeeklyDigest}>
+              <Switch
+                aria-label="Weekly digest"
+                isSelected={weeklyDigest}
+                onChange={setWeeklyDigest}
+              >
                 <Switch.Control>
                   <Switch.Thumb />
                 </Switch.Control>
@@ -174,7 +180,11 @@ export function SettingsSection() {
               label="AI summaries"
               description="Include AI-generated summaries in release notifications."
             >
-              <Switch isSelected={aiSummaries} onChange={setAiSummaries}>
+              <Switch
+                aria-label="AI summaries"
+                isSelected={aiSummaries}
+                onChange={setAiSummaries}
+              >
                 <Switch.Control>
                   <Switch.Thumb />
                 </Switch.Control>

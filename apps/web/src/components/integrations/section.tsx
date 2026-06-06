@@ -339,6 +339,7 @@ export function IntegrationsSection() {
                       </div>
                       <div className="flex items-center gap-2">
                         <Switch
+                          aria-label={`Toggle ${channel.channelName}`}
                           isSelected={channel.enabled}
                           onChange={(enabled) =>
                             handleToggleDiscordChannel(

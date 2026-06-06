@@ -48,7 +48,7 @@ export function UserMenu() {
         </Avatar>
       </Button>
       <Dropdown.Popover className="min-w-56">
-        <Dropdown.Menu onAction={handleAction}>
+        <Dropdown.Menu aria-label="User menu" onAction={handleAction}>
           <Dropdown.Section>
             <Header>
               <div className="flex items-center gap-2">

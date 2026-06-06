@@ -49,6 +49,7 @@ export function MarketingPricing() {
       {/* Billing toggle */}
       <div className="flex items-center justify-center gap-3">
         <ToggleButtonGroup
+          aria-label="Billing period"
           selectionMode="single"
           disallowEmptySelection
           selectedKeys={new Set([billingPeriod])}

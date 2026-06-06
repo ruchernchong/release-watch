@@ -76,6 +76,7 @@ export function IntegrationToggle({
       {linked && (
         <div className="flex items-center gap-3">
           <Switch
+            aria-label={`Toggle ${config.label} notifications`}
             isSelected={localEnabled}
             onChange={handleToggle}
             isDisabled={isPending}

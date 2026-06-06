@@ -206,6 +206,7 @@ export function Overview({ stats, releases, telegramStatus }: OverviewProps) {
               </div>
               {optimisticTelegram.linked && (
                 <Switch
+                  aria-label="Toggle Telegram notifications"
                   isSelected={optimisticTelegram.channel?.enabled ?? false}
                   onChange={handleTelegramToggle}
                   isDisabled={isPending}

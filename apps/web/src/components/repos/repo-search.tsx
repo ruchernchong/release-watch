@@ -154,6 +154,7 @@ export function RepoSearch() {
       </ComboBox.InputGroup>
       <ComboBox.Popover>
         <ListBox
+          aria-label="Repository results"
           renderEmptyState={() => (
             <Typography type="body-sm" color="muted">
               {isPending
