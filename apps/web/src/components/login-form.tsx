@@ -1,6 +1,5 @@
-import { Card, Typography } from "@heroui/react";
+import { Card, cn, Typography } from "@heroui/react";
 import { LoginButtons } from "@web/components/login-buttons";
-import { cn } from "@web/lib/utils";
 
 export function LoginForm({
   className,

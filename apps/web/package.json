@@ -21,7 +21,6 @@
     "@sentry/nextjs": "catalog:",
     "@vercel/analytics": "1.6.1",
     "better-auth": "catalog:",
-    "clsx": "2.1.1",
     "drizzle-orm": "catalog:",
     "embla-carousel": "8.6.0",
     "embla-carousel-react": "8.6.0",
@@ -37,7 +36,6 @@
     "react-dom": "19.2.3",
     "react-resizable-panels": "4.10.0",
     "recharts": "3.6.0",
-    "tailwind-merge": "3.4.0",
     "tailwind-variants": "3.2.2",
     "zod": "catalog:"
   },
