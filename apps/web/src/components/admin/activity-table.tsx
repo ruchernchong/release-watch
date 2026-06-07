@@ -9,6 +9,7 @@ import {
   Typography,
 } from "@heroui/react";
 import { DataGrid, type DataGridColumn } from "@heroui-pro/react";
+import { adminActivitySearchParams } from "@web/app/(dashboard)/dashboard/admin/activity/search-params";
 import type { ActivityLog, AdminActivityResult } from "@web/lib/data/admin";
 import {
   Activity,
@@ -18,7 +19,7 @@ import {
   UserCircle,
 } from "lucide-react";
 import type { Route } from "next";
-import { useRouter } from "next/navigation";
+import { useQueryState } from "nuqs";
 import { useTransition } from "react";
 
 interface ActivityTableProps {
@@ -62,17 +63,18 @@ function DeviceIcon({ device }: { device: "desktop" | "mobile" | "tablet" }) {
 }
 
 export function ActivityTable({ data }: ActivityTableProps) {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [, setOffset] = useQueryState(
+    "offset",
+    adminActivitySearchParams.offset.withOptions({
+      shallow: false,
+      startTransition,
+    }),
+  );
 
   const navigateToOffset = (offset: number) => {
-    startTransition(() => {
-      const normalizedOffset = Math.max(0, offset);
-      const href = normalizedOffset
-        ? `/dashboard/admin/activity?offset=${normalizedOffset}`
-        : "/dashboard/admin/activity";
-      router.replace(href as Route);
-    });
+    const normalizedOffset = Math.max(0, offset);
+    setOffset(normalizedOffset || null);
   };
 
   const columns: DataGridColumn<ActivityLog>[] = [

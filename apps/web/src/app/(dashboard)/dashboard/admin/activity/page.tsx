@@ -5,17 +5,16 @@ import {
 import { AdminNav } from "@web/components/admin/admin-nav";
 import { getAdminActivity } from "@web/lib/data/admin";
 import { Activity, Shield } from "lucide-react";
+import type { SearchParams } from "nuqs/server";
 import { Suspense } from "react";
+import { adminActivitySearchParamsCache } from "./search-params";
 
-interface AdminActivityPageProps {
-  searchParams: Promise<{ offset?: string }>;
+interface PageProps {
+  searchParams: Promise<SearchParams>;
 }
 
-export default async function AdminActivityPage({
-  searchParams,
-}: AdminActivityPageProps) {
-  const params = await searchParams;
-  const offset = Number(params.offset ?? 0);
+export default async function AdminActivityPage({ searchParams }: PageProps) {
+  const { offset } = await adminActivitySearchParamsCache.parse(searchParams);
 
   return (
     <div className="flex flex-col gap-8">

@@ -5,18 +5,17 @@ import {
 } from "@web/components/admin/users-table";
 import { getAdminUsers } from "@web/lib/data/admin";
 import { Shield, Users } from "lucide-react";
+import type { SearchParams } from "nuqs/server";
 import { Suspense } from "react";
+import { adminUsersSearchParamsCache } from "./search-params";
 
-interface AdminUsersPageProps {
-  searchParams: Promise<{ search?: string; offset?: string }>;
+interface PageProps {
+  searchParams: Promise<SearchParams>;
 }
 
-export default async function AdminUsersPage({
-  searchParams,
-}: AdminUsersPageProps) {
-  const params = await searchParams;
-  const search = params.search ?? "";
-  const offset = Number(params.offset ?? 0);
+export default async function AdminUsersPage({ searchParams }: PageProps) {
+  const { search, offset } =
+    await adminUsersSearchParamsCache.parse(searchParams);
 
   return (
     <div className="flex flex-col gap-8">
@@ -60,5 +59,5 @@ async function AdminUsersTable({
   offset: number;
 }) {
   const data = await getAdminUsers({ search, offset, limit: 20 });
-  return <UsersTable data={data} search={search} />;
+  return <UsersTable data={data} />;
 }

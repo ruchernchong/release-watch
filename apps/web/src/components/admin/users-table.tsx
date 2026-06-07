@@ -14,6 +14,7 @@ import {
 } from "@heroui/react";
 import { DataGrid, type DataGridColumn, NumberValue } from "@heroui-pro/react";
 import { unbanUser } from "@web/app/(dashboard)/dashboard/admin/users/actions";
+import { adminUsersSearchParams } from "@web/app/(dashboard)/dashboard/admin/users/search-params";
 import { BanUserDialog } from "@web/components/admin/ban-user-dialog";
 import type { AdminUserSummary, AdminUsersResult } from "@web/lib/data/admin";
 import {
@@ -27,17 +28,11 @@ import {
 } from "lucide-react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
-import {
-  type Key,
-  useCallback,
-  useEffect,
-  useState,
-  useTransition,
-} from "react";
+import { throttle, useQueryStates } from "nuqs";
+import { type Key, useCallback, useState, useTransition } from "react";
 
 interface UsersTableProps {
   data: AdminUsersResult;
-  search: string;
 }
 
 function formatJoined(dateString: string): string {
@@ -48,36 +43,31 @@ function formatJoined(dateString: string): string {
   });
 }
 
-export function UsersTable({ data, search }: UsersTableProps) {
+export function UsersTable({ data }: UsersTableProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const [searchQuery, setSearchQuery] = useState(search);
+  const [{ search }, setAdminUsersSearchParams] = useQueryStates(
+    adminUsersSearchParams,
+    {
+      shallow: false,
+      startTransition,
+    },
+  );
   const [banDialogUser, setBanDialogUser] = useState<AdminUserSummary | null>(
     null,
   );
 
-  useEffect(() => {
-    setSearchQuery(search);
-  }, [search]);
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      const params = new URLSearchParams();
-      const trimmedSearch = searchQuery.trim();
-      if (trimmedSearch) params.set("search", trimmedSearch);
-
-      const queryString = params.toString();
-      const href = queryString
-        ? `/dashboard/admin/users?${queryString}`
-        : "/dashboard/admin/users";
-
-      startTransition(() => {
-        router.replace(href as Route);
-      });
-    }, 300);
-    return () => clearTimeout(timeout);
-  }, [router, searchQuery]);
+  const updateSearch = (value: string) => {
+    const trimmedSearch = value.trim();
+    setAdminUsersSearchParams(
+      {
+        search: trimmedSearch || null,
+        offset: null,
+      },
+      { limitUrlUpdates: throttle(300) },
+    );
+  };
 
   const handleUnban = useCallback(
     async (userId: string) => {
@@ -254,8 +244,8 @@ export function UsersTable({ data, search }: UsersTableProps) {
         )}
 
         <TextField
-          value={searchQuery}
-          onChange={setSearchQuery}
+          value={search}
+          onChange={updateSearch}
           aria-label="Search users"
         >
           <InputGroup>
