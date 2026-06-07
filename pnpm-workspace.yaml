@@ -22,6 +22,7 @@ catalog:
   "@tailwindcss/postcss": 4.1.18
   "@upstash/redis": 1.35.8
   "@vercel/config": 0.5.1
+  "@vercel/related-projects": 1.1.0
   '@types/node': 24.12.2
   better-auth: 1.6.11
   drizzle-kit: 0.31.8

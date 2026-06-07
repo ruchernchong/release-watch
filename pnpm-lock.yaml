@@ -27,6 +27,9 @@ catalogs:
     '@vercel/config':
       specifier: 0.5.1
       version: 0.5.1
+    '@vercel/related-projects':
+      specifier: 1.1.0
+      version: 1.1.0
     better-auth:
       specifier: 1.6.11
       version: 1.6.11
@@ -171,6 +174,9 @@ importers:
       '@vercel/analytics':
         specifier: 1.6.1
         version: 1.6.1(next@16.2.6(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
+      '@vercel/related-projects':
+        specifier: 'catalog:'
+        version: 1.1.0
       better-auth:
         specifier: 'catalog:'
         version: 1.6.11(@opentelemetry/api@1.9.0)(drizzle-kit@0.31.8)(drizzle-orm@0.45.2(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@types/pg@8.16.0)(@upstash/redis@1.35.8)(kysely@0.28.17))(next@16.2.6(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -2970,6 +2976,9 @@ packages:
   '@vercel/queue@0.1.7':
     resolution: {integrity: sha512-4Uk9LOvDPVYqBJGrNDk4fdLte4CmFERXCUJI2y7SRYX1d//dI96Ww7sgKZF4+YDj/YaBXoCZ11AU0HYkVwW9Eg==}
     engines: {node: '>=20.0.0'}
+
+  '@vercel/related-projects@1.1.0':
+    resolution: {integrity: sha512-4YjXj8rL9UVX444vaKuSmXgZD0ABOEgQNd6BR75vACaeAcuwU8powNyKDoAM9JIPfVhx7/zHCum5z+7lx2Mp9g==}
 
   '@vercel/routing-utils@6.2.0':
     resolution: {integrity: sha512-YI2cGYZmJKEyGSEgf5Fw5rVuW7X1bTOQ7/pnLRNTFMH3YB3qqP5erCLCJGv2kIvNo1iQAPINHQRJj6ykEdGoPg==}
@@ -8669,6 +8678,10 @@ snapshots:
       minimatch: 10.2.5
       mixpart: 0.0.6
       picocolors: 1.1.1
+
+  '@vercel/related-projects@1.1.0':
+    optionalDependencies:
+      ajv: 6.15.0
 
   '@vercel/routing-utils@6.2.0':
     dependencies:

@@ -20,6 +20,7 @@
     "@shipradar/types": "workspace:*",
     "@sentry/nextjs": "catalog:",
     "@vercel/analytics": "1.6.1",
+    "@vercel/related-projects": "catalog:",
     "better-auth": "catalog:",
     "drizzle-orm": "catalog:",
     "embla-carousel": "8.6.0",

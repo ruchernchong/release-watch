@@ -1,6 +1,7 @@
 import type { VercelConfig } from "@vercel/config/v1";
 
 export const config: VercelConfig = {
+  relatedProjects: ["prj_bqVrIuICIqkTyFMood40VOfTXXQL"],
   // Temporary disabled due to Vercel Hobby account
   // crons: [
   //   {
