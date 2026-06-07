@@ -3,8 +3,8 @@ import { redis } from "@shipradar/redis";
 import type { SystemStats } from "@shipradar/types";
 import { getAllTrackedRepos } from "./kv.service";
 
-const NOTIFICATIONS_SENT_KEY = "notifications_sent";
-const RELEASES_NOTIFIED_KEY = "releases_notified";
+const NOTIFICATIONS_SENT_KEY = "notifications:sent";
+const RELEASES_NOTIFIED_KEY = "releases:notified";
 
 async function computeStats(): Promise<
   Pick<SystemStats, "uniqueUsers" | "reposWatched" | "reposTracked">
