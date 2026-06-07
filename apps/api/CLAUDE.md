@@ -27,10 +27,6 @@ src/
     channels/
       telegram.ts          # /channels/telegram/*
       discord.ts           # /channels/discord/*
-    admin/
-      users.ts             # /admin/users/*
-      activity.ts          # /admin/activity
-      stats.ts             # /admin/stats
   middleware/
     auth.ts                # JWT authentication (verifies via JWKS)
     db.ts                  # Database context middleware
@@ -66,13 +62,6 @@ No versioning - internal API only.
 - `POST /channels/discord/channels` - Add notification channel
 - `DELETE /channels/discord/channels/:channelId` - Remove channel
 - `PATCH /channels/discord/toggle` - Toggle channel notifications
-
-**Admin (JWT + admin role):**
-- `GET /admin/users` - List users
-- `GET /admin/users/:id` - User details
-- `POST /admin/users/:id/ban` - Ban/unban user
-- `GET /admin/activity` - Session activity logs
-- `GET /admin/stats` - System stats
 
 ## Authentication
 

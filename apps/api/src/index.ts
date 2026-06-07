@@ -1,10 +1,7 @@
 import { Hono } from "hono";
 import { requestId } from "hono/request-id";
 
-// import { type AuthEnv, adminOnly, jwtAuth } from "./middleware/auth";
-// import adminActivity from "./routes/admin/activity";
-// import adminStats from "./routes/admin/stats";
-// import adminUsers from "./routes/admin/users";
+// import { type AuthEnv, jwtAuth } from "./middleware/auth";
 // import discord from "./routes/channels/discord";
 // import telegram from "./routes/channels/telegram";
 // import dashboard from "./routes/dashboard";
@@ -25,15 +22,6 @@ import stats from "./routes/stats";
 // .route("/", telegram);
 // .route("/", discord);
 
-// Admin routes
-// const admin = new Hono<AuthEnv>()
-//   .basePath("/admin")
-//   .use("*", jwtAuth)
-//   .use("*", adminOnly)
-//   .route("/", adminUsers)
-//   .route("/", adminActivity)
-//   .route("/", adminStats);
-
 const app = new Hono()
   .use("*", requestId())
   .route("/", health)
@@ -42,7 +30,6 @@ const app = new Hono()
   // .route("/", webhook)
   // .route("/internal", internal)
   // .route("/", api)
-  // .route("/", admin)
   .onError((error, c) => {
     return c.json({ error: error.message });
   });
