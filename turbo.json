@@ -17,6 +17,7 @@
     "GOOGLE_*",
     "HEROUI_AUTH_TOKEN",
     "POSTHOG_API_KEY",
+    "SENTRY_*",
     "TELEGRAM_BOT_TOKEN",
     "UPSTASH_*"
   ],
