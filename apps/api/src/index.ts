@@ -10,7 +10,6 @@ import health from "./routes/health";
 // import internal from "./routes/internal";
 
 // import repos from "./routes/repos";
-// import stats from "./routes/stats";
 
 // import webhook from "./routes/webhook";
 
@@ -26,7 +25,6 @@ const app = new Hono()
   .use("*", requestId())
   .route("/", health)
   .route("/health", health)
-  // .route("/", stats)
   // .route("/", webhook)
   // .route("/internal", internal)
   // .route("/", api)
